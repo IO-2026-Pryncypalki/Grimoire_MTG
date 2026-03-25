@@ -1,6 +1,8 @@
----
-title: UC-01 - Logowanie przez Google OAuth2
----
+# Diagramy sekwencji — Grimoire MtG
+
+## UC-01 — Logowanie przez Google OAuth2
+
+```mermaid
 sequenceDiagram
     autonumber
     actor U as Uzytkownik
@@ -41,10 +43,11 @@ sequenceDiagram
     SM-->>UI: zwraca SessionToken
     deactivate SM
     UI->>U: Wyswietla Dashboard
+```
 
----
-title: UC-02 - Reczne wyszukiwanie i dodawanie karty
----
+## UC-02 — Reczne wyszukiwanie i dodawanie karty
+
+```mermaid
 sequenceDiagram
     autonumber
     actor U as Uzytkownik
@@ -98,10 +101,11 @@ sequenceDiagram
 
         UI->>U: Wyswietla potwierdzenie dodania
     end
+```
 
----
-title: UC-03 - Skanowanie karty kamera i dodanie do kolekcji
----
+## UC-03 — Skanowanie karty kamera i dodanie do kolekcji
+
+```mermaid
 sequenceDiagram
     autonumber
     actor U as Uzytkownik (Mobile)
@@ -155,10 +159,11 @@ sequenceDiagram
             UI->>U: Wyswietla komunikat o sukcesie
         end
     end
+```
 
----
-title: UC-04 - Tworzenie nowego decku
----
+## UC-04 — Tworzenie nowego decku
+
+```mermaid
 sequenceDiagram
     autonumber
     actor U as Uzytkownik
@@ -203,10 +208,11 @@ sequenceDiagram
 
         UI->>U: Potwierdzenie zapisu
     end
+```
 
----
-title: UC-05 - Przegladanie kolekcji z weryfikacja sesji
----
+## UC-05 — Przegladanie kolekcji z weryfikacja sesji
+
+```mermaid
 sequenceDiagram
     autonumber
     actor U as Uzytkownik
@@ -239,10 +245,11 @@ sequenceDiagram
         end
         deactivate COL
     end
+```
 
----
-title: UC-06 - Edycja istniejacego decku
----
+## UC-06 — Edycja istniejacego decku
+
+```mermaid
 sequenceDiagram
     autonumber
     actor U as Uzytkownik
@@ -284,10 +291,11 @@ sequenceDiagram
             UI->>U: Powrot do widoku listy
         end
     end
+```
 
----
-title: UC-07 - Sprawdzenie wartosci kolekcji
----
+## UC-07 — Sprawdzenie wartosci kolekcji
+
+```mermaid
 sequenceDiagram
     autonumber
     actor U as Uzytkownik (Tomasz)
@@ -332,3 +340,4 @@ sequenceDiagram
         U->>UI: Klika karte
         UI->>U: Wyswietla historie cen i szczegoly
     end
+```

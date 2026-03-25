@@ -1,3 +1,6 @@
+# Diagram klas — Grimoire MtG
+
+```mermaid
 classDiagram
     class SessionManager {
         -List~Session~ activeSessions
@@ -99,14 +102,14 @@ classDiagram
     }
 
     User "1" -- "0..*" Session : posiada
-    SessionManager "1" -- "*" Session : zarządza
+    SessionManager "1" -- "*" Session : zarzadza
     SessionManager ..> User : tworzy lub wyszukuje
 
     User "1" -- "1" Collection : posiada
     User "1" -- "*" Deck : tworzy
 
     Collection "1" -- "*" CollectionEntry : zawiera
-    CollectionEntry "1" -- "1" Card : odnosi się do
+    CollectionEntry "1" -- "1" Card : odnosi sie do
     Deck "1" -- "*" Card : zawiera
 
     ScryfallAdapter ..|> ICardProvider : implementuje
@@ -116,4 +119,5 @@ classDiagram
     Collection ..> ICardProvider : pobiera ceny
     Deck ..> ICardProvider : szuka kart
     Deck ..> IDeckValidator : sprawdza zasady
-    ScannerService ..> ICardProvider : identyfikuje kartę po OCR
+    ScannerService ..> ICardProvider : identyfikuje karte po OCR
+```

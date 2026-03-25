@@ -22,6 +22,13 @@ classDiagram
         +isValid() boolean
     }
 
+    class GoogleUserInfo {
+        <<DTO>>
+        +String googleId
+        +String email
+        +String name
+    }
+
     class User {
         +UUID id
         +String email
@@ -104,6 +111,7 @@ classDiagram
     User "1" -- "0..*" Session : posiada
     SessionManager "1" -- "*" Session : zarzadza
     SessionManager ..> User : tworzy lub wyszukuje
+    SessionManager ..> GoogleUserInfo : tworzy z odpowiedzi Google
 
     User "1" -- "1" Collection : posiada
     User "1" -- "*" Deck : tworzy

@@ -77,10 +77,13 @@ graph LR
             UC15(("Wartość"))
             UC16(("Sortuj"))
         end
+        subgraph _
+            Scryfall[("🌐 Scryfall")]
+            MLKit[("📷 ML Kit")]
+        end
     end
 
-    Scryfall[("🌐 Scryfall")]
-    MLKit[("📷 ML Kit")]
+
 
     Tomasz --- UC01
     Tomasz --- UC03

@@ -5,7 +5,7 @@
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as Uzytkownik
+    actor U as Użytkownik
     participant UI as Interfejs
     participant G as Google OAuth2
     participant SM as SessionManager
@@ -15,7 +15,7 @@ sequenceDiagram
     U->>UI: Klika "Zaloguj przez Google"
     UI->>G: Przekierowanie do Google (Authorization Request)
     G->>U: Wyswietla ekran logowania Google
-    U->>G: Loguje sie i wyraza zgode
+    U->>G: Loguje sie i wyraża zgode
     G-->>UI: Zwraca authorization code (redirect)
 
     UI->>SM: loginWithGoogle(authCode)
@@ -23,18 +23,18 @@ sequenceDiagram
 
     SM->>G: exchangeGoogleToken(authCode)
     activate G
-    G-->>SM: Zwraca access token + dane uzytkownika (email, name, googleId)
+    G-->>SM: Zwraca access token + dane użytkownika (email, name, googleId)
     deactivate G
 
     SM->>DB: findByGoogleId(googleId)
     activate DB
 
-    alt Uzytkownik istnieje
-        DB-->>SM: dane uzytkownika
+    alt Użytkownik istnieje
+        DB-->>SM: dane użytkownika
     else Nowy uzytkownik
         DB-->>SM: brak wyniku
         SM->>DB: createUser(email, username, googleId)
-        DB-->>SM: nowy uzytkownik utworzony
+        DB-->>SM: nowy użytkownik utworzony
     end
     deactivate DB
 
@@ -45,18 +45,18 @@ sequenceDiagram
     UI->>U: Wyswietla Dashboard
 ```
 
-## UC-02 — Reczne wyszukiwanie i dodawanie karty
+## UC-02 — Ręczne wyszukiwanie i dodawanie karty
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as Uzytkownik
+    actor U as Użytkownik
     participant UI as Interfejs
     participant SM as SessionManager
     participant SA as ScryfallAdapter
     participant COL as Kolekcja
 
-    Note over U, UI: Warunek: Uzytkownik jest zalogowany (posiada token)
+    Note over U, UI: Warunek: Użytkownik jest zalogowany (posiada token)
 
     U->>UI: Wpisuje nazwe karty w wyszukiwarke
     UI->>SM: checkSession(token)
@@ -68,17 +68,17 @@ sequenceDiagram
     deactivate SA
 
     alt Scenariusz Alternatywny: Brak wynikow
-        UI->>U: Wyswietla "Nie znaleziono kart pasujacych do wyszukiwania"
+        UI->>U: Wyświetla "Nie znaleziono kart pasujacych do wyszukiwania"
     else Scenariusz Glowny: Znaleziono karty
-        UI->>U: Wyswietla liste wynikow
-        U->>UI: Wybiera konkretna karte
+        UI->>U: Wyświetla liste wynikow
+        U->>UI: Wybiera konkretną karte
 
         UI->>SA: getCardDetails(scryfallId)
         activate SA
-        SA-->>UI: zwraca szczegoly (obraz, opis, cena, edycja)
+        SA-->>UI: zwraca szczegóły (obraz, opis, cena, edycja)
         deactivate SA
 
-        UI->>U: Wyswietla pelne dane karty
+        UI->>U: Wyświetla pełne dane karty
 
         U->>UI: Klika "Dodaj do kolekcji"
 
@@ -86,11 +86,11 @@ sequenceDiagram
         activate COL
 
         alt Scenariusz Alternatywny: Karta juz jest w kolekcji
-            COL-->>UI: zwraca istniejacy CollectionEntry
-            UI->>U: Pyta: "Karta jest juz w kolekcji. Dodac kolejny egzemplarz?"
+            COL-->>UI: zwraca istniejący CollectionEntry
+            UI->>U: Pyta: "Karta jest juz w kolekcji. Dodać kolejny egzemplarz?"
             U->>UI: Wybiera "Tak"
             UI->>COL: entry.updateQuantity(+1)
-            COL-->>UI: Sukces (zaktualizowano liczbe)
+            COL-->>UI: Sukces (zaktualizowano liczbę)
         else Karta nowa
             COL-->>UI: brak wpisu
             UI->>COL: addCard(card)
@@ -99,16 +99,16 @@ sequenceDiagram
         end
         deactivate COL
 
-        UI->>U: Wyswietla potwierdzenie dodania
+        UI->>U: Wyświetla potwierdzenie dodania
     end
 ```
 
-## UC-03 — Skanowanie karty kamera i dodanie do kolekcji
+## UC-03 — Skanowanie karty kamerą/aparatem i dodanie do kolekcji
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as Uzytkownik (Mobile)
+    actor U as Użytkownik (Mobile)
     participant UI as Interfejs Skanera
     participant SM as SessionManager
     participant SS as ScannerService
@@ -116,9 +116,9 @@ sequenceDiagram
     participant SA as ScryfallAdapter
     participant COL as Kolekcja
 
-    Note over U, UI: Warunek: Uzytkownik zalogowany
+    Note over U, UI: Warunek: Użytkownik zalogowany
 
-    U->>UI: Otwiera skaner i robi zdjecie karty
+    U->>UI: Otwiera skaner i robi zdjęcie karty
     UI->>SM: checkSession(token)
     SM-->>UI: token OK
 
@@ -128,10 +128,10 @@ sequenceDiagram
     SS->>ML: recognizeText(image)
     activate ML
 
-    alt Scenariusz Alternatywny: Zle oswietlenie
-        ML-->>SS: Brak mozliwosci odczytu tekstu
-        SS-->>UI: Blad (Niewyrazne zdjecie)
-        UI->>U: Wyswietla komunikat: "Zrob ponowne zdjecie"
+    alt Scenariusz Alternatywny: Złe oświetlenie
+        ML-->>SS: Brak możliwości odczytu tekstu
+        SS-->>UI: Bład (Niewyraźne zdjęcie)
+        UI->>U: Wyświetla komunikat: "Zrób ponowne zdjęcie"
     else Sukces OCR
         ML-->>SS: Zwraca tekst (np. "Tarmogoyf")
         deactivate ML
@@ -140,14 +140,14 @@ sequenceDiagram
         activate SA
 
         alt Scenariusz Alternatywny: Nie znaleziono w Scryfall
-            SA-->>SS: Brak wynikow
-            SS-->>UI: Blad (Karta nieznana)
-            UI->>U: Proponuje reczne wyszukiwanie (UC-02)
+            SA-->>SS: Brak wyników
+            SS-->>UI: Bład (Karta nieznana)
+            UI->>U: Proponuje ręczne wyszukiwanie (UC-02)
         else Znaleziono karte
             SA-->>SS: Zwraca dane karty (id, obraz, edycja)
             deactivate SA
 
-            SS-->>UI: Wyswietla podglad karty
+            SS-->>UI: Wyświetla podglad karty
             deactivate SS
 
             U->>UI: Potwierdza i klika "Dodaj do kolekcji"
@@ -166,20 +166,20 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as Uzytkownik
+    actor U as Użytkownik
     participant UI as Interfejs
     participant SM as SessionManager
     participant D as DeckObject
     participant SA as ScryfallAdapter
     participant VAL as FormatValidator
 
-    U->>UI: Wybiera Utworz nowy deck
-    UI->>U: Wyswietla formularz
+    U->>UI: Wybiera "Utworz nowy deck"
+    UI->>U: Wyświetla formularz
 
-    U->>UI: Podaje nazwe i format
+    U->>UI: Podaje nazwę i format
 
     alt Brak nazwy
-        UI->>U: Komunikat bledu
+        UI->>U: Komunikat błędu
     else Dane OK
         UI->>SM: checkSession(token)
         SM-->>UI: token OK
@@ -190,8 +190,8 @@ sequenceDiagram
         loop Dodawanie kart
             U->>UI: Szuka karty
             UI->>SA: searchCard(query)
-            SA-->>UI: lista wynikow
-            U->>UI: Dodaje wybrana karte
+            SA-->>UI: lista wyników
+            U->>UI: Dodaje wybraną kartę
             UI->>D: addCard(card, count)
         end
 
@@ -210,12 +210,12 @@ sequenceDiagram
     end
 ```
 
-## UC-05 — Przegladanie kolekcji z weryfikacja sesji
+## UC-05 — Przegladanie kolekcji z weryfikacją sesji
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as Uzytkownik
+    actor U as Użytkownik
     participant UI as Interfejs
     participant SM as SessionManager
     participant COL as Kolekcja
@@ -237,11 +237,11 @@ sequenceDiagram
         activate COL
 
         alt Kolekcja ma karty
-            COL-->>UI: lista obiektow CollectionEntry
-            UI->>U: Wyswietla karty (z iloscia, stanem, notatkami)
+            COL-->>UI: lista obiektów CollectionEntry
+            UI->>U: Wyświetla karty (z ilościa, stanem, notatkami)
         else Kolekcja pusta
             COL-->>UI: pusta lista
-            UI->>U: Wyswietla ekran zachety (link do dodawania)
+            UI->>U: Wyświetla ekran zachęty (link do dodawania)
         end
         deactivate COL
     end
@@ -252,7 +252,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as Uzytkownik
+    actor U as Użytkownik
     participant UI as Interfejs
     participant SM as SessionManager
     participant D as DeckObject
@@ -269,15 +269,15 @@ sequenceDiagram
         UI->>+D: load()
         D-->>-UI: dane decku i statystyki
 
-        UI->>U: Wyswietla tryb edycji
+        UI->>U: Wyświetla tryb edycji
 
         loop Edycja kart
-            U->>UI: Dodaje/Usuwa karte
+            U->>UI: Dodaje/Usuwa kartę
             UI->>+SA: searchCard(query)
             SA-->>-UI: wyniki
             UI->>+D: updateContent()
-            D-->>-UI: odswiezone statystyki
-            UI->>U: Pokazuje zmiany na zywo
+            D-->>-UI: odswieżone statystyki
+            UI->>U: Pokazuje zmiany na żywo
         end
 
         alt Klika Zapisz
@@ -288,7 +288,7 @@ sequenceDiagram
             UI->>U: Pyta o potwierdzenie
             U->>UI: Potwierdza
             UI->>D: discardChanges()
-            UI->>U: Powrot do widoku listy
+            UI->>U: Powrót do widoku listy
         end
     end
 ```
@@ -298,7 +298,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     autonumber
-    actor U as Uzytkownik (Tomasz)
+    actor U as Użytkownik (Tomasz)
     participant UI as Interfejs
     participant SM as SessionManager
     participant COL as Kolekcja
@@ -309,8 +309,8 @@ sequenceDiagram
     UI->>+SM: checkSession(token)
     SM-->>-UI: status sesji (valid)
 
-    alt Brak polaczenia z internetem
-        UI->>U: Ostrzezenie: "Brak polaczenia - ceny z cache"
+    alt Brak połaczenia z internetem
+        UI->>U: Ostrzeżenie: "Brak połaczenia - ceny z cache"
         UI->>+COL: getCachedPrices()
         COL-->>-UI: ostatnio zapisane dane cenowe
     else Polaczenie aktywne
@@ -319,7 +319,7 @@ sequenceDiagram
 
         UI->>+SA: getLatestPrices(ids)
 
-        alt Blad API / Brak cen dla czesci kart
+        alt Bład API / Brak cen dla części kart
             SA-->>UI: zwraca ceny + info o braku danych dla wybranych ID
         else Sukces
             SA-->>-UI: kompletne dane cenowe
@@ -330,14 +330,14 @@ sequenceDiagram
     end
 
     UI->>+COL: calculateTotalValue(prices)
-    COL-->>-UI: laczna wartosc i posortowana lista
+    COL-->>-UI: łaczna wartość i posortowana lista
 
-    UI->>U: Wyswietla wartosc laczna i ceny przy kartach
+    UI->>U: Wyświetla wartość łaczną i ceny przy kartach
 
-    opt Filtrowanie i Szczegoly
-        U->>UI: Filtruje po wartosci (np. > 50$)
+    opt Filtrowanie i Szczegóły
+        U->>UI: Filtruje po wartości (np. > 50$)
         UI->>U: Aktualizuje widok
         U->>UI: Klika karte
-        UI->>U: Wyswietla historie cen i szczegoly
+        UI->>U: Wyświetla historie cen i szczegóły
     end
 ```

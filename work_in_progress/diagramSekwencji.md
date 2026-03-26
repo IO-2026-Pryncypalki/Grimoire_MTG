@@ -64,18 +64,18 @@ sequenceDiagram
 
     UI->>SA: searchCard(query)
     activate SA
-    SA-->>UI: zwraca liste wynikow (miniatury, nazwy, edycje)
+    SA-->>UI: Zwraca liste wynikow (miniatury, nazwy, edycje)
     deactivate SA
 
-    alt Scenariusz Alternatywny: Brak wynikow
+    alt  Brak wynikow
         UI->>U: Wyświetla "Nie znaleziono kart pasujacych do wyszukiwania"
-    else Scenariusz Glowny: Znaleziono karty
+    else Znaleziono karty
         UI->>U: Wyświetla liste wynikow
         U->>UI: Wybiera konkretną karte
 
         UI->>SA: getCardDetails(scryfallId)
         activate SA
-        SA-->>UI: zwraca szczegóły (obraz, opis, cena, edycja)
+        SA-->>UI: Zwraca szczegóły (obraz, opis, cena, edycja)
         deactivate SA
 
         UI->>U: Wyświetla pełne dane karty
@@ -85,14 +85,14 @@ sequenceDiagram
         UI->>COL: getEntry(scryfallId)
         activate COL
 
-        alt Scenariusz Alternatywny: Karta juz jest w kolekcji
+        alt  Karta juz jest w kolekcji
             COL-->>UI: zwraca istniejący CollectionEntry
             UI->>U: Pyta: "Karta jest juz w kolekcji. Dodać kolejny egzemplarz?"
             U->>UI: Wybiera "Tak"
             UI->>COL: entry.updateQuantity(+1)
             COL-->>UI: Sukces (zaktualizowano liczbę)
         else Karta nowa
-            COL-->>UI: brak wpisu
+            COL-->>UI: Brak wpisu
             UI->>COL: addCard(card)
             Note right of COL: Tworzy nowy CollectionEntry (quantity=1)
             COL-->>UI: Sukces (dodano karte)
@@ -128,7 +128,7 @@ sequenceDiagram
     SS->>ML: recognizeText(image)
     activate ML
 
-    alt Scenariusz Alternatywny: Złe oświetlenie
+    alt  Złe oświetlenie
         ML-->>SS: Brak możliwości odczytu tekstu
         SS-->>UI: Bład (Niewyraźne zdjęcie)
         UI->>U: Wyświetla komunikat: "Zrób ponowne zdjęcie"
@@ -139,7 +139,7 @@ sequenceDiagram
         SS->>SA: searchCard("Tarmogoyf")
         activate SA
 
-        alt Scenariusz Alternatywny: Nie znaleziono w Scryfall
+        alt  Nie znaleziono w Scryfall
             SA-->>SS: Brak wyników
             SS-->>UI: Bład (Karta nieznana)
             UI->>U: Proponuje ręczne wyszukiwanie (UC-02)
@@ -190,7 +190,7 @@ sequenceDiagram
         loop Dodawanie kart
             U->>UI: Szuka karty
             UI->>SA: searchCard(query)
-            SA-->>UI: lista wyników
+            SA-->>UI: Lista wyników
             U->>UI: Dodaje wybraną kartę
             UI->>D: addCard(card, count)
         end
@@ -203,7 +203,7 @@ sequenceDiagram
         activate VAL
         VAL-->>D: true
         deactivate VAL
-        D-->>UI: wynik walidacji OK
+        D-->>UI: Wynik walidacji OK
         deactivate D
 
         UI->>U: Potwierdzenie zapisu
@@ -237,10 +237,10 @@ sequenceDiagram
         activate COL
 
         alt Kolekcja ma karty
-            COL-->>UI: lista obiektów CollectionEntry
+            COL-->>UI: Lista obiektów CollectionEntry
             UI->>U: Wyświetla karty (z ilościa, stanem, notatkami)
         else Kolekcja pusta
-            COL-->>UI: pusta lista
+            COL-->>UI: Pusta lista
             UI->>U: Wyświetla ekran zachęty (link do dodawania)
         end
         deactivate COL
@@ -261,22 +261,22 @@ sequenceDiagram
     U->>UI: Wybiera deck do edycji
 
     UI->>+SM: checkSession(token)
-    SM-->>-UI: zwraca status sesji
+    SM-->>-UI: Zwraca status sesji
 
     alt Sesja wygasla
         UI->>U: Przekierowanie do logowania
     else Sesja aktywna
         UI->>+D: load()
-        D-->>-UI: dane decku i statystyki
+        D-->>-UI: Dane decku i statystyki
 
         UI->>U: Wyświetla tryb edycji
 
         loop Edycja kart
             U->>UI: Dodaje/Usuwa kartę
             UI->>+SA: searchCard(query)
-            SA-->>-UI: wyniki
+            SA-->>-UI: Wyniki
             UI->>+D: updateContent()
-            D-->>-UI: odswieżone statystyki
+            D-->>-UI: Odswieżone statystyki
             UI->>U: Pokazuje zmiany na żywo
         end
 
@@ -307,22 +307,22 @@ sequenceDiagram
     U->>UI: Wybiera widok wyceny rynkowej
 
     UI->>+SM: checkSession(token)
-    SM-->>-UI: status sesji (valid)
+    SM-->>-UI: Status sesji (valid)
 
     alt Brak połaczenia z internetem
         UI->>U: Ostrzeżenie: "Brak połaczenia - ceny z cache"
         UI->>+COL: getCachedPrices()
-        COL-->>-UI: ostatnio zapisane dane cenowe
+        COL-->>-UI: Ostatnio zapisane dane cenowe
     else Polaczenie aktywne
         UI->>+COL: getCardIds()
-        COL-->>-UI: lista ID kart w kolekcji
+        COL-->>-UI: Lista ID kart w kolekcji
 
         UI->>+SA: getLatestPrices(ids)
 
         alt Bład API / Brak cen dla części kart
-            SA-->>UI: zwraca ceny + info o braku danych dla wybranych ID
+            SA-->>UI: Zwraca ceny + info o braku danych dla wybranych ID
         else Sukces
-            SA-->>-UI: kompletne dane cenowe
+            SA-->>-UI: Kompletne dane cenowe
         end
 
         UI->>+COL: updateCache(prices)
@@ -330,7 +330,7 @@ sequenceDiagram
     end
 
     UI->>+COL: calculateTotalValue(prices)
-    COL-->>-UI: łaczna wartość i posortowana lista
+    COL-->>-UI: Łaczna wartość i posortowana lista
 
     UI->>U: Wyświetla wartość łaczną i ceny przy kartach
 

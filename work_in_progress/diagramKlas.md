@@ -2,16 +2,19 @@
 
 ```mermaid
 classDiagram
-    class SessionManager {
-        -List~Session~ activeSessions
+
+    class GoogleUserInfo {
+        <<DTO>>
+        +String googleId
+        +String email
+        +String name
+    }
+
+    class AuthService {
+        -UserRepository userRepo
+        -SessionManager sessionManager
         +loginWithGoogle(String authCode) Session
-        +logout(token) void
-        +checkSession(token) boolean
         -exchangeGoogleToken(String authCode) GoogleUserInfo
-        -findOrCreateUser(GoogleUserInfo info) User
-        -createSession(userId, deviceType) Session
-        -getSessionByToken(token) Session
-        -invalidateSession(token) void
     }
 
     class Session {
@@ -22,11 +25,13 @@ classDiagram
         +isValid() boolean
     }
 
-    class GoogleUserInfo {
-        <<DTO>>
-        +String googleId
-        +String email
-        +String name
+    class SessionManager {
+        -List~Session~ activeSessions
+        +createSession(UUID userId, String deviceType) Session
+        +checkSession(String token) boolean
+        +logout(String token) void
+        -getSessionByToken(String token) Session
+        -invalidateSession(String token) void
     }
 
     class User {
@@ -36,6 +41,13 @@ classDiagram
         +String googleId
         +updateProfile()
     }
+
+    class UserRepository {
+        <<repository>>
+        +findOrCreateByGoogleId(GoogleUserInfo info) User
+        +findById(UUID id) User
+    }
+
 
     class Card {
         +String scryfallId
@@ -82,11 +94,32 @@ classDiagram
         +getPrice(String scryfallId) Double
     }
 
+    class JsonCacheProvider {
+        -Map~String, Card~ memoryCache
+        -String filePath
+        -loadFromFile() void
+        -saveToFile() void
+        +getCard(id) Card
+        +isCashedMap(id) bool
+        +isCashedFile(id) bool
+
+    }
+
     class ScryfallAdapter {
+        -HttpClient client
         +searchCard(String query) List~Card~
         +getCardDetails(String id) Card
         +getPrice(String scryfallId) Double
     }
+
+    class SmartAdapter{
+        -ScryfallAdapter scryfall
+        -JsonCacheProvider cashe
+        +searchCard(String query) List~Card~
+        +getCardDetails(String id) Card
+        +getPrice(String scryfallId) Double
+    }
+
 
     class IDeckValidator {
         <<interface>>
@@ -108,10 +141,14 @@ classDiagram
         +recognizeText(Object image) String
     }
 
+    AuthService ..> GoogleUserInfo : używa DTO
+    AuthService --> UserRepository : korzysta z
+    AuthService --> SessionManager : inicjuje sesję
+    UserRepository ..> User : operuje na
+
+
     User "1" -- "0..*" Session : posiada
     SessionManager "1" -- "*" Session : zarzadza
-    SessionManager ..> User : tworzy lub wyszukuje
-    SessionManager ..> GoogleUserInfo : tworzy z odpowiedzi Google
 
     User "1" -- "1" Collection : posiada
     User "1" -- "*" Deck : tworzy
@@ -121,6 +158,8 @@ classDiagram
     Deck "1" -- "*" Card : zawiera
 
     ScryfallAdapter ..|> ICardProvider : implementuje
+    LocalCasheAdapter ..|> ICardProvider : implementuje
+
     GoogleMLKitAdapter ..|> ScannerService : dostarcza OCR
     FormatValidator ..|> IDeckValidator : implementuje
 

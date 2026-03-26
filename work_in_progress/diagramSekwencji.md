@@ -8,8 +8,9 @@ sequenceDiagram
     actor U as Użytkownik
     participant UI as Interfejs
     participant G as Google OAuth2
+    participant AS as AuthService
+    participant UR as UserRepository
     participant SM as SessionManager
-    participant DB as Baza Danych
     participant S as Nowa Sesja
 
     U->>UI: Klika "Zaloguj przez Google"
@@ -18,30 +19,33 @@ sequenceDiagram
     U->>G: Loguje sie i wyraża zgode
     G-->>UI: Zwraca authorization code (redirect)
 
-    UI->>SM: loginWithGoogle(authCode)
-    activate SM
+    UI->>AS: loginWithGoogle(authCode)
+    activate AS
 
-    SM->>G: exchangeGoogleToken(authCode)
+    AS->>G: exchangeGoogleToken(authCode)
     activate G
-    G-->>SM: Zwraca access token + dane użytkownika (email, name, googleId)
+    G-->>AS: Zwraca access token + GoogleUserInfo (email, name, googleId)
     deactivate G
 
-    SM->>DB: findByGoogleId(googleId)
-    activate DB
+    AS->>UR: findOrCreateByGoogleId(googleUserInfo)
+    activate UR
 
     alt Użytkownik istnieje
-        DB-->>SM: dane użytkownika
-    else Nowy uzytkownik
-        DB-->>SM: brak wyniku
-        SM->>DB: createUser(email, username, googleId)
-        DB-->>SM: nowy użytkownik utworzony
+        UR-->>AS: istniejący User
+    else Nowy użytkownik
+        UR->>UR: tworzy nowego User
+        UR-->>AS: nowy User
     end
-    deactivate DB
+    deactivate UR
 
-    SM->>SM: createSession(userId, device)
+    AS->>SM: createSession(userId, deviceType)
+    activate SM
     SM->>S: create
-    SM-->>UI: zwraca SessionToken
+    SM-->>AS: zwraca Session z tokenem
     deactivate SM
+
+    AS-->>UI: zwraca Session
+    deactivate AS
     UI->>U: Wyswietla Dashboard
 ```
 
@@ -67,7 +71,7 @@ sequenceDiagram
     SA-->>UI: Zwraca liste wynikow (miniatury, nazwy, edycje)
     deactivate SA
 
-    alt  Brak wynikow
+    alt Brak wynikow
         UI->>U: Wyświetla "Nie znaleziono kart pasujacych do wyszukiwania"
     else Znaleziono karty
         UI->>U: Wyświetla liste wynikow
@@ -85,7 +89,7 @@ sequenceDiagram
         UI->>COL: getEntry(scryfallId)
         activate COL
 
-        alt  Karta juz jest w kolekcji
+        alt Karta juz jest w kolekcji
             COL-->>UI: zwraca istniejący CollectionEntry
             UI->>U: Pyta: "Karta jest juz w kolekcji. Dodać kolejny egzemplarz?"
             U->>UI: Wybiera "Tak"
@@ -128,7 +132,7 @@ sequenceDiagram
     SS->>ML: recognizeText(image)
     activate ML
 
-    alt  Złe oświetlenie
+    alt Złe oświetlenie
         ML-->>SS: Brak możliwości odczytu tekstu
         SS-->>UI: Bład (Niewyraźne zdjęcie)
         UI->>U: Wyświetla komunikat: "Zrób ponowne zdjęcie"
@@ -139,7 +143,7 @@ sequenceDiagram
         SS->>SA: searchCard("Tarmogoyf")
         activate SA
 
-        alt  Nie znaleziono w Scryfall
+        alt Nie znaleziono w Scryfall
             SA-->>SS: Brak wyników
             SS-->>UI: Bład (Karta nieznana)
             UI->>U: Proponuje ręczne wyszukiwanie (UC-02)

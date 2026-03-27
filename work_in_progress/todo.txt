@@ -1,3 +1,2 @@
 ikonki do sekwencji dla db api itd
-wszystko jest publiczne???
 poprawić diagram sesji na podstawie nowych klas ( funkcje i aktorzy ) 

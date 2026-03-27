@@ -3,18 +3,27 @@
 ```mermaid
 classDiagram
 
+    class IAuthStrategy {
+        <<interface>>
+        +authenticate(String authCode) GoogleUserInfo
+    }
+
+    class GoogleAuthStrategy {
+        -HttpClient client
+        +authenticate(String authCode) GoogleUserInfo
+    }
+
+    class LoginOrchestrator {
+        -UserRepository userRepo
+        -SessionManager sessionManager
+        +login(IAuthStrategy strategy, String code) Session
+    }
+
     class GoogleUserInfo {
         <<DTO>>
         +String googleId
         +String email
         +String name
-    }
-
-    class AuthService {
-        -UserRepository userRepo
-        -SessionManager sessionManager
-        +loginWithGoogle(String authCode) Session
-        -exchangeGoogleToken(String authCode) GoogleUserInfo
     }
 
     class Session {
@@ -91,10 +100,22 @@ classDiagram
         +refreshPrices(ICardProvider provider) void
     }
 
+    class DeckEntry {
+        -Card card
+        -int quantity
+        -String notes
+        +getCard() Card
+        +getQuantity() int
+        +getNotes() String
+        +updateQuantity(int delta) void
+        +setNotes(String notes) void
+    }
+
     class Deck {
         -UUID id
         -String name
         -String format
+        -List~DeckEntry~ cards
         +getId() UUID
         +getName() String
         +getFormat() String
@@ -156,31 +177,40 @@ classDiagram
         +recognizeText(Object image) String
     }
 
-    AuthService ..> GoogleUserInfo : tworzy z odpowiedzi Google
-    AuthService --> UserRepository : korzysta z
-    AuthService --> SessionManager : inicjuje sesje
+    GoogleAuthStrategy ..> GoogleUserInfo : tworzy z odpowiedzi Google
+    IAuthStrategy  <|.. GoogleAuthStrategy
+    LoginOrchestrator ..> IAuthStrategy : używa do autentykacji
+    LoginOrchestrator o-- UserRepository : zarządza danymi
+    LoginOrchestrator o-- SessionManager : tworzy sesję
     UserRepository ..> User : operuje na
 
-    User "1" -- "0..*" Session : posiada
     SessionManager "1" -- "*" Session : zarzadza
 
+    User "1" -- "0..*" Session : posiada
     User "1" -- "1" Collection : posiada
     User "1" -- "*" Deck : tworzy
 
     Collection "1" -- "*" CollectionEntry : zawiera
     CollectionEntry "1" -- "1" Card : odnosi sie do
-    Deck "1" -- "*" Card : zawiera
+    Deck "1" -- "*" DeckEntry : zawiera
+    DeckEntry "1" -- "1" Card : zawiera
 
-    SmartAdapter ..|> ICardProvider : implementuje
-    SmartAdapter --> ScryfallAdapter : deleguje zapytania
-    SmartAdapter --> JsonCacheProvider : sprawdza cache
-    ScryfallAdapter ..|> ICardProvider : implementuje
+    ICardProvider <|.. SmartAdapter : implementuje
+    ICardProvider <.. Collection : pobiera ceny
 
-    GoogleMLKitAdapter ..|> ScannerService : dostarcza OCR
-    FormatValidator ..|> IDeckValidator : implementuje
+    SmartAdapter o-- ScryfallAdapter : pyta Scryfall
+    ICardProvider <|.. ScryfallAdapter  : implementuje
 
-    Collection ..> ICardProvider : pobiera ceny
+    SmartAdapter *-- JsonCacheProvider : sprawdza cache
+    
+    ICardProvider <.. ScannerService : po skanie pyta o kartę
+    ScannerService ..> GoogleMLKitAdapter : dostarcza OCR
+    
+
+    IDeckValidator <|.. FormatValidator : implementuje
+
     Deck ..> ICardProvider : szuka kart
     Deck ..> IDeckValidator : sprawdza zasady
-    ScannerService ..> ICardProvider : identyfikuje karte po OCR
+
+
 ```

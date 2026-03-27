@@ -8,7 +8,8 @@ sequenceDiagram
     actor U as Użytkownik
     participant UI as Interfejs
     participant G as Google OAuth2
-    participant AS as AuthService
+    participant LO as LoginOrchestrator
+    participant GAS as GoogleAuthStrategy
     participant UR as UserRepository
     participant SM as SessionManager
     participant S as Nowa Sesja
@@ -19,33 +20,37 @@ sequenceDiagram
     U->>G: Loguje sie i wyraża zgode
     G-->>UI: Zwraca authorization code (redirect)
 
-    UI->>AS: loginWithGoogle(authCode)
-    activate AS
+    UI->>LO: login(googleStrategy, authCode)
+    activate LO
 
-    AS->>G: exchangeGoogleToken(authCode)
+    LO->>GAS: authenticate(authCode)
+    activate GAS
+    GAS->>G: exchangeGoogleToken(authCode)
     activate G
-    G-->>AS: Zwraca access token + GoogleUserInfo (email, name, googleId)
+    G-->>GAS: Zwraca access token + GoogleUserInfo (email, name, googleId)
     deactivate G
+    GAS-->>LO: Zwraca GoogleUserInfo
+    deactivate GAS
 
-    AS->>UR: findOrCreateByGoogleId(googleUserInfo)
+    LO->>UR: findOrCreateByGoogleId(googleUserInfo)
     activate UR
 
     alt Użytkownik istnieje
-        UR-->>AS: istniejący User
+        UR-->>LO: istniejący User
     else Nowy użytkownik
         UR->>UR: tworzy nowego User
-        UR-->>AS: nowy User
+        UR-->>LO: nowy User
     end
     deactivate UR
 
-    AS->>SM: createSession(userId, deviceType)
+    LO->>SM: createSession(userId, deviceType)
     activate SM
     SM->>S: create
-    SM-->>AS: zwraca Session z tokenem
+    SM-->>LO: zwraca Session z tokenem
     deactivate SM
 
-    AS-->>UI: zwraca Session
-    deactivate AS
+    LO-->>UI: zwraca Session
+    deactivate LO
     UI->>U: Wyswietla Dashboard
 ```
 
@@ -57,7 +62,7 @@ sequenceDiagram
     actor U as Użytkownik
     participant UI as Interfejs
     participant SM as SessionManager
-    participant SA as ScryfallAdapter
+    participant SA as SmartAdapter
     participant COL as Kolekcja
 
     Note over U, UI: Warunek: Użytkownik jest zalogowany (posiada token)
@@ -117,7 +122,7 @@ sequenceDiagram
     participant SM as SessionManager
     participant SS as ScannerService
     participant ML as GoogleMLKit (OCR)
-    participant SA as ScryfallAdapter
+    participant SA as SmartAdapter
     participant COL as Kolekcja
 
     Note over U, UI: Warunek: Użytkownik zalogowany
@@ -174,7 +179,7 @@ sequenceDiagram
     participant UI as Interfejs
     participant SM as SessionManager
     participant D as DeckObject
-    participant SA as ScryfallAdapter
+    participant SA as SmartAdapter
     participant VAL as FormatValidator
 
     U->>UI: Wybiera "Utworz nowy deck"
@@ -260,7 +265,7 @@ sequenceDiagram
     participant UI as Interfejs
     participant SM as SessionManager
     participant D as DeckObject
-    participant SA as ScryfallAdapter
+    participant SA as SmartAdapter
 
     U->>UI: Wybiera deck do edycji
 
@@ -306,7 +311,7 @@ sequenceDiagram
     participant UI as Interfejs
     participant SM as SessionManager
     participant COL as Kolekcja
-    participant SA as ScryfallAdapter
+    participant SA as SmartAdapter
 
     U->>UI: Wybiera widok wyceny rynkowej
 
@@ -321,7 +326,7 @@ sequenceDiagram
         UI->>+COL: getCardIds()
         COL-->>-UI: Lista ID kart w kolekcji
 
-        UI->>+SA: getLatestPrices(ids)
+        UI->>+SA: getPrice(id)
 
         alt Bład API / Brak cen dla części kart
             SA-->>UI: Zwraca ceny + info o braku danych dla wybranych ID

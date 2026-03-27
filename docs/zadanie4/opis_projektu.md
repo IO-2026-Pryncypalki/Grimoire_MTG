@@ -6,7 +6,7 @@
 
 Każda klasa w systemie ma jedną, wyraźnie określoną odpowiedzialność:
 
-- **AuthService** — odpowiada wyłącznie za proces logowania przez Google OAuth2: wymianę authorization code na dane użytkownika (`GoogleUserInfo`) i zainicjowanie sesji. Nie zarządza sesjami ani użytkownikami bezpośrednio — deleguje to do `SessionManager` i `UserRepository`.
+- **LoginOrchestrator** — odpowiada wyłącznie za orkiestrację procesu logowania: przyjmuje strategię autentykacji (`IAuthStrategy`) i kod autoryzacyjny, deleguje wymianę tokenu do strategii, a następnie inicjuje sesję. Nie zarządza sesjami ani użytkownikami bezpośrednio — deleguje to do `SessionManager` i `UserRepository`.
 - **SessionManager** — odpowiada wyłącznie za zarządzanie cyklem życia sesji: tworzenie, walidację i unieważnianie tokenów. Nie zajmuje się autoryzacją OAuth2 ani logiką biznesową kart.
 - **UserRepository** — odpowiada za operacje na danych użytkowników: wyszukiwanie po `googleId` i tworzenie nowych kont. Nie zajmuje się sesjami ani autoryzacją.
 - **ScannerService** — odpowiada wyłącznie za przetwarzanie skanu karty (orkiestrację OCR → identyfikacja). Nie przechowuje wyników ani nie zarządza kolekcją.
@@ -26,6 +26,7 @@ System jest otwarty na rozszerzenia, ale zamknięty na modyfikacje, dzięki zast
 
 - **ICardProvider** — interfejs dostawcy danych o kartach. Implementuje go `SmartAdapter` (który wewnętrznie komponuje `ScryfallAdapter` i `JsonCacheProvider`) oraz sam `ScryfallAdapter`. W przyszłości można dodać np. adapter do innego API (MTGJson) — wystarczy nowa implementacja `ICardProvider`, bez zmiany klas `Deck`, `Collection` czy `ScannerService`.
 - **IDeckValidator** — interfejs walidatora talii. `FormatValidator` obsługuje różne formaty (Standard, Modern, Commander) na podstawie zestawu reguł (`formatRules`). Dodanie nowego formatu (np. Pioneer, Pauper) wymaga jedynie rozszerzenia mapy reguł, bez modyfikacji interfejsu ani klasy `Deck`.
+- **IAuthStrategy** — interfejs strategii autentykacji. `GoogleAuthStrategy` implementuje logowanie przez Google OAuth2. W przyszłości można dodać kolejne strategie (np. GitHub OAuth, Apple Sign-In) jako nowe implementacje `IAuthStrategy`, bez modyfikacji `LoginOrchestrator`.
 
 ### L — Liskov Substitution Principle (Zasada podstawienia Liskov)
 
@@ -33,6 +34,7 @@ Każda implementacja interfejsu może być użyta zamiennie z inną, bez wpływu
 
 - `SmartAdapter` i `ScryfallAdapter` oba implementują `ICardProvider` i mogą być używane zamiennie wszędzie tam, gdzie oczekiwany jest ten interfejs — `Deck.searchNewCards()`, `Collection.refreshPrices()` i `ScannerService.processScan()` działają poprawnie niezależnie od wybranej implementacji. Różnica jest jedynie w wydajności (cache vs bezpośrednie zapytania HTTP).
 - `FormatValidator` implementuje `IDeckValidator` i może być w przyszłości zastąpiony wyspecjalizowaną implementacją (np. `CustomFormatValidator` dla niestandardowych reguł) — `Deck.validate()` działa poprawnie z każdą klasą spełniającą kontrakt interfejsu.
+- `GoogleAuthStrategy` implementuje `IAuthStrategy` i może być zastąpiona inną strategią autentykacji — `LoginOrchestrator.login()` działa poprawnie niezależnie od przekazanej implementacji.
 
 ### I — Interface Segregation Principle (Zasada segregacji interfejsów)
 
@@ -40,6 +42,7 @@ Interfejsy w systemie są celowo wąskie i skupione na jednym obszarze:
 
 - **ICardProvider** definiuje trzy metody związane z pobieraniem danych o kartach (`searchCard`, `getCardDetails`, `getPrice`). Nie wymusza implementacji logiki walidacji, skanowania czy zarządzania kolekcją.
 - **IDeckValidator** definiuje jedną metodę `isValid(Deck, String format)`. Nie zmusza walidatorów do implementacji wyszukiwania kart czy zarządzania sesją.
+- **IAuthStrategy** definiuje jedną metodę `authenticate(String authCode)`. Nie wymusza wiedzy o sesjach, repozytoriach ani logice biznesowej.
 
 `JsonCacheProvider` celowo **nie** implementuje `ICardProvider` — jego API (`getCard`, `isCachedMap`, `isCachedFile`) jest inne, bo pełni inną rolę (cache, nie dostawca). Orkiestracją zajmuje się `SmartAdapter`, który implementuje `ICardProvider` i korzysta z obu klas wewnętrznie.
 
@@ -50,7 +53,7 @@ Klasy wysokiego poziomu zależą od abstrakcji, nie od konkretnych implementacji
 - **Deck** zależy od `ICardProvider` (do wyszukiwania kart) i `IDeckValidator` (do walidacji), nie od `SmartAdapter` czy `FormatValidator` bezpośrednio. Dzięki temu dostawcę danych i reguły walidacji można podmieniać niezależnie.
 - **Collection** zależy od `ICardProvider` przy odświeżaniu cen (`refreshPrices`), co pozwala na wstrzyknięcie dowolnego źródła danych cenowych.
 - **ScannerService** przyjmuje `ICardProvider` jako parametr metody `processScan`, co umożliwia testowanie z mockiem zamiast rzeczywistego API.
-- **AuthService** zależy od `UserRepository` i `SessionManager` przez pola prywatne, co umożliwia ich podmianę (np. w testach jednostkowych).
+- **LoginOrchestrator** zależy od `IAuthStrategy` przez parametr metody `login`, co umożliwia podmianę mechanizmu autentykacji bez modyfikacji orchestratora. Zależy również od `UserRepository` i `SessionManager` przez pola prywatne, co umożliwia ich podmianę (np. w testach jednostkowych).
 
 ---
 
@@ -69,9 +72,11 @@ Gdyby w przyszłości Scryfall został zastąpiony innym API (np. MTGJson), wyst
 
 ### 2. Strategy (wzorzec behawioralny)
 
-**Gdzie:** `IDeckValidator` z implementacją `FormatValidator`
+**Gdzie:** `IAuthStrategy` z implementacją `GoogleAuthStrategy` oraz `IDeckValidator` z implementacją `FormatValidator`
 
-**Uzasadnienie:** Zasady budowania talii różnią się fundamentalnie w zależności od formatu turniejowego:
+**Uzasadnienie — autentykacja:** Mechanizm logowania może różnić się w zależności od dostawcy tożsamości (Google, GitHub, Apple Sign-In itd.). Zamiast umieszczać rozgałęzienia `if/switch` wewnątrz `LoginOrchestrator`, logika wymiany tokenu i pobrania danych użytkownika jest wydzielona za interfejs `IAuthStrategy`. `GoogleAuthStrategy` implementuje konkretny przepływ OAuth2 dla Google i zwraca ustandaryzowane `GoogleUserInfo`. `LoginOrchestrator` wywołuje `strategy.authenticate(authCode)` i jest niezależny od konkretnego dostawcy — dodanie nowej metody logowania sprowadza się do napisania nowej implementacji `IAuthStrategy`.
+
+**Uzasadnienie — walidacja decku:** Zasady budowania talii różnią się fundamentalnie w zależności od formatu turniejowego:
 
 - **Commander** wymaga dokładnie 100 kart, z jednym legendarnym stworzeniem jako dowódcą, bez powtórzeń (poza basic landami).
 - **Standard** ogranicza się do 60+ kart z maksymalnie 4 kopiami tej samej karty i rotującym zbiorem legalnych edycji.

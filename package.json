@@ -1,0 +1,28 @@
+{
+  "name": "grimoire_mtg",
+  "version": "1.0.0",
+  "description": "Mobile app for scanning Magic: The Gathering cards and building decks effortlessly.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IO-2026-Pryncypalki/Grimoire_MTG.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IO-2026-Pryncypalki/Grimoire_MTG/issues"
+  },
+  "homepage": "https://github.com/IO-2026-Pryncypalki/Grimoire_MTG#readme",
+  "devDependencies": {
+    "jest": "^30.3.0"
+  }
+}

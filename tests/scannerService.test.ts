@@ -1,4 +1,4 @@
-const ScannerService = require('../src/scanner/ScannerService');
+import ScannerService from '../src/backend/scanner/ScannerService';
 
 describe('ScannerService', () => {
   const makeCard = () => ({

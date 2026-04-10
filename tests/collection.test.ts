@@ -1,8 +1,8 @@
-const Collection = require('../src/collection/Collection');
-const Card = require('../src/collection/Card');
+import Collection from '../src/backend/collection/Collection';
+import Card from '../src/backend/collection/Card';
 
 describe('Collection', () => {
-  const makeCard = (id = 'abc-123', price = 10.0) => new Card({
+  const makeCard = (id = 'abc-123' , price : number | null  = 10.0 ) => new Card({
     scryfallId: id,
     name: 'Tarmogoyf',
     setCode: 'MH2',
@@ -18,14 +18,14 @@ describe('Collection', () => {
       col.addCard(makeCard());
       const entry = col.getEntry('abc-123');
       expect(entry).not.toBeNull();
-      expect(entry.quantity).toBe(1);
+      expect(entry.getQuantity()).toBe(1);
     });
 
     test('inkrementuje quantity gdy karta już istnieje', () => {
       const col = makeCollection();
       col.addCard(makeCard());
       col.addCard(makeCard());
-      expect(col.getEntry('abc-123').quantity).toBe(2);
+      expect(col.getEntry('abc-123').getQuantity()).toBe(2);
     });
 
     test('rzuca błąd gdy card jest null', () => {
@@ -87,17 +87,22 @@ describe('Collection', () => {
       const col = makeCollection();
       col.addCard(makeCard('a', 10.0));
       col.addCard(makeCard('b', 5.0));
-      const provider = { getPrice: jest.fn().mockResolvedValue(99.0) };
+      const provider = { searchCard : jest.fn(),
+        getCardDetails : jest.fn(),
+        getPrice: jest.fn().mockResolvedValue(99.0) };
       await col.refreshPrices(provider);
-      expect(provider.getPrice).toHaveBeenCalledTimes(2);
+      expect(provider.getPrice()).toHaveBeenCalledTimes(2);
     });
 
     test('aktualizuje currentPrice na podstawie odpowiedzi providera', async () => {
       const col = makeCollection();
       col.addCard(makeCard('a', 1.0));
-      const provider = { getPrice: jest.fn().mockResolvedValue(42.0) };
+      const provider = {
+        getPrice: jest.fn().mockResolvedValue(42.0),
+        searchCard : jest.fn(),
+        getCardDetails : jest.fn(),};
       await col.refreshPrices(provider);
-      expect(col.getEntry('a').card.currentPrice).toBe(42.0);
+      expect(col.getEntry('a').getCard().getCurrentPrice()).toBe(42.0);
     });
 
     test('kontynuuje aktualizację pozostałych kart gdy jedna rzuca błąd', async () => {
@@ -108,9 +113,11 @@ describe('Collection', () => {
         getPrice: jest.fn()
           .mockRejectedValueOnce(new Error('API error'))
           .mockResolvedValueOnce(50.0),
+        searchCard : jest.fn(),
+        getCardDetails : jest.fn(),
       };
       await col.refreshPrices(provider);
-      expect(col.getEntry('b').card.currentPrice).toBe(50.0);
+      expect(col.getEntry('b').getCard().getCurrentPrice()).toBe(50.0);
     });
   });
 });

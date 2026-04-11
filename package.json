@@ -9,7 +9,9 @@
   },
   "scripts": {
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "start": "ts-node src/backend/index.ts",
+    "dev": "nodemon src/backend/index.ts"
   },
   "repository": {
     "type": "git",
@@ -36,5 +38,15 @@
     "transform": {
       "^.+\\.ts$": "ts-jest"
     }
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "nodemon": "^3.1.14",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1"
   }
 }

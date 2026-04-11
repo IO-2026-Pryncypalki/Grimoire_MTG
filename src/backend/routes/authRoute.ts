@@ -24,14 +24,17 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
     try {
         // we can use req.user because the GoogleStrategy that we've
         // implemented in `google.ts` attaches the user
-        const user = req.user;
+        const user = req.user as any;
+        if ( !user || !user.id){
+            return res.status(401).json({message: "Authentication failed"});
+        }
 
         // handle the google callback, generate auth token
         const { authToken } = AuthService.handleGoogleCallback({ id: user.id, jwtSecureCode: user.jwtSecureCode });
 
         // redirect to frontend with the accessToken as query param
         const redirectUrl = `${process.env.FE_BASE_URL}?accessToken=${authToken}`;
-        return res.redirect(redirectUrl);
+        return res.status(302).redirect(redirectUrl);
     } catch (error) {
         return res.status(500).json({ message: 'An error occurred during authentication', error });
     }

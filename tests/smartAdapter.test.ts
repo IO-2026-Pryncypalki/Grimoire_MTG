@@ -1,4 +1,4 @@
-const SmartAdapter = require('../src/adapters/SmartAdapter');
+import SmartAdapter from '../src/backend/adapters/SmartAdapter';
 
 describe('SmartAdapter', () => {
   const makeCard = (id = 'abc-123') => ({

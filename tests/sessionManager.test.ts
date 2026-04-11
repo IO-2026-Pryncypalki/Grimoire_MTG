@@ -1,4 +1,4 @@
-const SessionManager = require('../src/session/SessionManager');
+import SessionManager from '../src/backend/session/SessionManager';
 
 describe('SessionManager', () => {
   let manager;

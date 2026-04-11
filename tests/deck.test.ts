@@ -1,5 +1,5 @@
-const Deck = require('../src/deck/Deck');
-const Card = require('../src/collection/Card');
+import Deck from '../src/backend/deck/Deck';
+import Card from '../src/backend/collection/Card';
 
 describe('Deck', () => {
   const makeCard = (id = 'abc-123') => new Card({
@@ -16,14 +16,14 @@ describe('Deck', () => {
     test('dodaje kartę z podaną liczbą kopii', () => {
       const deck = makeDeck();
       deck.addCard(makeCard(), 4);
-      expect(deck.cards.get('abc-123')).toBe(4);
+      expect(deck.getCard('abc-123').getQuantity()).toBe(4);
     });
 
     test('sumuje count przy ponownym dodaniu tej samej karty', () => {
       const deck = makeDeck();
       deck.addCard(makeCard(), 2);
       deck.addCard(makeCard(), 2);
-      expect(deck.cards.get('abc-123')).toBe(4);
+      expect(deck.getCard('abc-123')).toBe(4);
     });
 
     test('rzuca błąd gdy count <= 0', () => {
@@ -38,7 +38,7 @@ describe('Deck', () => {
       const deck = makeDeck();
       deck.addCard(makeCard(), 4);
       deck.removeCard('abc-123');
-      expect(deck.cards.has('abc-123')).toBe(false);
+      expect(deck.getCard('abc-123')).toBe(false);
     });
 
     test('nie rzuca błędu dla nieistniejącego ID', () => {
@@ -71,7 +71,11 @@ describe('Deck', () => {
   describe('searchNewCards(query, provider)', () => {
     test('wywołuje provider.searchCard z zapytaniem', async () => {
       const deck = makeDeck();
-      const provider = { searchCard: jest.fn().mockResolvedValue([makeCard()]) };
+      const provider = {
+        searchCard: jest.fn().mockResolvedValue([makeCard()]),
+        getPrice : null,
+        getCardDetails : null
+      };
       await deck.searchNewCards('Lightning', provider);
       expect(provider.searchCard).toHaveBeenCalledWith('Lightning');
     });
@@ -79,14 +83,22 @@ describe('Deck', () => {
     test('zwraca listę kart z odpowiedzi providera', async () => {
       const deck = makeDeck();
       const cards = [makeCard('a'), makeCard('b')];
-      const provider = { searchCard: jest.fn().mockResolvedValue(cards) };
+      const provider = {
+        searchCard: jest.fn().mockResolvedValue(cards),
+        getPrice : null,
+        getCardDetails : null
+      };
+
       const result = await deck.searchNewCards('test', provider);
       expect(result).toHaveLength(2);
     });
 
     test('zwraca [] gdy provider zwraca pustą listę', async () => {
       const deck = makeDeck();
-      const provider = { searchCard: jest.fn().mockResolvedValue([]) };
+      const provider = { searchCard: jest.fn().mockResolvedValue([]),
+        getPrice : null,
+        getCardDetails : null
+      };
       const result = await deck.searchNewCards('nic', provider);
       expect(result).toEqual([]);
     });

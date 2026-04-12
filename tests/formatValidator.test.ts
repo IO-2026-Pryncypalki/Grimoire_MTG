@@ -1,6 +1,6 @@
-const FormatValidator = require('../src/deck/FormatValidator');
-const Deck = require('../src/deck/Deck');
-const Card = require('../src/collection/Card');
+import FormatValidator from '../src/backend/deck/FormatValidator';
+import Deck from'../src/backend/deck/Deck';
+import Card from '../src/backend/collection/Card';
 
 describe('FormatValidator', () => {
   let validator;
@@ -15,7 +15,7 @@ describe('FormatValidator', () => {
     setCode: 'M21',
     currentPrice: 1.0,
     imageUrl: '',
-    isBasicLand,
+
   });
 
   const buildDeck = (format, cardCounts) => {

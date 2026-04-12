@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    /* Podstawy */
+    "target": "ES6",                          // Standard kodu wyjściowego
+    "module": "CommonJS",                    // Standard modułów (wymagany przez Jesta)
+    "lib": ["ES6", "DOM"],                   // Biblioteki typów (DOM opcjonalnie)
+
+    /* Integracja z Jestem i Node */
+    "types": ["jest", "node"],               // TO ROZWIĄŻE BŁĄD "Cannot find name 'describe'"
+    "esModuleInterop": true,                 // Usuwa błędy WARN przy importach
+    "skipLibCheck": true,                    // Przyspiesza kompilację i pomija błędy w bibliotekach
+    "moduleResolution": "node",
+
+    /* Ścieżki */
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*", "src/*"]
+    },
+
+    /* Rygor i czystość kodu */
+    "strict": true,                          // Wymusza dobre praktyki (SOLID)
+    "noImplicitAny": false,                  // Na razie dajemy false, żebyś nie musiał typować wszystkiego w testach
+    "outDir": "./dist"                       // Gdzie ma trafiać skompilowany kod
+  },
+  "include": [
+    "src/**/*",                              // Obejmij kod źródłowy
+    "tests/**/*"                             // Obejmij testy
+  ],
+  "exclude": ["node_modules"]                // Nigdy nie zaglądaj do node_modules
+}

@@ -1,4 +1,4 @@
-const Session = require('../src/session/Session');
+import Session from '../src/backend/session/Session';
 
 describe('Session', () => {
   const makeSession = (offsetMs) => new Session({

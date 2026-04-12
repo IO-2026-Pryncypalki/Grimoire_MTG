@@ -9,7 +9,10 @@
   },
   "scripts": {
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "migrate:up":     "node-pg-migrate up",
+    "migrate:down":   "node-pg-migrate down",
+    "migrate:create": "node-pg-migrate create --migrations-dir migrations"
   },
   "repository": {
     "type": "git",

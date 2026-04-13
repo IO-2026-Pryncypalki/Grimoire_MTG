@@ -12,6 +12,10 @@
     "test:coverage": "jest --coverage",
     "start": "ts-node src/backend/index.ts",
     "dev": "nodemon src/backend/index.ts"
+    "test:coverage": "jest --coverage",
+    "migrate:up":     "dotenv -e .env -- node-pg-migrate up",
+    "migrate:down":   "dotenv -e .env -- node-pg-migrate down",
+    "migrate:create": "dotenv -e .env -- node-pg-migrate create --migrations-dir migrations --extension ts"
   },
   "repository": {
     "type": "git",
@@ -27,6 +31,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
+    "@types/node-pg-migrate": "^2.3.1",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
@@ -51,6 +56,9 @@
     "passport-jwt": "^4.0.1",
     "pg": "^8.20.0",
     "sequelize": "^6.37.8",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "node-pg-migrate": "^8.0.4"
   }
+
+
 }

@@ -24,7 +24,8 @@
   },
   "include": [
     "src/**/*",                              // Obejmij kod źródłowy
-    "tests/**/*"                             // Obejmij testy
+    "tests/**/*", 
+    "migrations/**/*"                           // Obejmij testy
   ],
   "exclude": ["node_modules"]                // Nigdy nie zaglądaj do node_modules
 }

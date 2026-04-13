@@ -1,13 +1,11 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import express,{Request,Response} from 'express'
-
+import sequelize from "./config/database";
 import passport from './auth/passport'
-
 import {json} from 'body-parser'
 import authRoute from './routes/authRoute'
 import userRoute from './routes/userRoute'
-
 
 
 const app = express();

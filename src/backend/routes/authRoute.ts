@@ -20,21 +20,31 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
   the access token generation and redirect the user to the frontend.
 */
 // Google OAuth2.0 callback route
-router.get('/google/callback', passport.authenticate('google', { session: false }), (req: Request, res: Response) => {
+router.get('/google/callback', passport.authenticate('google', { session: false }), async (req: Request, res: Response) => {
     try {
-        // we can use req.user because the GoogleStrategy that we've
-        // implemented in `google.ts` attaches the user
         const user = req.user as any;
-        if ( !user || !user.id){
-            return res.status(401).json({message: "Authentication failed"});
+        if (!user || !user.id) {
+            return res.status(401).json({ message: "Authentication failed" });
         }
 
-        // handle the google callback, generate auth token
-        const { authToken } = AuthService.handleGoogleCallback({ id: user.id, jwtSecureCode: user.jwtSecureCode });
+        // UWAGA: Dodajemy 'await' i wyciągamy oba tokeny
+        const { accessToken, refreshToken } = await AuthService.handleGoogleCallback({
+            id: user.id,
+            jwtSecureCode: user.jwtSecureCode
+        });
+
+        // BEZPIECZEŃSTWO: Ustawiamy refreshToken jako ciasteczko HttpOnly
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true, // Frontend (JS) nie ma do niego dostępu
+            secure: process.env.NODE_ENV === 'production', // Wymaga HTTPS w produkcji
+            sameSite: 'lax', // Zabezpieczenie przed atakami CSRF
+            maxAge: 14 * 24 * 60 * 60 * 1000 // 14 dni w milisekundach
+        });
 
         // redirect to frontend with the accessToken as query param
-        const redirectUrl = `${process.env.FE_BASE_URL}?accessToken=${authToken}`;
+        const redirectUrl = `${process.env.FE_BASE_URL}?accessToken=${accessToken}`;
         return res.status(302).redirect(redirectUrl);
+
     } catch (error) {
         return res.status(500).json({ message: 'An error occurred during authentication', error });
     }

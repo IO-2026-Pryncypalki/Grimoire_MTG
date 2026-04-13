@@ -5,18 +5,17 @@ interface GoogleCallbackParams {
     jwtSecureCode: string;
 }
 
-export const handleGoogleCallback = (params: GoogleCallbackParams) => {
+export const handleGoogleCallback = async (params: GoogleCallbackParams) => {
+
     // 1. Przygotowanie danych do zaszycia w tokenie (Payload)
     const payload = {
         sub: params.id,
         jsc: params.jwtSecureCode // to Twoje dodatkowe zabezpieczenie z UUID
     };
+    const accessToken = jwt.sign(payload,process.env.JWT_ACCESS_SECRET,{expiresIn:'15m'});
 
-    // 2. Generowanie tokena JWT podpisanego Twoim kluczem z .env
-    const authToken = jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
-        expiresIn: '7d', // token ważny np. 7 dni
-    });
+    const refreshToken = jwt.sign(payload,process.env.JWT_REFRESH_SECRET,{expiresIn: '14d'});
 
-    // 3. Zwrócenie tokena do routera
-    return { authToken };
+    //await RefreshTokenModel.create({token:refreshToken,userId: params.id})
+    return { accessToken,refreshToken };
 };

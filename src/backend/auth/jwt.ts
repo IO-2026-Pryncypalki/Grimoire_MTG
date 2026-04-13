@@ -1,5 +1,5 @@
 import { Strategy, ExtractJwt, VerifiedCallback } from 'passport-jwt';
-import User from './User';
+import {User} from '../models/User';
 import bcrypt from 'bcrypt';
 
 const options = {
@@ -18,7 +18,7 @@ async function verify(payload: any, done: VerifiedCallback) {
     }
 
     // try to find a User with the `id` in the JWT payload.
-    const user = await User.findOne({
+    const user: User = await User.findOne({
         where: {
             id: payload.id,
         },

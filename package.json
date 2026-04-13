@@ -10,9 +10,9 @@
   "scripts": {
     "test": "jest",
     "test:coverage": "jest --coverage",
-    "migrate:up": "dotenv -e .env -- node-pg-migrate up --tsconfig tsconfig.json",
-    "migrate:down": "dotenv -e .env -- node-pg-migrate down --tsconfig tsconfig.json",
-    "migrate:create": "dotenv -e .env -- node-pg-migrate create --migrations-dir migrations --tsconfig tsconfig.json"
+    "migrate:up":     "dotenv -e .env -- node-pg-migrate up",
+    "migrate:down":   "dotenv -e .env -- node-pg-migrate down",
+    "migrate:create": "dotenv -e .env -- node-pg-migrate create --migrations-dir migrations"
   },
   "repository": {
     "type": "git",

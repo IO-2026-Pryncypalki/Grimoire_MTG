@@ -28,9 +28,8 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
         }
 
         // UWAGA: Dodajemy 'await' i wyciągamy oba tokeny
-        const { accessToken, refreshToken } = await AuthService.handleGoogleCallback({
+        const { accessToken, refreshToken } = await AuthService.getJwtTokens({
             id: user.id,
-            jwtSecureCode: user.jwtSecureCode
         });
 
         // BEZPIECZEŃSTWO: Ustawiamy refreshToken jako ciasteczko HttpOnly
@@ -42,12 +41,22 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
         });
 
         // redirect to frontend with the accessToken as query param
-        const redirectUrl = `${process.env.FE_BASE_URL}?accessToken=${accessToken}`;
-        return res.status(302).redirect(redirectUrl);
+        res.cookie('accessToken', accessToken, {
+            httpOnly: false, // Frontend MUSI mieć do tego dostęp!
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 15 * 60 * 1000 // 15 minut
+        });
 
+        // 3. Czysty redirect na frontend (bez brudzenia URL!)
+        const redirectUrl = `${process.env.FE_BASE_URL}`;
+        return res.status(302).redirect(redirectUrl);
     } catch (error) {
         return res.status(500).json({ message: 'An error occurred during authentication', error });
     }
 });
+router.get('/refresh', async(req : Request,res: Response)=>{
+
+})
 
 export default router;

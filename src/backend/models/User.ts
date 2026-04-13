@@ -27,7 +27,6 @@ export const User = sequelize.define('User', {
         field: 'avatar_url',
         allowNull: true // znak '?' na schemacie
     },
-    // Nasze pole do bezpieczeństwa JWT (nie ma go na obrazku, ale musi tu być!)
     jwtSecureCode: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,

@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 
 const options = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET || 'secret-test',
+    secretOrKey: process.env.JWT_ACCESS_SECRET || 'secret-test',
 };
 
 async function verify(payload: any, done: VerifiedCallback) {
@@ -13,31 +13,25 @@ async function verify(payload: any, done: VerifiedCallback) {
       you can create your JWT like the way you like.
     */
     // bad path: JWT is not valid
-    if (!payload?.id || !payload?.jwtSecureCode) {
+    if (!payload?.id ) {
         return done(null, false);
     }
-
+    try{
     // try to find a User with the `id` in the JWT payload.
-    const user: User = await User.findOne({
+    const user = await User.findOne({
         where: {
             id: payload.id,
         },
     });
-
     // bad path: User is not found.
     if (!user) {
         return done(null, false);
     }
-
-    // compare User's jwtSecureCode with the JWT's `jwtSecureCode` that the
-    // request has.
-    // bad path: bad JWT, it sucks.
-    if (!bcrypt.compareSync(user.jwtSecureCode, payload.jwtSecureCode)) {
-        return done(null, false);
-    }
-
     // happy path: JWT is valid, we auth the User.
-    return done(null, user);
+    return done(null, user); }
+    catch(error)
+    {
+        return done(error,false);
+    }
 }
-
 export default new Strategy(options, verify);

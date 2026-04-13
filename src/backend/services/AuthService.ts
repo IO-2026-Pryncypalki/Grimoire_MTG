@@ -2,15 +2,13 @@ import jwt from 'jsonwebtoken';
 
 interface GoogleCallbackParams {
     id: string;
-    jwtSecureCode: string;
 }
 
-export const handleGoogleCallback = async (params: GoogleCallbackParams) => {
+export const getJwtTokens = async (params: GoogleCallbackParams) => {
 
     // 1. Przygotowanie danych do zaszycia w tokenie (Payload)
     const payload = {
         sub: params.id,
-        jsc: params.jwtSecureCode // to Twoje dodatkowe zabezpieczenie z UUID
     };
     const accessToken = jwt.sign(payload,process.env.JWT_ACCESS_SECRET,{expiresIn:'15m'});
 

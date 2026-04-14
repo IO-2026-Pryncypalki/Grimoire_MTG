@@ -3,6 +3,7 @@ import sequelize from '../config/database';
 
 export const User = sequelize.define('User', {
     id: {
+        field:'user_id',
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
@@ -30,8 +31,9 @@ export const User = sequelize.define('User', {
     jwtSecureCode: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        field: 'jwt_secure_code'
-    }
+        field: 'jwt_secret'
+    },
+
 }, {
     tableName: 'users',
     timestamps: true, // automatycznie zarządza czasami

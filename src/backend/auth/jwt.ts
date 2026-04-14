@@ -1,9 +1,16 @@
 import { Strategy, ExtractJwt, VerifiedCallback } from 'passport-jwt';
 import {User} from '../models/User';
 import bcrypt from 'bcrypt';
-
+const cookieExtractor = (req)=>{
+    let token = null;
+    if ( req && req.cookies)
+    {
+        token = req.cookies['accessToken'];
+    }
+    return token;
+}
 const options = {
-    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    jwtFromRequest: cookieExtractor,
     secretOrKey: process.env.JWT_ACCESS_SECRET || 'secret-test',
 };
 

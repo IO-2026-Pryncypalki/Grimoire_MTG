@@ -15,18 +15,15 @@ async function verify(accessToken: string, refreshToken: string, profile: Profil
                 googleId: profile.id,
             },
         });
-
         // if not
         if (!user) {
             // create new user if doesn't exist
             user = await User.create({
                 googleId: profile.id,
                 email: profile.emails?.[0]?.value,
-                fullName: profile.displayName,
-                jwtSecureCode: randomUUID(),
+                //jwtSecureCode: randomUUID(),
             });
         }
-
         // auth the User
         return done(null, user);
     } catch (error) {

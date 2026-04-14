@@ -37,7 +37,7 @@ describe('Google Auth Flow', () => {
     });
 
     it('should handle successful callback and redirect to frontend with token', async () => {
-        (AuthService.handleGoogleCallback as jest.Mock).mockReturnValue({
+        (AuthService.getJwtTokens as jest.Mock).mockReturnValue({
             authToken: 'fake-jwt-token-abcd'
         });
 
@@ -58,7 +58,7 @@ describe('Google Auth Flow', () => {
     });
 
     it('should return 500 if AuthService fails', async () => {
-        (AuthService.handleGoogleCallback as jest.Mock).mockImplementation(() => {
+        (AuthService.getJwtTokens as jest.Mock).mockImplementation(() => {
             throw new Error('Database down');
         });
 
@@ -72,7 +72,7 @@ describe('Google Auth Flow', () => {
         const originalUrl = process.env.FE_BASE_URL;
         delete process.env.FE_BASE_URL;
 
-        (AuthService.handleGoogleCallback as jest.Mock).mockReturnValue({ authToken: 'abc' });
+        (AuthService.getJwtTokens as jest.Mock).mockReturnValue({ authToken: 'abc' });
 
         const res = await request(app).get('/api/auth/google/callback');
 

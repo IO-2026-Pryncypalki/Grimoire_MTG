@@ -22,7 +22,7 @@ export const up = (pgm) => {
         CREATE TYPE legality_status AS ENUM ('legal', 'not_legal', 'restricted', 'banned');
 
         CREATE TABLE users (
-            id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
             google_id   VARCHAR(64) NOT NULL UNIQUE,
             email       VARCHAR(255) NOT NULL UNIQUE,
             username    VARCHAR(100) NOT NULL,

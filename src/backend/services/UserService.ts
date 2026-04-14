@@ -1,11 +1,10 @@
-import User from '../auth/User';
+import {User} from '../models/User';
 
 export const getUserProfile = async (userId: string) => {
     // Pobieramy użytkownika z bazy wraz z jego relacjami (kolekcja, decki)
     const user = await User.findOne({
         where: { id: userId },
-        // Jeśli używasz ORM, tutaj dołączasz powiązane tabele
-        // include: ['Collection', 'Decks']
+
     });
 
     if (!user) {
@@ -13,9 +12,8 @@ export const getUserProfile = async (userId: string) => {
     }
 
     return {
-        fullName: user.fullName,
-        email: user.email,
-        collection: user.collection || [], // Logika z image.png
-        decks: user.decks || []            // Logika z image.png
+        username: user.get('username') as string,
+        email: user.get('email') as string,
+       // avatarUrl: user.get('avatarUrl') as string,
     };
 };

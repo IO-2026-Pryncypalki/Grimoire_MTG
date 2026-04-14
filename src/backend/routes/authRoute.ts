@@ -1,62 +1,108 @@
 import { Request, Response, Router } from 'express';
 import passport from '../auth/passport';
 import * as AuthService from '../services/AuthService';
-
+import {Session}from '../models/Session'
+import UserRoute from "../routes/userRoute";
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import {Model} from "sequelize";
+import {getJwtTokens} from "../services/AuthService";
 const router = Router();
 
-/*
-  This route triggers the Google sign-in/sign-up flow. 
-  When the frontend calls it, the user will be redirected to the 
-  Google accounts page to log in with their Google account.
-*/
-// Google OAuth2.0 route
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-
-/*
-  This route is the callback endpoint for Google OAuth2.0. 
-  After the user logs in via Google's authentication flow, they are redirected here.
-  Passport.js processes the callback, attaches the user to req.user, and we handle 
-  the access token generation and redirect the user to the frontend.
-*/
-// Google OAuth2.0 callback route
 router.get('/google/callback', passport.authenticate('google', { session: false }), async (req: Request, res: Response) => {
     try {
         const user = req.user as any;
         if (!user || !user.id) {
             return res.status(401).json({ message: "Authentication failed" });
         }
-
         // UWAGA: Dodajemy 'await' i wyciągamy oba tokeny
         const { accessToken, refreshToken } = await AuthService.getJwtTokens({
             id: user.id,
         });
+        const hashedToken = await bcrypt.hash(refreshToken,10);
+        const expiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '14',10);
+       const expiresAt = new Date();
+       expiresAt.setDate(expiresAt.getDate() + expiryDays)
+        Session.create(
+            {
+                userId: user.id,
+                refreshToken:hashedToken,
+                device:'web',
+                createdAt:new Date(),
+                expiresAt
 
-        // BEZPIECZEŃSTWO: Ustawiamy refreshToken jako ciasteczko HttpOnly
+            }
+        )
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true, // Frontend (JS) nie ma do niego dostępu
             secure: process.env.NODE_ENV === 'production', // Wymaga HTTPS w produkcji
             sameSite: 'lax', // Zabezpieczenie przed atakami CSRF
-            maxAge: 14 * 24 * 60 * 60 * 1000 // 14 dni w milisekundach
+            maxAge: parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '14',10) * 24 * 60 * 60 * 1000
         });
 
-        // redirect to frontend with the accessToken as query param
         res.cookie('accessToken', accessToken, {
             httpOnly: false, // Frontend MUSI mieć do tego dostęp!
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
-            maxAge: 15 * 60 * 1000 // 15 minut
+            maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRY_MIN || '15',10) * 60 * 1000 // 15 minut
         });
-
         // 3. Czysty redirect na frontend (bez brudzenia URL!)
-        const redirectUrl = `${process.env.FE_BASE_URL}`;
+        const redirectUrl = `${process.env.BE_BASE_URL}/api/user`;
         return res.status(302).redirect(redirectUrl);
     } catch (error) {
         return res.status(500).json({ message: 'An error occurred during authentication', error });
     }
 });
-router.get('/refresh', async(req : Request,res: Response)=>{
+router.post('/refresh', async(req : Request,res: Response)=>{
 
+const {refreshToken} = req.cookies;
+if ( !refreshToken) return res.sendStatus(401);
+try {
+    const payload = jwt.verify(refreshToken,process.env.JWT_REFRESH_SECRET)
+    const sessions = await Session.findAll({where: {userId : payload.id}});
+    let currentSession : any = null ;
+    for ( const s of sessions)
+    {
+        const match = await bcrypt.compare(refreshToken,s.get('refreshToken'))
+        if(match)
+        {
+            currentSession = s;
+            break;
+        }
+    }
+    if ( !currentSession || new Date() > currentSession.expiresAt)
+    {
+        return res.status(401).json({message:'Session expired you need to log in again'});
+    }
+
+    // Wszystko git generujemy nowy access token i rotujemy ten stary
+      const {accessToken: newAccessToken,refreshToken: newRefreshToken} = await getJwtTokens({id:payload.id})
+
+    res.cookie('accessToken',newAccessToken,{
+        httpOnly:false,
+        maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRY_MIN || '15',10) * 60 * 1000,
+    })
+    res.cookie('refreshToken', newRefreshToken, {
+        httpOnly: true, // Frontend (JS) nie ma do niego dostępu
+        secure: process.env.NODE_ENV === 'production', // Wymaga HTTPS w produkcji
+        sameSite: 'lax', // Zabezpieczenie przed atakami CSRF
+        maxAge: parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '14',10) * 24 * 60 * 60 * 1000
+    });
+    const expiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '14',10);
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + expiryDays)
+    await currentSession.update({
+        refreshToken: await bcrypt.hash(newRefreshToken,10),
+        created_at: new Date(),
+        expiresAt
+    })
+    res.json({message:"Token refreshed"});
+}
+catch(err)
+{
+ res.sendStatus(401);
+}
 })
 
 export default router;

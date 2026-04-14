@@ -19,7 +19,11 @@ import request from 'supertest';
 import express from 'express';
 import authRoute from '../src/backend/routes/authRoute';
 import * as AuthService from '../src/backend/services/AuthService';
-
+jest.mock('../src/backend/models/Session', () => ({
+    Session: {
+        create: jest.fn().mockResolvedValue({}), // Udajemy, że zapis do bazy zawsze działa
+    }
+}));
 // Mockowanie AuthService
 jest.mock('../src/backend/services/AuthService');
 
@@ -37,14 +41,31 @@ describe('Google Auth Flow', () => {
     });
 
     it('should handle successful callback and redirect to frontend with token', async () => {
-        (AuthService.getJwtTokens as jest.Mock).mockReturnValue({
-            authToken: 'fake-jwt-token-abcd'
+        (AuthService.getJwtTokens as jest.Mock).mockResolvedValue({
+            accessToken: 'fake-access-token-123',
+            refreshToken: 'fake-refresh-token-456'
         });
 
         const res = await request(app).get('/api/auth/google/callback');
 
+        // 2. Status dalej powinien być 302 (Redirect)
         expect(res.status).toBe(302);
-        expect(res.header.location).toContain('accessToken=fake-jwt-token-abcd');
+
+        // 3. Sprawdzamy przekierowanie - teraz powinno iść na czysty URL frontendu
+        // Bez żadnych znaków zapytania i tokenów
+        expect(res.header.location).toBe(process.env.BE_BASE_URL+'/api/user');
+
+        // 4. KLUCZOWY MOMENT: Sprawdzamy ciasteczka
+        const cookies = res.header['set-cookie'];
+        expect(cookies).toBeDefined();
+
+        // Sprawdzamy czy accessToken jest w ciasteczkach
+        const hasAccessToken = cookies.some((c: string) => c.includes('accessToken=fake-access-token-123'));
+        // Sprawdzamy czy refreshToken jest w ciasteczkach
+        const hasRefreshToken = cookies.some((c: string) => c.includes('refreshToken=fake-refresh-token-456'));
+
+        expect(hasAccessToken).toBe(true);
+        expect(hasRefreshToken).toBe(true);
     });
 
     it('should return 401 if passport fails to provide user data', async () => {
@@ -68,15 +89,30 @@ describe('Google Auth Flow', () => {
         expect(res.body.message).toBe('An error occurred during authentication');
     });
 
-    it('should handle missing FE_BASE_URL gracefully', async () => {
+    it('should handle missing FE_BASE_URL by falling back to a default route', async () => {
+        // 1. Symulujemy brak URL-a frontendu
         const originalUrl = process.env.FE_BASE_URL;
-        delete process.env.FE_BASE_URL;
+        process.env.FE_BASE_URL = '';
 
-        (AuthService.getJwtTokens as jest.Mock).mockReturnValue({ authToken: 'abc' });
+        // 2. Mockujemy AuthService tak, żeby zwracał TO, czego kod teraz oczekuje
+        (AuthService.getJwtTokens as jest.Mock).mockResolvedValue({
+            accessToken: 'abc',
+            refreshToken: 'szubidubi'
+        });
 
         const res = await request(app).get('/api/auth/google/callback');
 
-        expect(res.header.location).toContain('undefined?accessToken=abc');
+        // 3. Sprawdzamy, gdzie nas wywiało.
+        // Jeśli w kodzie masz fallback (np. res.redirect(process.env.FE_BASE_URL || '/')), to testuj '/'
+        expect(res.status).toBe(302);
+        expect(res.header.location).toBeDefined();
+        // Nie szukamy już "?accessToken=abc" w URL!
+        expect(res.header.location).not.toContain('accessToken=');
+
+        // 4. Sprawdzamy czy mimo braku URL-a, ciastka i tak zostały ustawione
+        const cookies = res.header['set-cookie'];
+        expect(cookies).toBeDefined();
+        expect(cookies.some((c: string) => c.includes('accessToken=abc'))).toBe(true);
 
         process.env.FE_BASE_URL = originalUrl;
     });

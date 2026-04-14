@@ -37,5 +37,7 @@ google-services.json
 node_modules/
 coverage/
 *.env
-.env.local
 .env
+.env.local
+dist/
+

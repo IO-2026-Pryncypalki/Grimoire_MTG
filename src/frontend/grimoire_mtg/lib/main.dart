@@ -55,7 +55,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   String _recognizedText = "Kliknij przycisk, aby zeskanować tekst";
   bool _isLoading = false;
 
-  // 1. Logika pobierania z assetów (Twoja stara funkcja)
+  // 1. Logika pobierania z assetów
   Future<String> _getAssetFilePath() async {
     final directory = await getTemporaryDirectory();
     final path = '${directory.path}/test_image.jpg';

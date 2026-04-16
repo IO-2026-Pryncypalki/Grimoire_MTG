@@ -38,3 +38,6 @@ node_modules/
 coverage/
 *.env
 .env.local
+
+# tests that take up a lot of space
+assets/

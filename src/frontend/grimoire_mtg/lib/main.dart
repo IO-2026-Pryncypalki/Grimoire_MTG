@@ -4,6 +4,43 @@ import 'package:flutter/services.dart'; // dla rootBundle
 import 'package:path_provider/path_provider.dart'; // dla getTemporaryDirectory
 import 'package:image_picker/image_picker.dart'; // dla aparatu
 import 'scanner/text_scanner.dart'; // Twoja klasa skanera
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+
+class ApiService {
+  // Zmień na swój adres URL
+  final String _baseUrl = 'https://totally_real_aip.guru/v1';
+
+  Future<bool> sendOcrResult(String userId, String text) async {
+    final url = Uri.parse('$_baseUrl/save-ocr');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          // Tutaj możesz dodać Authorization: 'Bearer $token' jeśli wymagane
+        },
+        body: jsonEncode({
+          'user_id': userId,
+          'content': text,
+          'timestamp': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true; // Sukces
+      } else {
+        print('Błąd serwera: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Błąd sieciowy: $e');
+      return false;
+    }
+  }
+}
 
 // --- SERWIS APARATU ---
 class CameraService {
@@ -68,7 +105,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
     return path;
   }
 
-  // 2. Wspólna metoda przetwarzania obrazu
+  final ApiService _apiService = ApiService();
+
   Future<void> _processImage(String path) async {
     setState(() {
       _isLoading = true;
@@ -77,13 +115,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     try {
       final result = await _scanner.scanText(path);
-      setState(() {
-        _recognizedText = result.isEmpty ? "Nie wykryto tekstu." : result;
-      });
+      
+      if (result.isNotEmpty) {
+        setState(() => _recognizedText = "Wysyłanie do bazy...");
+
+        bool isSent = await _apiService.sendOcrResult('user_997', result);
+
+        setState(() {
+          _recognizedText = isSent 
+            ? "Sukces! Tekst zapisany: \n\n$result" 
+            : "Tekst rozpoznany, ale nie udało się go wysłać do API.";
+        });
+      } else {
+        setState(() => _recognizedText = "Nie wykryto tekstu.");
+      }
     } catch (e) {
-      setState(() {
-        _recognizedText = "Błąd skanowania: $e";
-      });
+      setState(() => _recognizedText = "Błąd: $e");
     } finally {
       setState(() => _isLoading = false);
     }

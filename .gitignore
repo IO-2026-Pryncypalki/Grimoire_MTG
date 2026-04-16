@@ -37,7 +37,12 @@ google-services.json
 node_modules/
 coverage/
 *.env
+.env
 .env.local
 
 # tests that take up a lot of space
 assets/
+
+
+dist/
+

@@ -39,5 +39,10 @@ coverage/
 *.env
 .env
 .env.local
+
+# tests that take up a lot of space
+assets/
+
+
 dist/
 

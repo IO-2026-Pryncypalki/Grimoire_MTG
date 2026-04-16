@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // Zmień na swój adres URL
-  final String _baseUrl = 'https://totally_real_aip.guru/v1';
+  final String _baseUrl = 'https://totally_real_api.guru/v1';
 
   Future<bool> sendOcrResult(String userId, String text) async {
     final url = Uri.parse('$_baseUrl/save-ocr');
@@ -98,7 +98,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     final path = '${directory.path}/test_image.jpg';
     final file = File(path);
 
-    final data = await rootBundle.load('assets/2.jpg');
+    final data = await rootBundle.load('assets/eotfofyl.png');
     final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 
     await file.writeAsBytes(bytes);

@@ -2,7 +2,10 @@ import Card from "../collection/Card";
 export default class JsonCacheProvider{
     private memoryCache : Map<string,Card>
     private filePath : string;
-
+    constructor(memoryCache:Map<string,Card>,filePath: string) {
+        this.memoryCache = memoryCache
+        this.filePath = filePath
+    }
     private loadFromFile() {
 
     }

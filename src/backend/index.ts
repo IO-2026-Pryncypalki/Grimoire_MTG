@@ -7,7 +7,7 @@ import passport from './auth/passport'
 import {json} from 'body-parser'
 import authRoute from './routes/authRoute'
 import userRoute from './routes/userRoute'
-
+import cardRoute from './routes/cardRoute'
 
 const app = express();
 app.use(json());
@@ -16,6 +16,7 @@ app.use(passport.initialize());
 app.use('/api/auth',authRoute);
 
 app.use('/api/user',userRoute);
+app.use('/api/cards',cardRoute);
 app.get('/', (req: Request, res: Response) => {
     res.send('welcome to the Google OAuth 2.0 + JWT Node.js app!');
 });

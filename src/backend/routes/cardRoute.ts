@@ -2,6 +2,7 @@ import { Request, Response, Router } from 'express';
 import requireJwt from '../middlewares/requireJwt';
 
 import ScryfallAdapter from "../adapters/ScryfallAdapter";
+import Card from "../collection/Card";
 const router = Router()
 
 const scryfall = new ScryfallAdapter();

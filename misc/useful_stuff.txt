@@ -1,3 +1,0 @@
-google ml kit do czytania tekstu z kart
-Oauth2 do potwierdzania torzsamości
-można jednoznacznie rozpoznać kartę po numerku w secie/kodzie setu

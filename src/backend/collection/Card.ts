@@ -1,8 +1,9 @@
-interface Price{
+
+export interface Price{
     usd : number
-    usdFoil : number
+    usd_foil : number
     eur : number
-    eurFoil : number
+    eur_foil : number
 }
 export default class Card {
     private scryfallId : string;
@@ -20,14 +21,17 @@ export default class Card {
     private rarity : number | null;
     private colors : string[] = []
     private colorsIdentity : string[] = []
-    private imageUri : string[] | null;
-    private currentPrice : Price | null;
+    private imageUri : any | null;
+    private priceUsd : number | null;
+    private priceUsdFoil : number | null;
+    private priceEur : number | null;
+    private priceEurFoil : number | null;
     private scryfallUri : string | null;
 
     constructor(data?: {
         id : string,
         name : string | null,
-        set_code: string | null,
+        set: string | null,
         set_name: string | null,
         collector_number : string | null,
         lang : string | null,
@@ -40,15 +44,14 @@ export default class Card {
         rarity? : number | null,
         colors? : string[],
         colors_identity? : string[],
-        image_uris? : string[] | null,
-        prices? : Price | null,
+        image_uris? : any| null,
+        prices? : Price | null ,
         scryfall_uri? : string | null,
-
     })
     {
         this.scryfallId = data?.id?? "unknown-id";
         this.name = data?.name ?? null;
-        this.setCode = data?.set_code ?? null;
+        this.setCode = data?.set?? null;
         this.setName = data?.set_name ?? null;
         this.collectorNumber = data?.collector_number ?? null,
         this.lang = data?.lang ?? null,
@@ -61,8 +64,11 @@ export default class Card {
         this.rarity = data?.rarity ?? null;
         if(data?.colors) this.colors = data?.colors;
         if (data?.colors_identity)  this.colorsIdentity = data?.colors_identity;
-        this.imageUri = data?.image_uris ?? null,
-        this.currentPrice = data?.prices ?? null;
+        this.imageUri = data?.image_uris.normal ?? null,
+        this.priceUsd = data?.prices?.usd ?? null;
+        this.priceUsdFoil = data?.prices?.usd_foil ?? null;
+        this.priceEur = data?.prices?.eur ?? null;
+        this.priceEurFoil = data?.prices?.eur_foil ?? null;
         this.scryfallUri = data?.scryfall_uri ?? null;
     }
     public getScryfallId() : string {
@@ -74,9 +80,9 @@ export default class Card {
     public getSetCode(): string | null{
         return this.setCode;
     }
-    public getCurrentPrice(): Price | null{
-        return this.currentPrice;
-    }
+    // public getCurrentPrice(): Price | null{
+    //     return this.currentPrice;
+    // }
     public getImageUrl(): string[] | null{
         return this.imageUri;
     }

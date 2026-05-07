@@ -1,4 +1,3 @@
-
 jest.mock('../src/backend/models/CollectionEntry', () => ({
     CollectionEntry: {
         findOrCreate: jest.fn().mockResolvedValue([{}, true]),

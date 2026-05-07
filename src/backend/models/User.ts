@@ -21,7 +21,7 @@ export const User = sequelize.define('User', {
     },
     username: {
         type: DataTypes.STRING(100),
-        allowNull: true // może być puste przy pierwszej rejestracji przez Google
+        allowNull: true
     },
     avatarUrl: {
         type: DataTypes.TEXT,

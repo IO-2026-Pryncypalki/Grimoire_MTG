@@ -4,22 +4,27 @@ export const CardModel = sequelize.define('CardModel',{
     id:{
         type: DataTypes.UUID,
         primaryKey: true,
-        field:'scryfall_id'
+        field:'scryfall_id',
+        allowNull: false,
     },
     name:{
-      type: DataTypes.STRING(255)
+      type: DataTypes.STRING(255),
+        allowNull: false,
     },
     setCode:{
         type:DataTypes.STRING(10),
-        field:'set_code'
+        field:'set_code',
+        allowNull: false,
     },
     setName:{
         type:DataTypes.STRING(255),
-        field:'set_name'
+        field:'set_name',
+        allowNull: false,
     },
     collectorNumber:{
         type: DataTypes.STRING(10),
         field:'collector_number',
+        allowNull: false,
     },
     lang: {
         type: DataTypes.STRING(10),
@@ -29,7 +34,7 @@ export const CardModel = sequelize.define('CardModel',{
         field:'mana_cost',
     },
     cmc:{
-        type:DataTypes.NUMBER,
+        type:DataTypes.DECIMAL,
     },
     typeLine:{
         type:DataTypes.STRING(255),
@@ -60,19 +65,19 @@ export const CardModel = sequelize.define('CardModel',{
         field:'image_uri'
     },
     priceUsd:{
-        type:DataTypes.NUMBER,
+        type:DataTypes.DECIMAL,
         field:'price_usd'
     },
     priceUsdFoil:{
-        type:DataTypes.NUMBER,
+        type:DataTypes.DECIMAL,
         field:'price_usd_foil',
     },
     priceEur:{
-        type:DataTypes.NUMBER,
+        type:DataTypes.DECIMAL,
         field:'price_eur',
     },
     priceEurFoil:{
-        type:DataTypes.NUMBER,
+        type:DataTypes.DECIMAL,
         field:'price_eur_foil'
     },
     pricesUpdate:{
@@ -93,5 +98,7 @@ export const CardModel = sequelize.define('CardModel',{
     },
     {
         tableName: 'cards',
+        timestamps: false,
+        underscored: true,
     }
 );

@@ -6,8 +6,22 @@ import Card from "../collection/Card";
 const router = Router()
 
 const scryfall = new ScryfallAdapter();
-router.get('/search',async (req,res)=>{
-    const cardData = await scryfall.searchCard('Black Lotus')
-    res.send(cardData)
+router.post('/search',async (req,res)=> {
+    try {
+        const { cardName } = req.body;
+
+        const cardData = await scryfall.searchCard(cardName);
+
+        return res.status(201).json({
+            data: cardData
+        });
+
+    } catch (error: any) {
+        if (error.message === "Scryfall Rate Limit Exceeded") {
+            return res.status(429).json({ error: "Scryfall Rate Limit Exceeded." });
+        }
+
+        return res.status(500).json({ error: error.message });
+    }
 });
 export default router

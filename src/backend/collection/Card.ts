@@ -18,7 +18,7 @@ export default class Card {
     private oracleText : string | null;
     private power : string | null;
     private toughness : string | null;
-    private rarity : number | null;
+    private rarity : string | null;
     private colors : string[] = []
     private colorsIdentity : string[] = []
     private imageUri : any | null;
@@ -41,7 +41,7 @@ export default class Card {
         oracle_id : string | null,
         power?: string | null,
         toughness? : string | null,
-        rarity? : number | null,
+        rarity? : string | null,
         colors? : string[],
         colors_identity? : string[],
         image_uris? : any| null,

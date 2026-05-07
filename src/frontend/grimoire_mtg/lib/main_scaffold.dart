@@ -69,7 +69,7 @@ class _MainNavigationHandlerState extends State<MainNavigationHandler> {
         },
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.qr_code_scanner),
+            icon: Icon(Icons.document_scanner_rounded),
             label: 'Skaner',
           ),
           NavigationDestination(

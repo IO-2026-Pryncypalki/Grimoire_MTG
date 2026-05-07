@@ -4,22 +4,52 @@ import requests
 from PIL import Image
 from io import BytesIO
 import re
+import sys
+import shutil
 
-OUTPUT_DIR = "output"
+"""
+script usage:
+1. run from main folder of repo (lazy i know)
+
+2. Format: Script_name destination_name type num_cards num_backgrounds
+
+default destination is test
+
+3. type:
+- only_card -> no background
+- hd -> full hd with background
+-  d -> 800x600
+- mono_bg -> white background
+
+default type is hd
+
+
+default num_cards is 200
+
+default num_backgorunds is 50
+"""
+
+
+
+OUTPUT_DIR = "src/frontend/grimoire_mtg/assets/" + ( sys.argv[1] if len(sys.argv) >= 2 else "test" )
 CARD_DIR = os.path.join(OUTPUT_DIR, "cards")
 BG_DIR = os.path.join(OUTPUT_DIR, "backgrounds")
-FINAL_DIR = os.path.join(OUTPUT_DIR, "final")
+FINAL_DIR = OUTPUT_DIR
 
-NUM_CARDS = 200
-NUM_BACKGROUNDS = 50
+QUALITY = sys.argv[2] if len(sys.argv) >= 3 else "hd"
+
+NUM_CARDS = int(sys.argv[3]) if len(sys.argv) >= 4 else 2
+NUM_BACKGROUNDS = int(sys.argv[4]) if len(sys.argv) >= 5 else 5
 
 HEADERS = {
     "User-Agent": "MTG-OCR-Dataset-Generator/4.0"
 }
+if os.path.exists(OUTPUT_DIR):
+    shutil.rmtree(OUTPUT_DIR)
 
+os.makedirs(FINAL_DIR , exist_ok=True)
 os.makedirs(CARD_DIR, exist_ok=True)
 os.makedirs(BG_DIR, exist_ok=True)
-os.makedirs(FINAL_DIR, exist_ok=True)
 
 
 def download_image(url):
@@ -111,9 +141,14 @@ def fetch_backgrounds(n):
     print("Downloading random backgrounds...")
     paths = []
 
+    main_url = "https://picsum.photos/1080/1920?random="
+
+    if QUALITY == "ld":
+        main_url = "https://picsum.photos/800/600?random="
+
     for i in range(n):
         try:
-            url = f"https://picsum.photos/800/600?random={i}"
+            url = main_url + str(i)
             img = download_image(url).convert("RGB")
 
             path = os.path.join(BG_DIR, f"bg_{i}.jpg")
@@ -128,6 +163,20 @@ def fetch_backgrounds(n):
 
 def compose_images(cards, bgs):
     print("Composing final images...")
+    if len(bgs) == 0:
+        try:
+            card = Image.open(card_path).convert("RGBA")
+            base_name = os.path.splitext(os.path.basename(card_path))[0]
+            out_path = os.path.join(FINAL_DIR, f"{base_name}.png")
+
+            card.convert("RGB").save(out_path)
+
+            if i % 10 == 0:
+                print(f"Generated {i} images...")
+
+        except Exception as e:
+            print("Error composing image:", e)
+        return
 
     for i, card_path in enumerate(cards):
         try:
@@ -136,10 +185,10 @@ def compose_images(cards, bgs):
             bg = Image.open(bg_path).convert("RGBA")
             card = Image.open(card_path).convert("RGBA")
 
-            scale = random.uniform(0.3, 0.6)
+            scale = random.uniform(0.9, 1.1)
             card = card.resize((int(card.width * scale), int(card.height * scale)))
 
-            angle = random.uniform(-25, 25)
+            angle = random.uniform(-15, 15)
             card = card.rotate(angle, expand=True)
 
             max_x = max(0, bg.width - card.width)
@@ -151,11 +200,11 @@ def compose_images(cards, bgs):
             bg.paste(card, (x, y), card)
 
             base_name = os.path.splitext(os.path.basename(card_path))[0]
-            out_path = os.path.join(FINAL_DIR, f"{base_name}_final.png")
+            out_path = os.path.join(FINAL_DIR, f"{base_name}.png")
 
             bg.convert("RGB").save(out_path)
 
-            if i % 20 == 0:
+            if i % 10 == 0:
                 print(f"Generated {i} images...")
 
         except Exception as e:
@@ -164,7 +213,15 @@ def compose_images(cards, bgs):
 
 if __name__ == "__main__":
     cards = fetch_cards_bulk(NUM_CARDS)
-    bgs = fetch_backgrounds(NUM_BACKGROUNDS)
+    bgs = []
+    if QUALITY != "only_card" and QUALITY != "mono_bg":
+        bgs = fetch_backgrounds(NUM_BACKGROUNDS)
+    if QUALITY == "mono_bg":
+        img = download_image("https://placehold.co/1080x1920/FFFFFF/FFFFFF").convert("RGB")
+        path = os.path.join(BG_DIR, f"bg_{0}.jpg")
+        img.save(path, "JPEG")
+        bgs.append(path)
     compose_images(cards, bgs)
-
+    shutil.rmtree(CARD_DIR)
+    shutil.rmtree(BG_DIR)
     print("Done!")

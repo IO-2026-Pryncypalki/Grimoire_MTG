@@ -1,3 +1,18 @@
+jest.mock('../src/backend/models/CollectionEntry', () => ({
+    CollectionEntry: {
+        findOrCreate: jest.fn().mockResolvedValue([{}, true]),
+        destroy:      jest.fn().mockResolvedValue(1),
+        findAll:      jest.fn().mockResolvedValue([]),
+    }
+}));
+
+jest.mock('../src/backend/models/Card', () => ({
+    Card: {
+        update:  jest.fn().mockResolvedValue([1]),
+        findAll: jest.fn().mockResolvedValue([]),
+    }
+}));
+
 import Collection from '../src/backend/collection/Collection';
 import Card from '../src/backend/collection/Card';
 
@@ -16,7 +31,7 @@ describe('Collection', () => {
     test('tworzy nowy wpis z quantity=1 gdy karty nie ma w kolekcji', () => {
       const col = makeCollection();
       col.addCard(makeCard());
-      const entry = col.getEntry('abc-123');
+      const entry = col.getEntry('abc-123')!;
       expect(entry).not.toBeNull();
       expect(entry.getQuantity()).toBe(1);
     });
@@ -25,7 +40,7 @@ describe('Collection', () => {
       const col = makeCollection();
       col.addCard(makeCard());
       col.addCard(makeCard());
-      expect(col.getEntry('abc-123').getQuantity()).toBe(2);
+      expect(col.getEntry('abc-123')!.getQuantity()).toBe(2);
     });
 
     test('rzuca błąd gdy card jest null', () => {
@@ -91,7 +106,7 @@ describe('Collection', () => {
         getCardDetails : jest.fn(),
         getPrice: jest.fn().mockResolvedValue(99.0) };
       await col.refreshPrices(provider);
-      expect(provider.getPrice()).toHaveBeenCalledTimes(2);
+      expect(provider.getPrice).toHaveBeenCalledTimes(2);
     });
 
     test('aktualizuje currentPrice na podstawie odpowiedzi providera', async () => {
@@ -102,7 +117,7 @@ describe('Collection', () => {
         searchCard : jest.fn(),
         getCardDetails : jest.fn(),};
       await col.refreshPrices(provider);
-      expect(col.getEntry('a').getCard().getCurrentPrice()).toBe(42.0);
+      expect(col.getEntry('a')!.getCard().getCurrentPrice()).toBe(42.0);
     });
 
     test('kontynuuje aktualizację pozostałych kart gdy jedna rzuca błąd', async () => {
@@ -117,7 +132,7 @@ describe('Collection', () => {
         getCardDetails : jest.fn(),
       };
       await col.refreshPrices(provider);
-      expect(col.getEntry('b').getCard().getCurrentPrice()).toBe(50.0);
+      expect(col.getEntry('b')!.getCard().getCurrentPrice()).toBe(50.0);
     });
   });
 });

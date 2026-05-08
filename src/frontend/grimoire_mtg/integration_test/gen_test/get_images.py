@@ -38,8 +38,8 @@ FINAL_DIR = OUTPUT_DIR
 
 QUALITY = sys.argv[2] if len(sys.argv) >= 3 else "hd"
 
-NUM_CARDS = int(sys.argv[3]) if len(sys.argv) >= 4 else 2
-NUM_BACKGROUNDS = int(sys.argv[4]) if len(sys.argv) >= 5 else 5
+NUM_CARDS = int(sys.argv[3]) if len(sys.argv) >= 4 else 200
+NUM_BACKGROUNDS = int(sys.argv[4]) if len(sys.argv) >= 5 else 50
 
 HEADERS = {
     "User-Agent": "MTG-OCR-Dataset-Generator/4.0"

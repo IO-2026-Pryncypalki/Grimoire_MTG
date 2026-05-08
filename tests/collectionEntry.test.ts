@@ -1,3 +1,22 @@
+// At the very top of collectionEntry.test.ts and collection.test.ts, before other imports
+jest.mock('../src/backend/models/CollectionEntry', () => ({
+    CollectionEntry: {
+        update:      jest.fn().mockResolvedValue([1]),
+        destroy:     jest.fn().mockResolvedValue(1),
+        findAll:     jest.fn().mockResolvedValue([]),
+        findOrCreate: jest.fn().mockResolvedValue([{}, true]),
+        findOne:     jest.fn().mockResolvedValue(null),
+    }
+}));
+
+jest.mock('../src/backend/models/Card', () => ({
+    Card: {
+        findByPk: jest.fn().mockResolvedValue(null),
+        update:   jest.fn().mockResolvedValue([1]),
+        findAll:  jest.fn().mockResolvedValue([]),
+    }
+}));
+
 import CollectionEntry from '../src/backend/collection/CollectionEntry';
 import Card from '../src/backend/collection/Card';
 

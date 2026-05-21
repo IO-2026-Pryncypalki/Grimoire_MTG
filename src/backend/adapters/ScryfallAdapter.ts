@@ -6,24 +6,29 @@ export default class ScryfallAdapter {
     private readonly RATE_LIMIT_MS = 100;
 
     public async searchCard(cardName: string): Promise<any> {
-        //Sprawdzenie, czy karta już istnieje w naszej lokalnej bazie
+        // Krok 1: Sprawdzenie, czy karta już istnieje w lokalnej bazie
         const dbCard = await CardModel.findOne({ where: { name: cardName } });
         if (dbCard) {
             return dbCard;
         }
 
-        // Krok 2: Obsługa limitów zapytań (Rate Limiting)
+        // Krok 2: Obsługa limitów zapytań (Rate Limiting) - WERSJA BEZ WYŚCIGÓW
         const now = Date.now();
-        const timeSinceLastRequest = now - this.lastRequestTime;
+        let delay = 0;
 
-        if (timeSinceLastRequest < this.RATE_LIMIT_MS) {
-            const delay = this.RATE_LIMIT_MS - timeSinceLastRequest;
+        if (now - this.lastRequestTime < this.RATE_LIMIT_MS) {
+            delay = this.RATE_LIMIT_MS - (now - this.lastRequestTime);
+        }
+
+        // Rezerwujemy slot czasowy synchronicznie, zapobiegając równoczesnym strzałom
+        this.lastRequestTime = now + delay;
+
+        if (delay > 0) {
             await new Promise(resolve => setTimeout(resolve, delay));
         }
-        this.lastRequestTime = Date.now();
 
-        // Krok 3: Pytamy Scryfall API
-        const scryfallUrl = `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(cardName)}`;
+        // Krok 3: Pytamy Scryfall API (zmiana na 'exact', aby cache w bazie działał poprawnie)
+        const scryfallUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cardName)}`;
         const response = await fetch(scryfallUrl);
 
         if (response.status === 429) {
@@ -36,7 +41,7 @@ export default class ScryfallAdapter {
 
         const data = await response.json();
 
-
+        // Krok 4: Zapis do bazy
         const newCard = await CardModel.create({
             id: data.id,
             name: data.name,
@@ -58,6 +63,7 @@ export default class ScryfallAdapter {
             priceUsdFoil: data.prices?.usd_foil,
             priceEur: data.prices?.eur,
             priceEurFoil: data.prices?.eur_foil,
+            pricesUpdate: new Date(), // Uzupełniony brakujący field!
             scryfallUri: data.scryfall_uri,
             fetchedAt: new Date(),
             updatedAt: new Date()

@@ -10,7 +10,7 @@ import userRoute from './routes/userRoute'
 import cardRoute from './routes/cardRoute'
 
 const app = express();
-app.use(json());
+app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
 app.use('/api/auth',authRoute);

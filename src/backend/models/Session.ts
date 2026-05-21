@@ -1,6 +1,5 @@
 import {DataTypes} from "sequelize";
 import sequelize from "../config/database";
-type DeviceType = 'web' | 'mobile';
 export const Session = sequelize.define('Session', {
     id: {
         type: DataTypes.UUID,

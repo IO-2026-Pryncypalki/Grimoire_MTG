@@ -1,8 +1,9 @@
-import Card from "../collection/Card";
+import {CardModel} from "../models/CardModel";
 export default class JsonCacheProvider{
-    private memoryCache : Map<string,Card>
-    private filePath : string;
 
+    constructor() {
+
+    }
     private loadFromFile() {
 
     }

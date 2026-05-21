@@ -1,2 +1,0 @@
-ikonki do sekwencji dla db api itd
-poprawić diagram sesji na podstawie nowych klas ( funkcje i aktorzy ) 

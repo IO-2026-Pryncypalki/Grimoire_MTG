@@ -21,7 +21,8 @@ async function verify(accessToken: string, refreshToken: string, profile: Profil
             user = await User.create({
                 googleId: profile.id,
                 email: profile.emails?.[0]?.value,
-                //jwtSecureCode: randomUUID(),
+                username:'mati',
+                jwtSecureCode: randomUUID(),
             });
         }
         // auth the User

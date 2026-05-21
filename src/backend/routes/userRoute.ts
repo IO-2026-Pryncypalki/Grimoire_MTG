@@ -17,6 +17,18 @@ router.get('/',requireJwt, async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'An error occurred', error });
     }
 });
+router.get('/collection/',requireJwt,async(req:Request,res:Response)=>{
+try {
+    
+}
+catch(err)
+{
+    return res.status(500).json({message: 'An error occured',err});
+}
+})
+router.get('/decks/',requireJwt,async(req: Request,res: Response)=>{
+
+})
 
 
 export default router;

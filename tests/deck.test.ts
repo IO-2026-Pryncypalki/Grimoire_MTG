@@ -2,13 +2,20 @@ import Deck from '../src/backend/deck/Deck';
 import Card from '../src/backend/collection/Card';
 
 describe('Deck', () => {
-  const makeCard = (id = 'abc-123') => new Card({
-    scryfallId: id,
-    name: 'Lightning Bolt',
-    setCode: 'M11',
-    currentPrice: 2.0,
-    imageUrl: 'https://example.com/card.jpg',
-  });
+  const makeCard = (id = 'abc-123', price: number | null = 10.0) => new Card({
+      id,
+      name:       'Tarmogoyf',
+      set:        'MH2',
+      set_name:   'Modern Horizons 2',
+      collector_number: '136',
+      lang:       'en',
+      mana_cost:  null,
+      cmc:        null,
+      type_line:  null,
+      oracle_id:  null,
+      prices:     price !== null ? { usd: price, usd_foil: 0, eur: 0, eur_foil: 0 } : null,
+      image_uris: null,
+    });
 
   const makeDeck = () => new Deck({ id: 'deck-1', name: 'Burn', format: 'Modern' });
 
@@ -72,9 +79,9 @@ describe('Deck', () => {
     test('wywołuje provider.searchCard z zapytaniem', async () => {
       const deck = makeDeck();
       const provider = {
-        searchCard: jest.fn().mockResolvedValue([makeCard()]),
-        getPrice : null,
-        getCardDetails : null
+          searchCard:     jest.fn().mockResolvedValue([makeCard()]),
+          getPrice:       jest.fn(),
+          getCardDetails: jest.fn(),
       };
       await deck.searchNewCards('Lightning', provider);
       expect(provider.searchCard).toHaveBeenCalledWith('Lightning');
@@ -84,9 +91,9 @@ describe('Deck', () => {
       const deck = makeDeck();
       const cards = [makeCard('a'), makeCard('b')];
       const provider = {
-        searchCard: jest.fn().mockResolvedValue(cards),
-        getPrice : null,
-        getCardDetails : null
+          searchCard:     jest.fn().mockResolvedValue([makeCard()]),
+          getPrice:       jest.fn(),
+          getCardDetails: jest.fn(),
       };
 
       const result = await deck.searchNewCards('test', provider);
@@ -95,9 +102,10 @@ describe('Deck', () => {
 
     test('zwraca [] gdy provider zwraca pustą listę', async () => {
       const deck = makeDeck();
-      const provider = { searchCard: jest.fn().mockResolvedValue([]),
-        getPrice : null,
-        getCardDetails : null
+      const provider = {
+          searchCard:     jest.fn().mockResolvedValue([makeCard()]),
+          getPrice:       jest.fn(),
+          getCardDetails: jest.fn(),
       };
       const result = await deck.searchNewCards('nic', provider);
       expect(result).toEqual([]);

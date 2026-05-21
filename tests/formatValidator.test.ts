@@ -9,14 +9,20 @@ describe('FormatValidator', () => {
     validator = new FormatValidator();
   });
 
-  const makeCard = (id, isBasicLand = false) => new Card({
-    scryfallId: id,
-    name: isBasicLand ? 'Forest' : `Card-${id}`,
-    setCode: 'M21',
-    currentPrice: 1.0,
-    imageUrl: '',
-
-  });
+  const makeCard = (id = 'abc-123', price: number | null = 10.0) => new Card({
+      id,
+      name:       'Tarmogoyf',
+      set:        'MH2',
+      set_name:   'Modern Horizons 2',
+      collector_number: '136',
+      lang:       'en',
+      mana_cost:  null,
+      cmc:        null,
+      type_line:  null,
+      oracle_id:  null,
+      prices:     price !== null ? { usd: price, usd_foil: 0, eur: 0, eur_foil: 0 } : null,
+      image_uris: null,
+    });
 
   const buildDeck = (format, cardCounts) => {
     const deck = new Deck({ id: 'd', name: 'Test', format });

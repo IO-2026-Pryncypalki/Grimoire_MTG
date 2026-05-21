@@ -1,4 +1,3 @@
-// At the very top of collectionEntry.test.ts and collection.test.ts, before other imports
 jest.mock('../src/backend/models/CollectionEntry', () => ({
     CollectionEntry: {
         update:      jest.fn().mockResolvedValue([1]),

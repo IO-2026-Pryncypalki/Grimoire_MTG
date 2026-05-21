@@ -7,7 +7,6 @@ import { Card as CardModel } from '../models/Card';
 const router = Router();
 
 // GET /api/collection
-// Returns all entries in the authenticated user's collection
 router.get('/', requireJwt, async (req: Request, res: Response) => {
     try {
         const user = req.user as any;
@@ -35,7 +34,6 @@ router.get('/', requireJwt, async (req: Request, res: Response) => {
 });
 
 // POST /api/collection
-// Adds a card to the collection (or increments quantity if it already exists)
 // Body: { scryfallId, quantity?, condition?, isFoil? }
 router.post('/', requireJwt, async (req: Request, res: Response) => {
     try {
@@ -46,7 +44,6 @@ router.post('/', requireJwt, async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'scryfallId is required' });
         }
 
-        // Card must already exist in our cards table (populated via SmartAdapter)
         const cardModel = await CardModel.findByPk(scryfallId);
         if (!cardModel) {
             return res.status(404).json({ message: 'Card not found — fetch it via the search endpoint first' });
@@ -54,7 +51,7 @@ router.post('/', requireJwt, async (req: Request, res: Response) => {
 
         const card = Card.fromModel(cardModel as InstanceType<typeof CardModel>, isFoil);
         const collection = await Collection.load(user.id);
-        await collection.addCard(card, { quantity, condition, isFoil });
+        collection.addCard(card, { quantity, condition, isFoil });
 
         return res.status(201).json({ message: 'Card added to collection' });
     } catch (error) {
@@ -62,47 +59,70 @@ router.post('/', requireJwt, async (req: Request, res: Response) => {
     }
 });
 
-// PATCH /api/collection/:scryfallId
-// Updates quantity, condition, or notes on an existing entry
-// Body: { delta?, condition?, notes? }
+// PATCH /api/collection/:scryfallId/transfer
+// Body: { fromCondition, toCondition, isFoil?, quantity? }
+router.patch('/:scryfallId/transfer', requireJwt, async (req: Request, res: Response) => {
+    try {
+        const user = req.user as any;
+        const { scryfallId } = req.params;
+        const { fromCondition, toCondition, isFoil = false, quantity = 1 } = req.body;
+
+        if (!fromCondition || !toCondition) {
+            return res.status(400).json({ message: 'fromCondition and toCondition are required' });
+        }
+
+        const collection = await Collection.load(user.id);
+        collection.transferCondition(scryfallId, fromCondition, toCondition, isFoil, quantity);
+
+        return res.status(200).json({ message: 'Condition transferred' });
+    } catch (error: any) {
+        return res.status(400).json({ message: error.message });
+    }
+});
+
+// PATCH /api/collection/:scryfallId?condition=NM&isFoil=false
+// Body: { delta?, notes? }
 router.patch('/:scryfallId', requireJwt, async (req: Request, res: Response) => {
     try {
         const user = req.user as any;
         const { scryfallId } = req.params;
-        const { delta, condition, notes } = req.body;
+        const condition = req.query.condition as string | undefined;
+        const isFoil    = req.query.isFoil === 'true'  ? true
+                        : req.query.isFoil === 'false' ? false
+                        : undefined;
+        const { delta, notes } = req.body;
 
         const collection = await Collection.load(user.id);
+        const entry = collection.getEntry(scryfallId, condition, isFoil);
+        if (!entry) return res.status(404).json({ message: 'Entry not found' });
 
-        let entry;
-        try {
-            entry = collection.getEntry(scryfallId);
-        } catch {
-            return res.status(404).json({ message: 'Card not in collection' });
+        if (delta !== undefined) {
+            entry.updateQuantity(delta);
+            collection.pruneEmpty();
         }
-
-        if (delta !== undefined)     await entry.updateQuantity(delta);
-        if (condition !== undefined) await entry.setCondition(condition);
-        if (notes !== undefined)     await entry.setNotes(notes);
+        if (notes !== undefined) entry.setNotes(notes);
 
         return res.status(200).json({ message: 'Entry updated' });
-    } catch (error) {
-        return res.status(500).json({ message: 'Failed to update entry', error });
+    } catch (error: any) {
+        return res.status(400).json({ message: error.message });
     }
 });
 
-// DELETE /api/collection/:scryfallId
-// Removes all entries for a card from the collection regardless of condition or foil
+// DELETE /api/collection/:scryfallId?condition=NM&isFoil=false
 router.delete('/:scryfallId', requireJwt, async (req: Request, res: Response) => {
     try {
         const user = req.user as any;
         const { scryfallId } = req.params;
+        const condition = req.query.condition as string | undefined;
+        const isFoil    = req.query.isFoil === 'true'  ? true
+                        : req.query.isFoil === 'false' ? false
+                        : undefined;
 
         const collection = await Collection.load(user.id);
-        await collection.removeCard(scryfallId);
-
-        return res.status(200).json({ message: 'Card removed from collection' });
+        collection.removeCard(scryfallId, condition, isFoil);
+        return res.status(200).json({ message: 'Entry removed' });
     } catch (error) {
-        return res.status(500).json({ message: 'Failed to remove card', error });
+        return res.status(500).json({ message: 'Failed to remove entry', error });
     }
 });
 

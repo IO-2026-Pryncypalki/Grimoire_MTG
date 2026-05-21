@@ -41,7 +41,11 @@ coverage/
 .env.local
 
 # tests that take up a lot of space
-assets/
+assets/hd/*.png
+assets/raw/*.png
+assets/easy/*.png
+assets/hard/*.png
+
 
 
 dist/

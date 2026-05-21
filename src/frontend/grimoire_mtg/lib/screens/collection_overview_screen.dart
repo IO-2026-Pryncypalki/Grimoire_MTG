@@ -24,6 +24,10 @@ class CollectionOverviewScreen extends StatelessWidget {
           child: const Center(child: Text('Karta', style: TextStyle(color: Colors.white))),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }

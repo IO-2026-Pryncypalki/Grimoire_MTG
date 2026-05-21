@@ -43,7 +43,8 @@
     "testEnvironment": "node",
     "transform": {
       "^.+\\.ts$": "ts-jest"
-    }
+    },
+    "setupFiles": ["./jest.setup.ts"]
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

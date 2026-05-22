@@ -34,7 +34,7 @@ export const up = (pgm) => {
 
         CREATE TABLE sessions (
             id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id       UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            user_id       UUID        NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
             refresh_token TEXT        NOT NULL UNIQUE,
             device        device_type NOT NULL DEFAULT 'web',
             created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -87,7 +87,7 @@ export const up = (pgm) => {
 
         CREATE TABLE collection_entries (
             id          UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id     UUID           NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            user_id     UUID           NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
             scryfall_id UUID           NOT NULL REFERENCES cards(scryfall_id),
             quantity    SMALLINT       NOT NULL DEFAULT 1,
             condition   card_condition NOT NULL DEFAULT 'NM',
@@ -105,7 +105,7 @@ export const up = (pgm) => {
 
         CREATE TABLE decks (
             id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id           UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            user_id           UUID        NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
             name              VARCHAR(255) NOT NULL,
             format            deck_format NOT NULL DEFAULT 'Custom',
             description       TEXT,

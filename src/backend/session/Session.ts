@@ -3,9 +3,9 @@ export default class Session {
     private deviceType : string;
     private userId : string;
     private createdAt : Date;
-    private expiresAt : Date;
+    private expiresAt : Date | null;
 
-    constructor(data:{token:string,deviceType:string, userId: string,createdAt:Date,expiresAt:Date}){
+    constructor(data:{token:string,deviceType:string, userId: string,createdAt:Date,expiresAt:Date | null;  }){
         this.token = data.token;
         this.deviceType = data.deviceType;
         this.userId = data.userId;
@@ -22,6 +22,7 @@ export default class Session {
         return this.userId;
     }
     public isValid(): boolean {
-        return false;
+        if (!this.expiresAt) return false;
+        return this.expiresAt > new Date();
     }
 }

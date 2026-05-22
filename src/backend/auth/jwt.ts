@@ -11,7 +11,7 @@ const cookieExtractor = (req)=>{
 }
 const options = {
     jwtFromRequest: cookieExtractor,
-    secretOrKey: process.env.JWT_ACCESS_SECRET || 'secret-test',
+    secretOrKey: process.env.JWT_SECRET || 'secret-test',
 };
 
 async function verify(payload: any, done: VerifiedCallback) {

@@ -9,12 +9,12 @@ export default class Collection {
     private entries: CollectionEntry[] = [];
 
     constructor(data: { userId: string; entries?: CollectionEntry[] }) {
-        this.userId  = data.userId;
+        this.userId = data.userId;
         if (data.entries) this.entries = data.entries;
     }
 
     static async load(userId: string): Promise<Collection> {
-        const rows    = await CollectionEntryModel.findAll({
+        const rows = await CollectionEntryModel.findAll({
             where:   { userId },
             include: [{ model: CardModel }],
         });
@@ -44,18 +44,51 @@ export default class Collection {
         }
     }
 
-    // Synchronous in-memory update; DB delete is fire-and-forget
-    public removeCard(scryfallId: string): void {
-        this.entries = this.entries.filter(
-            e => e.getCard().getScryfallId() !== scryfallId
-        );
-        CollectionEntryModel.destroy({ where: { userId: this.userId, scryfallId } })
-            .catch(err => console.error('removeCard DB error:', err));
+    // Moves `quantity` copies from one condition to another.
+    // Decrements source; creates or increments destination.
+    // If source hits 0 it's pruned from the in-memory list.
+    public transferCondition(
+        scryfallId: string,
+        fromCondition: string,
+        toCondition: string,
+        isFoil: boolean,
+        quantity: number = 1
+    ): void {
+        const fromEntry = this.getEntry(scryfallId, fromCondition, isFoil);
+        if (!fromEntry) throw new Error('Source entry not found');
+        if (fromEntry.getQuantity() < quantity) throw new Error('Not enough cards in that condition');
+
+        fromEntry.updateQuantity(-quantity);
+
+        const toEntry = this.getEntry(scryfallId, toCondition, isFoil);
+        if (toEntry) {
+            toEntry.updateQuantity(quantity);
+        } else {
+            this.addCard(fromEntry.getCard(), { quantity, condition: toCondition, isFoil });
+        }
+
+        this.pruneEmpty();
     }
 
-    // Returns null for missing entries instead of throwing — matches test expectations
-    public getEntry(scryfallId: string): CollectionEntry | null {
-        return this.entries.find(e => e.getCard().getScryfallId() === scryfallId) ?? null;
+    public getEntry(scryfallId: string, condition?: string, isFoil?: boolean): CollectionEntry | null {
+        return this.entries.find(e =>
+            e.getCard().getScryfallId() === scryfallId &&
+            (condition === undefined || e.getCondition() === condition) &&
+            (isFoil === undefined || e.getIsFoil() === isFoil)
+        ) ?? null;
+    }
+
+    public removeCard(scryfallId: string, condition?: string, isFoil?: boolean): void {
+        this.entries = this.entries.filter(e =>
+            !(e.getCard().getScryfallId() === scryfallId &&
+            (condition === undefined || e.getCondition() === condition) &&
+            (isFoil === undefined || e.getIsFoil() === isFoil))
+        );
+        const where: any = { userId: this.userId, scryfallId };
+        if (condition !== undefined) where.condition = condition;
+        if (isFoil !== undefined) where.isFoil    = isFoil;
+        CollectionEntryModel.destroy({ where })
+            .catch(err => console.error('removeCard DB error:', err));
     }
 
     public getEntries(): CollectionEntry[] { return this.entries; }
@@ -82,5 +115,10 @@ export default class Collection {
                 // One card failing doesn't stop the rest
             }
         }
+    }
+
+    // Removes zero-quantity entries from memory after transfers or decrements
+    public pruneEmpty(): void {
+        this.entries = this.entries.filter(e => e.getQuantity() > 0);
     }
 }

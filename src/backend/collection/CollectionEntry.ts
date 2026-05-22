@@ -35,7 +35,7 @@ export default class CollectionEntry {
         const cardRaw = (model as any).Card as InstanceType<typeof CardModel> | undefined;
         const card   = cardRaw
             ? Card.fromModel(cardRaw, isFoil)
-            : new Card({ scryfallId: raw.scryfallId as string });
+            : new Card({ id: raw.scryfallId as string });
 
         return new CollectionEntry({
             id:        raw.id        as string,

@@ -1,4 +1,4 @@
-import { CardModel } from "../models/CardModel";
+import { Card as CardModel } from "../models/Card";
 
 export default class ScryfallAdapter {
     private lastRequestTime: number = 0;
@@ -43,7 +43,7 @@ export default class ScryfallAdapter {
 
         // Krok 4: Zapis do bazy
         const newCard = await CardModel.create({
-            id: data.id,
+            scryfallId: data.id,
             name: data.name,
             setCode: data.set,
             setName: data.set_name,
@@ -57,13 +57,13 @@ export default class ScryfallAdapter {
             toughness: data.toughness,
             rarity: data.rarity,
             colors: data.colors,
-            colorsIdentity: data.color_identity,
+            colorIdentity: data.color_identity,
             imageUri: data.image_uris?.normal,
             priceUsd: data.prices?.usd,
             priceUsdFoil: data.prices?.usd_foil,
             priceEur: data.prices?.eur,
             priceEurFoil: data.prices?.eur_foil,
-            pricesUpdate: new Date(), // Uzupełniony brakujący field!
+            pricesUpdatedAt: new Date(),
             scryfallUri: data.scryfall_uri,
             fetchedAt: new Date(),
             updatedAt: new Date()

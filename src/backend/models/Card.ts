@@ -14,14 +14,17 @@ export const Card = sequelize.define('Card', {
     },
     setCode: {
         type: DataTypes.STRING(10),
+        field: 'set_code',
         allowNull: false,
     },
     setName: {
         type: DataTypes.STRING(255),
+        field: 'set_name',
         allowNull: false,
     },
     collectorNumber: {
         type: DataTypes.STRING(10),
+        field: 'collector_number',
         allowNull: false,
     },
     lang: {
@@ -30,6 +33,7 @@ export const Card = sequelize.define('Card', {
     },
     manaCost: {
         type: DataTypes.STRING(100),
+        field: 'mana_cost',
         allowNull: true,
     },
     cmc: {
@@ -38,10 +42,12 @@ export const Card = sequelize.define('Card', {
     },
     typeLine: {
         type: DataTypes.STRING(255),
+        field: 'type_line',
         allowNull: true,
     },
     oracleText: {
         type: DataTypes.TEXT,
+        field: 'oracle_text',
         allowNull: true,
     },
     power: {
@@ -53,7 +59,7 @@ export const Card = sequelize.define('Card', {
         allowNull: true,
     },
     rarity: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING(20),
         allowNull: true,
     },
     colors: {
@@ -62,43 +68,53 @@ export const Card = sequelize.define('Card', {
     },
     colorIdentity: {
         type: DataTypes.ARRAY(DataTypes.STRING(1)),
+        field: 'color_identity',
         allowNull: true,
     },
     imageUri: {
         type: DataTypes.TEXT,
+        field: 'image_uri',
         allowNull: true,
     },
     priceUsd: {
         type: DataTypes.DECIMAL(10, 2),
+        field: 'price_usd',
         allowNull: true,
     },
     priceUsdFoil: {
         type: DataTypes.DECIMAL(10, 2),
+        field: 'price_usd_foil',
         allowNull: true,
     },
     priceEur: {
         type: DataTypes.DECIMAL(10, 2),
+        field: 'price_eur',
         allowNull: true,
     },
     priceEurFoil: {
         type: DataTypes.DECIMAL(10, 2),
+        field: 'price_eur_foil',
         allowNull: true,
     },
     pricesUpdatedAt: {
         type: DataTypes.DATE,
+        field: 'prices_updated_at',
         allowNull: true,
     },
     scryfallUri: {
         type: DataTypes.TEXT,
+        field: 'scryfall_uri',
         allowNull: true,
     },
     fetchedAt: {
         type: DataTypes.DATE,
+        field: 'fetched_at',
         allowNull: false,
         defaultValue: DataTypes.NOW,
     },
     updatedAt: {
         type: DataTypes.DATE,
+        field: 'updated_at',
         allowNull: false,
         defaultValue: DataTypes.NOW,
     },

@@ -1,4 +1,4 @@
-import {CardModel} from "../models/CardModel";
+import { Card as CardModel } from "../models/Card";
 export default class JsonCacheProvider{
 
     constructor() {
@@ -12,7 +12,7 @@ export default class JsonCacheProvider{
     }
     public getCard(id : string)
     {
-
+        return CardModel.findByPk(id);
     }
     public isCachedMap(id : string) : boolean {
         return false;

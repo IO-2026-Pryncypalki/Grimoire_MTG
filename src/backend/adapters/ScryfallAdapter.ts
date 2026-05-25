@@ -5,14 +5,7 @@ export default class ScryfallAdapter {
     // Ograniczenie narzucone przez Scryfall - rekomendowane 50-100ms opóźnienia między requestami
     private readonly RATE_LIMIT_MS = 100;
 
-    public async searchCard(cardName: string): Promise<any> {
-        // Krok 1: Sprawdzenie, czy karta już istnieje w lokalnej bazie
-        const dbCard = await CardModel.findOne({ where: { name: cardName } });
-        if (dbCard) {
-            return dbCard;
-        }
-
-        // Krok 2: Obsługa limitów zapytań (Rate Limiting) - WERSJA BEZ WYŚCIGÓW
+    private async waitForRateLimit(): Promise<void> {
         const now = Date.now();
         let delay = 0;
 
@@ -20,12 +13,23 @@ export default class ScryfallAdapter {
             delay = this.RATE_LIMIT_MS - (now - this.lastRequestTime);
         }
 
-        // Rezerwujemy slot czasowy synchronicznie, zapobiegając równoczesnym strzałom
+        // Reserve the next slot synchronously to avoid request bursts.
         this.lastRequestTime = now + delay;
 
         if (delay > 0) {
             await new Promise(resolve => setTimeout(resolve, delay));
         }
+    }
+
+    public async searchCard(cardName: string): Promise<any> {
+        // Krok 1: Sprawdzenie, czy karta już istnieje w lokalnej bazie
+        const dbCard = await CardModel.findOne({ where: { name: cardName } });
+        if (dbCard) {
+            return dbCard;
+        }
+
+        // Krok 2: Obsługa limitów zapytań (Rate Limiting)
+        await this.waitForRateLimit();
 
         // Krok 3: Pytamy Scryfall API (zmiana na 'exact', aby cache w bazie działał poprawnie)
         const scryfallUrl = `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cardName)}`;
@@ -70,5 +74,34 @@ export default class ScryfallAdapter {
         });
 
         return newCard;
+    }
+
+    public async getPrice(scryfallId: string, isFoil = false): Promise<number | null> {
+        await this.waitForRateLimit();
+
+        const scryfallUrl = `https://api.scryfall.com/cards/${encodeURIComponent(scryfallId)}`;
+        const response = await fetch(scryfallUrl);
+
+        if (response.status === 429) {
+            throw new Error("Scryfall Rate Limit Exceeded");
+        }
+
+        if (!response.ok) {
+            throw new Error(`Card ${scryfallId} not found`);
+        }
+
+        const data = await response.json();
+        const rawPrice = isFoil ? data.prices?.usd_foil : data.prices?.usd;
+
+        if (rawPrice === null || rawPrice === undefined || rawPrice === '') {
+            return null;
+        }
+
+        const parsedPrice = Number(rawPrice);
+        if (Number.isNaN(parsedPrice)) {
+            return null;
+        }
+
+        return parsedPrice;
     }
 }

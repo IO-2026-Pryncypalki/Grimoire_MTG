@@ -3,6 +3,23 @@ import CollectionEntry from './CollectionEntry';
 import ICardProvider from '../interfaces/ICardProvider';
 import { Card as CardModel } from '../models/Card';
 import { CollectionEntry as CollectionEntryModel } from '../models/CollectionEntry';
+import { Op } from 'sequelize';
+
+export interface CollectionFilters {
+    color?: string;
+    type?: string;
+    cmc?: number;
+    edition?: string;
+}
+
+export interface RefreshPricesResult {
+    totalCards: number;
+    updatedCards: number;
+    failedCards: number;
+    failedIds: string[];
+}
+
+type PriceProvider = Pick<ICardProvider, 'getPrice'>;
 
 export default class Collection {
     private userId: string;
@@ -13,10 +30,32 @@ export default class Collection {
         if (data.entries) this.entries = data.entries;
     }
 
-    static async load(userId: string): Promise<Collection> {
+    static async load(userId: string, filters: CollectionFilters = {}): Promise<Collection> {
+        const cardWhere: any = {};
+
+        if (filters.color) {
+            cardWhere.colors = { [Op.contains]: [filters.color] };
+        }
+        if (filters.type) {
+            cardWhere.typeLine = { [Op.iLike]: `%${filters.type}%` };
+        }
+        if (filters.cmc !== undefined) {
+            cardWhere.cmc = filters.cmc;
+        }
+        if (filters.edition) {
+            cardWhere[Op.or] = [
+                { setCode: { [Op.iLike]: filters.edition } },
+                { setName: { [Op.iLike]: `%${filters.edition}%` } },
+            ];
+        }
+
+        const include = Reflect.ownKeys(cardWhere).length > 0
+            ? [{ model: CardModel, where: cardWhere }]
+            : [{ model: CardModel }];
+
         const rows = await CollectionEntryModel.findAll({
             where:   { userId },
-            include: [{ model: CardModel }],
+            include,
         });
         const entries = rows.map(row => CollectionEntry.fromModel(row));
         return new Collection({ userId, entries });
@@ -101,20 +140,41 @@ export default class Collection {
     }
 
     // Async — callers must await. Continues on per-card errors (resilient).
-    public async refreshPrices(provider: ICardProvider): Promise<void> {
+    public async refreshPrices(provider: PriceProvider): Promise<RefreshPricesResult> {
+        const result: RefreshPricesResult = {
+            totalCards: this.entries.length,
+            updatedCards: 0,
+            failedCards: 0,
+            failedIds: [],
+        };
+
         for (const entry of this.entries) {
+            const scryfallId = entry.getCard().getScryfallId();
             try {
-                const scryfallId = entry.getCard().getScryfallId();
-                const newPrice   = await provider.getPrice(scryfallId);
-                entry.getCard().updatePrice(newPrice);
-                CardModel.update(
-                    { priceUsd: newPrice, pricesUpdatedAt: new Date() },
+                const newPrice = await provider.getPrice(scryfallId, entry.getIsFoil());
+
+                if (newPrice === null) {
+                    result.failedCards += 1;
+                    result.failedIds.push(scryfallId);
+                    continue;
+                }
+
+                const priceField = entry.getIsFoil() ? 'priceUsdFoil' : 'priceUsd';
+                await CardModel.update(
+                    { [priceField]: newPrice, pricesUpdatedAt: new Date() },
                     { where: { scryfallId } }
-                ).catch(err => console.error('refreshPrices DB error:', err));
+                );
+
+                entry.getCard().updatePrice(newPrice);
+                result.updatedCards += 1;
             } catch {
                 // One card failing doesn't stop the rest
+                result.failedCards += 1;
+                result.failedIds.push(scryfallId);
             }
         }
+
+        return result;
     }
 
     // Removes zero-quantity entries from memory after transfers or decrements

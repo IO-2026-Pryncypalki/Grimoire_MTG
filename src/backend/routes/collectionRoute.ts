@@ -1,16 +1,50 @@
 import { Request, Response, Router } from 'express';
 import requireJwt from '../middlewares/requireJwt';
-import Collection from '../collection/Collection';
+import Collection, { CollectionFilters } from '../collection/Collection';
 import Card from '../collection/Card';
 import { Card as CardModel } from '../models/Card';
+import ScryfallAdapter from '../adapters/ScryfallAdapter';
 
 const router = Router();
+
+function getQueryParam(value: unknown): string | undefined {
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : undefined;
+    }
+
+    if (Array.isArray(value) && typeof value[0] === 'string') {
+        const trimmed = value[0].trim();
+        return trimmed.length > 0 ? trimmed : undefined;
+    }
+
+    return undefined;
+}
 
 // GET /api/collection
 router.get('/', requireJwt, async (req: Request, res: Response) => {
     try {
         const user = req.user as any;
-        const collection = await Collection.load(user.id);
+        const color = getQueryParam(req.query.color)?.toUpperCase();
+        const type = getQueryParam(req.query.type);
+        const edition = getQueryParam(req.query.edition) ?? getQueryParam(req.query.setCode);
+        const cmcParam = getQueryParam(req.query.cmc);
+
+        let cmc: number | undefined;
+        if (cmcParam !== undefined) {
+            cmc = Number(cmcParam);
+            if (Number.isNaN(cmc)) {
+                return res.status(400).json({ message: 'cmc must be a valid number' });
+            }
+        }
+
+        const filters: CollectionFilters = {};
+        if (color) filters.color = color;
+        if (type) filters.type = type;
+        if (edition) filters.edition = edition;
+        if (cmc !== undefined) filters.cmc = cmc;
+
+        const collection = await Collection.load(user.id, filters);
 
         const entries = collection.getEntries().map(entry => ({
             scryfallId: entry.getCard().getScryfallId(),
@@ -56,6 +90,28 @@ router.post('/', requireJwt, async (req: Request, res: Response) => {
         return res.status(201).json({ message: 'Card added to collection' });
     } catch (error) {
         return res.status(500).json({ message: 'Failed to add card', error });
+    }
+});
+
+// POST /api/collection/refresh-prices
+router.post('/refresh-prices', requireJwt, async (req: Request, res: Response) => {
+    try {
+        const user = req.user as any;
+        const collection = await Collection.load(user.id);
+        const refreshResult = await collection.refreshPrices(new ScryfallAdapter());
+
+        const message = refreshResult.totalCards === 0
+            ? 'No cards to refresh'
+            : refreshResult.failedCards > 0
+                ? 'Prices refreshed with warnings'
+                : 'Prices refreshed successfully';
+
+        return res.status(200).json({
+            message,
+            ...refreshResult,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to refresh prices', error });
     }
 });
 

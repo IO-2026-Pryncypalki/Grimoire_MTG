@@ -8,7 +8,7 @@ export default class Deck {
     private format : string;
     private cards : DeckEntry[] = [];
 
-    constructor(data?:{id : string,name: string,format:string,cards?: DeckEntry[]})
+    constructor(data:{id : string,name: string,format:string,cards?: DeckEntry[]})
     {
         this.id = data.id;
         this.name = data.name;

@@ -23,12 +23,15 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
         const hashedToken = await bcrypt.hash(refreshToken,10);
         const expiryDays = parseInt(process.env.REFRESH_TOKEN_EXPIRY_DAYS || '14',10);
        const expiresAt = new Date();
+        const userAgent = req.headers['user-agent'] || '';
+        // Prosty regex - jak znajdzie słowo 'android' albo 'mobile', to apka/telefon, jak nie, to web
+        const deviceType = /android|mobile/i.test(userAgent) ? 'android' : 'web';
        expiresAt.setDate(expiresAt.getDate() + expiryDays)
         Session.create(
             {
                 userId: user.id,
                 refreshToken:hashedToken,
-                device:'web',
+                device:deviceType,
                 createdAt:new Date(),
                 expiresAt
 
@@ -104,5 +107,35 @@ catch(err)
  res.sendStatus(401);
 }
 })
+router.post('/logout',async (req: Request,res:Response)=>{
+    const {refreshToken} = req.cookies;
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
 
+    if ( !refreshToken )
+    {
+        return res.status(200).json({message: 'You were logged out successfully'});
+    }
+
+    try {
+
+        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string) as any;
+
+
+        const sessions = await Session.findAll({ where: { userId: payload.id } });
+
+
+        for (const s of sessions) {
+            const match = await bcrypt.compare(refreshToken, s.get('refreshToken') as string);
+            if (match) {
+                await s.destroy();
+                break;
+            }
+        }
+
+        return res.status(200).json({ message: 'Pomyślnie wylogowano' });
+    } catch (err) {
+        return res.status(200).json({ message: 'Pomyślnie wylogowano (token wygasł)' });
+    }
+});
 export default router;

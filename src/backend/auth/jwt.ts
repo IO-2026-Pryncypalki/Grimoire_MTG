@@ -3,15 +3,22 @@ import {User} from '../models/User';
 import bcrypt from 'bcrypt';
 const cookieExtractor = (req)=>{
     let token = null;
-    if ( req && req.cookies)
-    {
+
+    // KROK 1: Szukamy w ciasteczkach (Dla przeglądarki)
+    if (req && req.cookies && req.cookies['accessToken']) {
         token = req.cookies['accessToken'];
     }
+
+    // KROK 2: Jeśli nie ma w ciastkach, bierzemy z nagłówka Authorization (Dla .http w CLionie)
+    if (!token && req.headers.authorization) {
+        token = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+    }
+
     return token;
 }
 const options = {
     jwtFromRequest: cookieExtractor,
-    secretOrKey: process.env.JWT_SECRET || 'secret-test',
+    secretOrKey: process.env.JWT_ACCESS_SECRET || 'secret-test',
 };
 
 async function verify(payload: any, done: VerifiedCallback) {

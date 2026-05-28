@@ -1,7 +1,103 @@
-POST http://localhost:3000/api/cards/search
+@baseUrl = http://localhost:3000/api
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjU2NmVlNjAyLTk4MzctNGE2NC05NzhiLWViZDVhNmQ2ZTViZiIsImlhdCI6MTc3OTk4MzE3MywiZXhwIjoxNzc5OTg0MDczfQ.611CGpwerWmwg60kDTz191-aV4ilrq_FeI5_cFE9O14
+@scryfallId = bd8fa327-dd41-4737-8f19-2cf5eb1f7cdd
+
+### 1. Tworzenie nowej talii
+POST {{baseUrl}}/decks
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "cardName": "Black Lotus"
+  "name": "Talia Testowa",
+  "format": "Standard"
 }
 
+> {%
+    if (response.status === 201) {
+        client.global.set("deckId", response.body.id);
+        client.log("\n========== KROK 1: TWORZENIE TALII ==========");
+        client.log(JSON.stringify(response.body, null, 2));
+    }
+%}
+
+### 2. Dodawanie kart do talii (4 sztuki)
+POST {{baseUrl}}/decks/{{deckId}}/cards
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "scryfallId": "{{scryfallId}}",
+  "quantity": 4,
+  "board": "main"
+}
+
+> {%
+    client.log("\n========== KROK 2: DODANIE KART ==========");
+    client.log(JSON.stringify(response.body, null, 2));
+%}
+
+### 3. Wypisanie szczegółów talii (z dodanymi kartami)
+GET {{baseUrl}}/decks/{{deckId}}
+Authorization: Bearer {{token}}
+
+> {%
+    client.log("\n========== KROK 3: SPRAWDZENIE TALII ==========");
+    client.log(JSON.stringify(response.body, null, 2));
+%}
+
+### 4. Zmniejszenie ilości karty (Usuwamy tylko 1 sztukę z 4)
+DELETE {{baseUrl}}/decks/{{deckId}}/cards/{{scryfallId}}?board=main&quantity=1
+Authorization: Bearer {{token}}
+
+> {%
+    client.log("\n========== KROK 4: USUNIĘCIE 1 SZTUKI (Zostały 3) ==========");
+    client.log(JSON.stringify(response.body, null, 2));
+%}
+
+
+### 5. Wypisanie szczegółów talii (z odjetymi kartami)
+GET {{baseUrl}}/decks/{{deckId}}
+Authorization: Bearer {{token}}
+
+> {%
+    client.log("\n========== KROK 5: SPRAWDZENIE TALII ==========");
+    client.log(JSON.stringify(response.body, null, 2));
+%}
+
+### 6. Całkowite usunięcie karty z talii (Wyrzucamy resztę)
+DELETE {{baseUrl}}/decks/{{deckId}}/cards/{{scryfallId}}?board=main
+Authorization: Bearer {{token}}
+
+> {%
+    client.log("\n========== KROK 6: CAŁKOWITE USUNIĘCIE KARTY ==========");
+    // Ten endpoint pewnie nie zwraca całej talii, tylko status OK, ale i tak wypisujemy loga
+    client.log(JSON.stringify(response.body, null, 2));
+%}
+
+### 7. Wypisanie szczegółów talii (z dodanymi kartami)
+GET {{baseUrl}}/decks/{{deckId}}
+Authorization: Bearer {{token}}
+
+> {%
+    client.log("\n========== KROK 7: SPRAWDZENIE TALII ==========");
+    client.log(JSON.stringify(response.body, null, 2));
+%}
+
+### 8. Całkowite usunięcie talii z bazy
+DELETE {{baseUrl}}/decks/{{deckId}}
+Authorization: Bearer {{token}}
+
+> {%
+    client.log("\n========== KROK 8: USUNIECIE TALII ==========");
+    client.log(JSON.stringify(response.body, null, 2));
+    client.log("\n>>> CYKL ZAKONCZONY SUKCESEM <<<");
+%}
+
+### 9. Wypisanie szczegółów talii (po delete)
+GET {{baseUrl}}/decks/{{deckId}}
+Authorization: Bearer {{token}}
+
+> {%
+    client.log("\n========== KROK 9: SPRAWDZENIE TALII ==========");
+    client.log(JSON.stringify(response.body, null, 2));
+%}

@@ -79,5 +79,24 @@ router.delete('/:id', requireJwt, async (req: Request, res: Response) => {
         return res.status(500).json({ message: error.message });
     }
 });
+router.delete('/:id/cards/:scryfallId', requireJwt, async (req: Request, res: Response) => {
+    try {
+        const deckId = req.params.id;
+        const scryfallId = req.params.scryfallId;
+
+        // Zabezpieczenie typów dla query params
+        const board = (req.query.board as string) || 'main';
+        const quantity = req.query.quantity ? parseInt(req.query.quantity as string, 10) : undefined;
+
+        await DeckService.removeCardFromDeck(deckId, scryfallId, board as any, quantity);
+
+        return res.status(200).json({ message: 'Pomyślnie usunięto kartę z talii' });
+    } catch (error: any) {
+        if (error.message.includes('not found')) {
+            return res.status(404).json({ message: error.message });
+        }
+        return res.status(500).json({ message: error.message });
+    }
+});
 
 export default router;

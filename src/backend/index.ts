@@ -20,7 +20,7 @@ app.use('/api/auth',authRoute);
 app.use('/api/user',userRoute);
 app.use('/api/cards',cardRoute);
 app.use('/api/collection', collectionRoute);
-app.use('/api/deck',deckRoute)
+app.use('/api/decks',deckRoute)
 app.get('/', (req: Request, res: Response) => {
     res.send('welcome to the Google OAuth 2.0 + JWT Node.js app!');
 });

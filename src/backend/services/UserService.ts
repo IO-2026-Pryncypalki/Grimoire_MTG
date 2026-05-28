@@ -8,7 +8,7 @@ export const getUserProfile = async (userId: string) => {
     });
 
     if (!user) {
-        throw new Error('Użytkownik nie istnieje');
+        throw new Error('User doesnt exist');
     }
 
     return {

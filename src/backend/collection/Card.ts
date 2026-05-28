@@ -95,21 +95,26 @@ export default class Card {
 
     // Constructs a Card domain object from a Sequelize model instance
     static fromModel(model: InstanceType<typeof CardModel>, isFoil = false): Card {
-        const raw = model.get() as Record<string, unknown>;
         const instance = new Card();
-        instance.scryfallId = raw.scryfallId as string;
-        instance.name = raw.name as string | null;
-        instance.setCode = raw.setCode as string | null;
-        instance.setName = raw.setName as string | null;
-        instance.collectorNumber = raw.collectorNumber as string | null;
-        instance.imageUri = raw.imageUri as string | null;
+
+        // Zamiast uzywac .get(), po prostu odwolujemy sie do pol (TypeScript teraz je widzi!)
+        instance.scryfallId = model.scryfallId;
+        instance.name = model.name;
+        instance.setCode = model.setCode;
+        instance.setName = model.setName;
+        instance.collectorNumber = model.collectorNumber;
+        instance.imageUri = model.imageUri ?? null;
+
+        // Ceny i logika foila
         instance.priceUsd = isFoil
-            ? (raw.priceUsdFoil as number | null)
-            : (raw.priceUsd as number | null);
-        instance.priceUsdFoil = raw.priceUsdFoil as number | null;
-        instance.priceEur = raw.priceEur as number | null;
-        instance.priceEurFoil = raw.priceEurFoil as number | null;
-        instance.scryfallUri = raw.scryfallUri as string | null;
+            ? (model.priceUsdFoil ?? null)
+            : (model.priceUsd ?? null);
+
+        instance.priceUsdFoil = model.priceUsdFoil ?? null;
+        instance.priceEur = model.priceEur ?? null;
+        instance.priceEurFoil = model.priceEurFoil ?? null;
+        instance.scryfallUri = model.scryfallUri ?? null;
+
         return instance;
     }
 }

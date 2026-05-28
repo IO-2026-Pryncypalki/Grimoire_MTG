@@ -1,8 +1,8 @@
 import Card from './Card';
 import CollectionEntry from './CollectionEntry';
 import ICardProvider from '../interfaces/ICardProvider';
-import { Card as CardModel } from '../models/Card';
-import { CollectionEntry as CollectionEntryModel } from '../models/CollectionEntry';
+import { Card as CardModel } from '../models/Card'; // To jest Twoja nowa klasa
+import { CollectionEntry as CollectionEntryModel } from '../models/CollectionEntry'; // To jest Twoja nowa klasa
 import { Op } from 'sequelize';
 
 export interface CollectionFilters {
@@ -54,10 +54,12 @@ export default class Collection {
             : [{ model: CardModel }];
 
         const rows = await CollectionEntryModel.findAll({
-            where:   { userId },
+            where: { userId },
             include,
         });
-        const entries = rows.map(row => CollectionEntry.fromModel(row));
+
+        // rzutowanie na 'any' na wypadek gdyby fromModel kumpla oczekiwał starego schematu
+        const entries = rows.map((row: any) => CollectionEntry.fromModel(row));
         return new Collection({ userId, entries });
     }
 
@@ -75,17 +77,16 @@ export default class Collection {
         if (existing) {
             existing.updateQuantity(quantity);
         } else {
-            this.entries.push(new CollectionEntry({ card, quantity, condition, isFoil, notes: null }));
+            // Ponieważ Twoje modele zmieniły CardCondition na union type ('NM' | 'M' | itd), rzutujemy
+            this.entries.push(new CollectionEntry({ card, quantity, condition: condition as any, isFoil, notes: null }));
             CollectionEntryModel.findOrCreate({
-                where:    { userId: this.userId, scryfallId: card.getScryfallId(), condition, isFoil },
+                where: { userId: this.userId, scryfallId: card.getScryfallId(), condition: condition as any, isFoil },
                 defaults: { quantity },
-            }).catch(err => console.error('addCard DB error:', err));
+            }).catch((err: any) => console.error('addCard DB error:', err));
         }
     }
 
     // Moves `quantity` copies from one condition to another.
-    // Decrements source; creates or increments destination.
-    // If source hits 0 it's pruned from the in-memory list.
     public transferCondition(
         scryfallId: string,
         fromCondition: string,
@@ -120,14 +121,15 @@ export default class Collection {
     public removeCard(scryfallId: string, condition?: string, isFoil?: boolean): void {
         this.entries = this.entries.filter(e =>
             !(e.getCard().getScryfallId() === scryfallId &&
-            (condition === undefined || e.getCondition() === condition) &&
-            (isFoil === undefined || e.getIsFoil() === isFoil))
+                (condition === undefined || e.getCondition() === condition) &&
+                (isFoil === undefined || e.getIsFoil() === isFoil))
         );
         const where: any = { userId: this.userId, scryfallId };
         if (condition !== undefined) where.condition = condition;
-        if (isFoil !== undefined) where.isFoil    = isFoil;
+        if (isFoil !== undefined) where.isFoil = isFoil;
+
         CollectionEntryModel.destroy({ where })
-            .catch(err => console.error('removeCard DB error:', err));
+            .catch((err: any) => console.error('removeCard DB error:', err));
     }
 
     public getEntries(): CollectionEntry[] { return this.entries; }
@@ -139,7 +141,6 @@ export default class Collection {
         }, 0);
     }
 
-    // Async — callers must await. Continues on per-card errors (resilient).
     public async refreshPrices(provider: PriceProvider): Promise<RefreshPricesResult> {
         const result: RefreshPricesResult = {
             totalCards: this.entries.length,
@@ -168,7 +169,6 @@ export default class Collection {
                 entry.getCard().updatePrice(newPrice);
                 result.updatedCards += 1;
             } catch {
-                // One card failing doesn't stop the rest
                 result.failedCards += 1;
                 result.failedIds.push(scryfallId);
             }
@@ -177,7 +177,6 @@ export default class Collection {
         return result;
     }
 
-    // Removes zero-quantity entries from memory after transfers or decrements
     public pruneEmpty(): void {
         this.entries = this.entries.filter(e => e.getQuantity() > 0);
     }

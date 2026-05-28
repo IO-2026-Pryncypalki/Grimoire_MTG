@@ -12,8 +12,8 @@ Session.belongsTo(User, { foreignKey: 'userId' });
 User.hasMany(CollectionEntry, { foreignKey: 'userId' });
 CollectionEntry.belongsTo(User, { foreignKey: 'userId' });
 
+CollectionEntry.belongsTo(Card, { foreignKey: 'scryfallId', targetKey: 'scryfallId' });
 Card.hasMany(CollectionEntry, { foreignKey: 'scryfallId' });
-CollectionEntry.belongsTo(Card, { foreignKey: 'scryfallId' });
 
 
 // User <-> Decks

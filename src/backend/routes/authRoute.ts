@@ -25,14 +25,13 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
        const expiresAt = new Date();
         const userAgent = req.headers['user-agent'] || '';
         // Prosty regex - jak znajdzie słowo 'android' albo 'mobile', to apka/telefon, jak nie, to web
-        const deviceType = /android|mobile/i.test(userAgent) ? 'android' : 'web';
+        const deviceType = /android|mobile/i.test(userAgent) ? 'mobile' : 'web';
        expiresAt.setDate(expiresAt.getDate() + expiryDays)
         Session.create(
             {
                 userId: user.id,
                 refreshToken:hashedToken,
                 device:deviceType,
-                createdAt:new Date(),
                 expiresAt
 
             }

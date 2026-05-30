@@ -23,14 +23,14 @@ describe('Deck', () => {
     test('dodaje kartę z podaną liczbą kopii', () => {
       const deck = makeDeck();
       deck.addCard(makeCard(), 4);
-      expect(deck.getCard('abc-123').getQuantity()).toBe(4);
+      expect(deck.getCard('abc-123')?.getQuantity()).toBe(4);
     });
 
     test('sumuje count przy ponownym dodaniu tej samej karty', () => {
       const deck = makeDeck();
       deck.addCard(makeCard(), 2);
       deck.addCard(makeCard(), 2);
-      expect(deck.getCard('abc-123')).toBe(4);
+      expect(deck.getCard('abc-123')?.getQuantity()).toBe(4);
     });
 
     test('rzuca błąd gdy count <= 0', () => {
@@ -45,7 +45,7 @@ describe('Deck', () => {
       const deck = makeDeck();
       deck.addCard(makeCard(), 4);
       deck.removeCard('abc-123');
-      expect(deck.getCard('abc-123')).toBe(false);
+      expect(deck.getCard('abc-123')).toBeNull();
     });
 
     test('nie rzuca błędu dla nieistniejącego ID', () => {
@@ -91,19 +91,20 @@ describe('Deck', () => {
       const deck = makeDeck();
       const cards = [makeCard('a'), makeCard('b')];
       const provider = {
-          searchCard:     jest.fn().mockResolvedValue([makeCard()]),
+          searchCard:     jest.fn().mockResolvedValue(cards),
           getPrice:       jest.fn(),
           getCardDetails: jest.fn(),
       };
 
       const result = await deck.searchNewCards('test', provider);
       expect(result).toHaveLength(2);
+      expect(result).toEqual(cards);
     });
 
     test('zwraca [] gdy provider zwraca pustą listę', async () => {
       const deck = makeDeck();
       const provider = {
-          searchCard:     jest.fn().mockResolvedValue([makeCard()]),
+          searchCard:     jest.fn().mockResolvedValue([]),
           getPrice:       jest.fn(),
           getCardDetails: jest.fn(),
       };

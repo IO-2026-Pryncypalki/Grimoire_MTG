@@ -19,11 +19,11 @@ export default class DeckEntry {
         return this.notes;
     }
     public updateQuantity(delta : number){
-        if ( this.quantity - delta < 0)
+        if ( this.quantity + delta < 0)
         {
             throw Error("You don't have enough items ( quantity would be negative)")
         }
-        this.quantity -= delta;
+        this.quantity += delta;
     }
     public setNotes(notes : string) {
         this.notes = notes;

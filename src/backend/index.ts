@@ -9,6 +9,7 @@ import authRoute from './routes/authRoute'
 import userRoute from './routes/userRoute'
 import cardRoute from './routes/cardRoute'
 import collectionRoute from './routes/collectionRoute';
+import deckRoute from './routes/deckRoute';
 import './models/associations';
 
 const app = express();
@@ -19,6 +20,7 @@ app.use('/api/auth',authRoute);
 app.use('/api/user',userRoute);
 app.use('/api/cards',cardRoute);
 app.use('/api/collection', collectionRoute);
+app.use('/api/decks', deckRoute);
 app.get('/', (req: Request, res: Response) => {
     res.send('welcome to the Google OAuth 2.0 + JWT Node.js app!');
 });

@@ -27,21 +27,29 @@ export default class Deck {
     public getCards(): DeckEntry[]{
     return this.cards;
     }
-    public getCard(scryfallId : string): DeckEntry
+    public getCard(scryfallId : string): DeckEntry | null
     {
-        return this.cards[0];
+        return this.cards.find((entry) => entry.getCard().getScryfallId() === scryfallId) ?? null;
     }
     public addCard(card : Card,count : number){
-
+        if (count <= 0) {
+            throw new Error('Card quantity must be greater than 0');
+        }
+        const existingEntry = this.getCard(card.getScryfallId());
+        if (existingEntry) {
+            existingEntry.updateQuantity(count);
+            return;
+        }
+        this.cards.push(new DeckEntry({ card, quantity: count, notes: '' }));
     }
     public removeCard(scryfallId : string){
-
+        this.cards = this.cards.filter((entry) => entry.getCard().getScryfallId() !== scryfallId);
     }
     public validate(validator : IDeckValidator): boolean{
-        return false;
+        return validator.isValid(this, this.format);
     }
-    public searchNewCards(query : string,provider : ICardProvider): Card[]
+    public async searchNewCards(query : string,provider : ICardProvider): Promise<Card[]>
     {
-        return [];
+        return provider.searchCard(query);
     }
 }

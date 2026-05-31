@@ -38,6 +38,7 @@ export default class Card {
         mana_cost?: string | null,
         cmc?: number | null,
         type_line?: string | null,
+        oracle_text?: string | null,
         oracle_id?: string | null,
         power?: string | null,
         toughness?: string | null,
@@ -57,7 +58,7 @@ export default class Card {
             this.manaCost = data?.mana_cost ?? null,
             this.cmc = data?.cmc ?? null,
             this.typeLine = data?.type_line ?? null,
-            this.oracleText = data?.oracle_id ?? null,
+            this.oracleText = data?.oracle_text ?? data?.oracle_id ?? null,
             this.power = data?.power ?? null,
             this.toughness = data?.toughness ?? null,
             this.rarity = data?.rarity ?? null;
@@ -79,14 +80,59 @@ export default class Card {
     public getSetCode(): string | null {
         return this.setCode;
     }
-    // public getCurrentPrice(): Price | null{
-    //     return this.currentPrice;
-    // }
+    public getSetName(): string | null {
+        return this.setName;
+    }
+    public getCollectorNumber(): string | null {
+        return this.collectorNumber;
+    }
+    public getLang(): string | null {
+        return this.lang;
+    }
+    public getManaCost(): string | null {
+        return this.manaCost;
+    }
+    public getCmc(): number | null {
+        return this.cmc;
+    }
+    public getTypeLine(): string | null {
+        return this.typeLine;
+    }
+    public getOracleText(): string | null {
+        return this.oracleText;
+    }
+    public getPower(): string | null {
+        return this.power;
+    }
+    public getToughness(): string | null {
+        return this.toughness;
+    }
+    public getRarity(): string | null {
+        return this.rarity;
+    }
+    public getColors(): string[] {
+        return this.colors;
+    }
+    public getColorIdentity(): string[] {
+        return this.colorsIdentity;
+    }
     public getImageUrl(): string | null {
         return this.imageUri;
     }
     public getCurrentPrice(): number | null {
         return this.priceUsd;
+    }
+    public getPriceUsdFoil(): number | null {
+        return this.priceUsdFoil;
+    }
+    public getPriceEur(): number | null {
+        return this.priceEur;
+    }
+    public getPriceEurFoil(): number | null {
+        return this.priceEurFoil;
+    }
+    public getScryfallUri(): string | null {
+        return this.scryfallUri;
     }
 
     public updatePrice(price: number | null): void {
@@ -102,14 +148,27 @@ export default class Card {
         instance.setCode = raw.setCode as string | null;
         instance.setName = raw.setName as string | null;
         instance.collectorNumber = raw.collectorNumber as string | null;
+        instance.lang = raw.lang as string | null;
+        instance.manaCost = raw.manaCost as string | null;
+        instance.cmc = raw.cmc !== null && raw.cmc !== undefined
+            ? Number(raw.cmc)
+            : null;
+        instance.typeLine = raw.typeLine as string | null;
+        instance.oracleText = raw.oracleText as string | null;
+        instance.power = raw.power as string | null;
+        instance.toughness = raw.toughness as string | null;
+        instance.rarity = raw.rarity as string | null;
+        instance.colors = (raw.colors as string[] | null) ?? [];
+        instance.colorsIdentity = (raw.colorIdentity as string[] | null) ?? [];
         instance.imageUri = raw.imageUri as string | null;
-        instance.priceUsd = isFoil
-            ? (raw.priceUsdFoil as number | null)
-            : (raw.priceUsd as number | null);
+        instance.priceUsd = raw.priceUsd as number | null;
         instance.priceUsdFoil = raw.priceUsdFoil as number | null;
         instance.priceEur = raw.priceEur as number | null;
         instance.priceEurFoil = raw.priceEurFoil as number | null;
         instance.scryfallUri = raw.scryfallUri as string | null;
+        if (isFoil) {
+            instance.priceUsd = instance.priceUsdFoil;
+        }
         return instance;
     }
 }

@@ -4,8 +4,57 @@ import Collection, { CollectionFilters } from '../collection/Collection';
 import Card from '../collection/Card';
 import { Card as CardModel } from '../models/Card';
 import ScryfallAdapter from '../adapters/ScryfallAdapter';
+import { ensureCardInDb } from '../services/CardService';
+import type { CardCondition } from '../models/CollectionEntry';
 
 const router = Router();
+
+const VALID_CONDITIONS: CardCondition[] = ['M', 'NM', 'GD', 'LP', 'MP', 'HP', 'DMG'];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function parseAddToCollectionBody(body: Record<string, unknown>): {
+    ok: true;
+    scryfallId: string;
+    quantity: number;
+    condition: CardCondition;
+    isFoil: boolean;
+} | { ok: false; message: string } {
+    const { scryfallId, quantity, condition, isFoil } = body;
+
+    if (typeof scryfallId !== 'string' || !UUID_RE.test(scryfallId)) {
+        return { ok: false, message: 'scryfallId must be a valid UUID' };
+    }
+
+    const parsedQuantity = quantity === undefined ? 1 : quantity;
+    if (
+        typeof parsedQuantity !== 'number' ||
+        !Number.isInteger(parsedQuantity) ||
+        parsedQuantity < 1
+    ) {
+        return { ok: false, message: 'quantity must be a positive integer' };
+    }
+
+    const parsedCondition = condition === undefined ? 'NM' : condition;
+    if (
+        typeof parsedCondition !== 'string' ||
+        !VALID_CONDITIONS.includes(parsedCondition as CardCondition)
+    ) {
+        return { ok: false, message: 'condition is invalid' };
+    }
+
+    const parsedIsFoil = isFoil === undefined ? false : isFoil;
+    if (typeof parsedIsFoil !== 'boolean') {
+        return { ok: false, message: 'isFoil must be a boolean' };
+    }
+
+    return {
+        ok: true,
+        scryfallId,
+        quantity: parsedQuantity,
+        condition: parsedCondition as CardCondition,
+        isFoil: parsedIsFoil,
+    };
+}
 
 function getQueryParam(value: unknown): string | undefined {
     if (typeof value === 'string') {
@@ -72,22 +121,36 @@ router.get('/', requireJwt, async (req: Request, res: Response) => {
 router.post('/', requireJwt, async (req: Request, res: Response) => {
     try {
         const user = req.user as any;
-        const { scryfallId, quantity = 1, condition = 'NM', isFoil = false } = req.body;
+        const validation = parseAddToCollectionBody(req.body);
 
-        if (!scryfallId) {
-            return res.status(400).json({ message: 'scryfallId is required' });
+        if (!validation.ok) {
+            return res.status(400).json({ message: validation.message });
         }
 
-        const cardModel = await CardModel.findByPk(scryfallId);
-        if (!cardModel) {
-            return res.status(404).json({ message: 'Card not found — fetch it via the search endpoint first' });
+        const { scryfallId, quantity, condition, isFoil } = validation;
+
+        let cardModel: InstanceType<typeof CardModel>;
+        try {
+            cardModel = await ensureCardInDb(scryfallId);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to resolve card';
+            if (message === 'Card not found') {
+                return res.status(404).json({ message });
+            }
+            if (message === 'Scryfall Rate Limit Exceeded') {
+                return res.status(429).json({ error: 'Scryfall Rate Limit Exceeded.' });
+            }
+            throw error;
         }
 
-        const card = Card.fromModel(cardModel as InstanceType<typeof CardModel>, isFoil);
+        const card = Card.fromModel(cardModel, isFoil);
         const collection = await Collection.load(user.id);
-        collection.addCard(card, { quantity, condition, isFoil });
+        const entry = await collection.addCardAndSave(card, { quantity, condition, isFoil });
 
-        return res.status(201).json({ message: 'Card added to collection' });
+        return res.status(201).json({
+            message: 'Card added to collection',
+            entry,
+        });
     } catch (error) {
         return res.status(500).json({ message: 'Failed to add card', error });
     }

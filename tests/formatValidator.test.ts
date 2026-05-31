@@ -83,4 +83,37 @@ describe('FormatValidator', () => {
       expect(() => validator.isValid(null, 'Standard')).toThrow();
     });
   });
+
+  describe('getCardFormatWarning', () => {
+    test('zwraca null dla legal', () => {
+      expect(validator.getCardFormatWarning('legal', 'Modern')).toBeNull();
+    });
+
+    test('zwraca ostrzeżenie not_legal', () => {
+      const warning = validator.getCardFormatWarning('not_legal', 'Standard');
+      expect(warning).toEqual({
+        status: 'not_legal',
+        message: 'Karta nie jest legalna w formacie Standard',
+      });
+    });
+
+    test('zwraca ostrzeżenie restricted', () => {
+      const warning = validator.getCardFormatWarning('restricted', 'Vintage');
+      expect(warning?.status).toBe('restricted');
+      expect(warning?.message).toContain('Vintage');
+    });
+
+    test('zwraca ostrzeżenie banned', () => {
+      const warning = validator.getCardFormatWarning('banned', 'Modern');
+      expect(warning?.status).toBe('banned');
+    });
+
+    test('zwraca null dla Custom bez sprawdzania', () => {
+      expect(validator.getCardFormatWarning('not_legal', 'Custom')).toBeNull();
+    });
+
+    test('zwraca null gdy brak statusu', () => {
+      expect(validator.getCardFormatWarning(null, 'Modern')).toBeNull();
+    });
+  });
 });

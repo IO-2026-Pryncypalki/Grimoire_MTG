@@ -21,6 +21,13 @@ export interface RefreshPricesResult {
 
 type PriceProvider = Pick<ICardProvider, 'getPrice'>;
 
+export interface SavedCollectionEntry {
+    scryfallId: string;
+    quantity: number;
+    condition: string;
+    isFoil: boolean;
+}
+
 export default class Collection {
     private userId: string;
     private entries: CollectionEntry[] = [];
@@ -81,6 +88,49 @@ export default class Collection {
                 defaults: { quantity },
             }).catch(err => console.error('addCard DB error:', err));
         }
+    }
+
+    public async addCardAndSave(
+        card: Card,
+        options: { quantity?: number; condition?: string; isFoil?: boolean } = {},
+    ): Promise<SavedCollectionEntry> {
+        if (!card) throw new Error("You can't add null");
+        const { quantity = 1, condition = 'NM', isFoil = false } = options;
+        const scryfallId = card.getScryfallId();
+
+        const [row, created] = await CollectionEntryModel.findOrCreate({
+            where:    { userId: this.userId, scryfallId, condition, isFoil },
+            defaults: { quantity },
+        });
+
+        let finalQuantity: number;
+        if (created) {
+            finalQuantity = quantity;
+        } else {
+            finalQuantity = (row.get('quantity') as number) + quantity;
+            await row.update({ quantity: finalQuantity });
+        }
+
+        await row.reload({ include: [{ model: CardModel }] });
+        const domainEntry = CollectionEntry.fromModel(row);
+
+        const memIdx = this.entries.findIndex(e =>
+            e.getCard().getScryfallId() === scryfallId &&
+            e.getCondition() === condition &&
+            e.getIsFoil() === isFoil
+        );
+        if (memIdx >= 0) {
+            this.entries[memIdx] = domainEntry;
+        } else {
+            this.entries.push(domainEntry);
+        }
+
+        return {
+            scryfallId,
+            quantity: finalQuantity,
+            condition,
+            isFoil,
+        };
     }
 
     // Moves `quantity` copies from one condition to another.

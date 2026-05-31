@@ -20,8 +20,14 @@ import {
     type AssignCollectionEntryInput,
     type DeckCardFillStatus,
 } from './DeckCardAssignmentService';
+import { ensureCardInDb } from './CardService';
+import {
+    getWarningForCard,
+    getWarningsForDeckCards,
+    type FormatWarningDto,
+} from './DeckFormatWarningService';
 
-export type { DeckCardFillStatus, AssignCollectionEntryInput };
+export type { DeckCardFillStatus, AssignCollectionEntryInput, FormatWarningDto };
 
 export interface DeckListItem {
     id: string;
@@ -57,6 +63,7 @@ export interface DeckCardItem {
     setCode: string | null;
     imageUrl: string | null;
     fillStatus: DeckCardFillStatus;
+    formatWarning: FormatWarningDto | null;
 }
 
 export interface DeckDetails extends DeckListItem {
@@ -80,7 +87,15 @@ export interface RemoveDeckCardResult {
     card?: DeckCardItem;
 }
 
-const toDeckCardItem = (card: DeckCardRecord): DeckCardItem => ({
+export interface AddDeckCardResult {
+    card: DeckCardItem;
+    formatWarning: FormatWarningDto | null;
+}
+
+const toDeckCardItem = (
+    card: DeckCardRecord,
+    formatWarning: FormatWarningDto | null = null,
+): DeckCardItem => ({
     id: card.id,
     scryfallId: card.scryfallId,
     quantity: card.quantity,
@@ -96,6 +111,7 @@ const toDeckCardItem = (card: DeckCardRecord): DeckCardItem => ({
         condition: a.condition,
         isFoil: a.isFoil,
     })) as Parameters<typeof buildDeckCardFillStatus>[1]),
+    formatWarning,
 });
 
 const toDeckListItem = (deck: DeckRecord): DeckListItem => ({
@@ -156,9 +172,14 @@ export const getDeckDetails = async (userId: string, deckId: string): Promise<De
     }
 
     const { cards, ...deckMeta } = deck;
+    const warnings = await getWarningsForDeckCards(
+        cards.map((card) => card.scryfallId),
+        deckMeta.format,
+    );
+
     return {
         ...toDeckListItem(deckMeta),
-        cards: cards.map(toDeckCardItem),
+        cards: cards.map((card) => toDeckCardItem(card, warnings.get(card.scryfallId) ?? null)),
     };
 };
 
@@ -220,9 +241,16 @@ export const addCardToDeck = async (
     userId: string,
     deckId: string,
     input: AddDeckCardInput,
-): Promise<DeckCardItem> => {
+): Promise<AddDeckCardResult> => {
     const quantity = input.quantity ?? 1;
     assertPositiveQuantity(quantity);
+
+    const deckMeta = await getByIdForUser(deckId, userId);
+    if (!deckMeta) {
+        throw new Error('Deck not found');
+    }
+
+    await ensureCardInDb(input.scryfallId);
 
     const card = await addCardToDeckForUser(deckId, userId, {
         scryfallId: input.scryfallId,
@@ -238,7 +266,16 @@ export const addCardToDeck = async (
 
     const deck = await getByIdForUserWithCards(deckId, userId);
     const updatedCard = deck?.cards.find((c) => c.id === card.id);
-    return toDeckCardItem(updatedCard ?? { ...card, assignments: [] });
+    const formatWarning = await getWarningForCard(input.scryfallId, deckMeta.format);
+    const deckCardItem = toDeckCardItem(
+        updatedCard ?? { ...card, assignments: [] },
+        formatWarning,
+    );
+
+    return {
+        card: deckCardItem,
+        formatWarning,
+    };
 };
 
 export const removeCardFromDeck = async (

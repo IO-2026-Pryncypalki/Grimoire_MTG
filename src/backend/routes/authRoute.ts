@@ -50,7 +50,7 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
             maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRY_MIN || '15',10) * 60 * 1000 // 15 minut
         });
         // 3. Czysty redirect na frontend (bez brudzenia URL!)
-        const redirectUrl = `${process.env.FE_BASE_URL}/api/user`;
+        const redirectUrl = `${process.env.FE_BASE_URL}/api/user/me`;
         return res.status(302).redirect(redirectUrl);
     } catch (error) {
         return res.status(500).json({ message: 'An error occurred during authentication', error });

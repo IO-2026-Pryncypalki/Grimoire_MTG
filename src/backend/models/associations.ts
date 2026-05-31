@@ -5,6 +5,7 @@ import { CollectionEntry } from './CollectionEntry';
 import { Deck } from './Deck';
 import { DeckCard } from './DeckCard';
 import { DeckCardAssignment } from './DeckCardAssignment';
+import { CardLegality } from './CardLegality';
 
 // Sessions
 User.hasMany(Session, { foreignKey: 'userId' });
@@ -16,6 +17,9 @@ CollectionEntry.belongsTo(User, { foreignKey: 'userId' });
 
 Card.hasMany(CollectionEntry, { foreignKey: 'scryfallId' });
 CollectionEntry.belongsTo(Card, { foreignKey: 'scryfallId' });
+
+Card.hasMany(CardLegality, { foreignKey: 'scryfallId' });
+CardLegality.belongsTo(Card, { foreignKey: 'scryfallId' });
 
 // Decks
 User.hasMany(Deck, { foreignKey: 'userId' });

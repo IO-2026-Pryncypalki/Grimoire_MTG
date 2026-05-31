@@ -48,6 +48,9 @@ const mapDeckServiceError = (error: unknown, res: Response, fallbackMessage: str
     if (message === 'Deck not found') {
         return res.status(404).json({ message });
     }
+    if (message === 'Scryfall Rate Limit Exceeded') {
+        return res.status(429).json({ error: 'Scryfall Rate Limit Exceeded.' });
+    }
     if (
         message === 'Deck name must not be empty' ||
         message === 'Invalid lastValidatedAt date' ||
@@ -265,7 +268,7 @@ router.post('/:id/cards', requireJwt, async (req: Request, res: Response) => {
 
         const { scryfallId, quantity, board, assignments } = validation;
 
-        const card = await DeckService.addCardToDeck(user.id, req.params.id, {
+        const result = await DeckService.addCardToDeck(user.id, req.params.id, {
             scryfallId,
             quantity,
             board,
@@ -274,7 +277,8 @@ router.post('/:id/cards', requireJwt, async (req: Request, res: Response) => {
 
         return res.status(201).json({
             message: 'Card added to deck',
-            card,
+            card: result.card,
+            formatWarning: result.formatWarning,
         });
     } catch (error) {
         return mapDeckServiceError(error, res, 'Failed to add card to deck');

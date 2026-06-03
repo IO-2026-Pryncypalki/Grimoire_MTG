@@ -1,0 +1,1578 @@
+00:00 +0: OCR Accuracy Tests - assets/test Sprawdź wszystkie obrazy z test
+Testowanie: assets/test/adipose_offspring.png
+✅ SUKCES: Oczekiwano "adipose offspring", otrzymano "Adipose ffspring"
+Cały tekst: "Adipose ffspring
+Creature- Alien
+Emerge 5*
+When Adipose Offspring enters the
+battlefield, create a 2/2 white Alien
+creature token. If Adipose Offspring's
+emerge cost was paid, instead create
+X of those tokens, where X is the
+sacrificed creature's toughness.
+R 0333
+WHO •EN >JoHN TEDRICK
+O BBC
+2/2
+t« &© 2023 Wizards of the Coast
+3"
+Czas skanowania: "4.487"
+Testowanie: assets/test/adipose_offspring_1.png
+✅ SUKCES: Oczekiwano "adipose offspring 1", otrzymano "Adipose Offspring"
+Cały tekst: "Adipose Offspring
+Creature - Alien
+Emerge 5*
+R O924
+When Adipose Offspring enters the
+battlefield, create a 2/2 white Alien
+creature token. If Adipose Offspring's
+emerge cost was paid, instead create
+Xof those tokens, where X is the
+sacrificed creature's toughness.
+WHO *EN IoHN TEDRICK
+BBC
+2/2
+TM & 2023 Wizards of the Coast
+("
+Czas skanowania: "3.485"
+Testowanie: assets/test/angel_s_grace.png
+❌ BŁĄD w assets/test/angel_s_grace.png: Oczekiwano "angel s grace", ale OCR wykrył "Instant"
+Cały tekst: "Instant
+Angel's Grace
+Split second (As long as this spell is on the
+Stack, players can't cast spells or activate
+abilities that aren't mana abulties. )
+004/289 R
+You can't lose the game this turn and
+your opponents can't win the game this
+turn. Until end of turn, damage that
+would reduce your life total to less than l
+reduces it to l instead.
+TSR• EN oLTAN BOROS
+TM &CO 2020 Wzards of the Coast"
+Czas skanowania: "3.174"
+Testowanie: assets/test/arcane_omens.png
+✅ SUKCES: Oczekiwano "arcane omens", otrzymano "Arcane Omens"
+Cały tekst: "Arcane Omens
+Sorcery
+Target player discards
+Converge
+X cards, where X is the number of
+colors of mana spent to cast this spell.
+Lluwen suddenly feli that he was seeing
+sOmething very dangerous. The crackling
+magic, the thunderous chanting-the urge
+to turn and run replaced all his curiosity.
+U O073
+SOS EN
+Story Spotlight
+ANTONIO losÉ MANZANEDO
+mtgstory.com
+TM & 2026 Wizards of the Coast"
+Czas skanowania: "3.348"
+Testowanie: assets/test/aspect_of_wolf.png
+✅ SUKCES: Oczekiwano "aspect of wolf", otrzymano "Aspect of Wolf"
+Cały tekst: "Aspect of Wolf
+Enchant Creature
+Target Creature's power and
+toughness are increased by half the
+unnber. of toreSts youI have n play
+rOunduag cowIn t0r pewer 2tnd up
+for toughness.
+Illus. O 1994 JeffA, Menges"
+Czas skanowania: "2.683"
+Testowanie: assets/test/austere_command.png
+✅ SUKCES: Oczekiwano "austere command", otrzymano "Austere Command"
+Cały tekst: "Austere Command
+Sorcery
+Choose two
+Destroy all artifacts.
+Destroy
+all enchantments.
+• Destroy all creatures with mana
+value 3 or less.
+Destroy all creatures with mana
+value 4 or greater.
+RO172
+MOC•EN >ÀNNA STEINBAUER
+TM & 2023 Vizards of the Coast"
+Czas skanowania: "3.224"
+Testowanie: assets/test/avatar_of_fury.png
+❌ BŁĄD w assets/test/avatar_of_fury.png: Oczekiwano "avatar of fury", ale OCR wykrył "IHUNG"
+Cały tekst: "IHUNG
+NUA-HNNI
+Avatar of Fury
+Creature- Avatar
+If an opponent controls seven or
+more lands, Avatar of Fury costs 6
+less t0 cast.
+Flying
+2:Avatar of Fury gets t+1/+0 until
+end of turn.
+kpost
+6/6"
+Czas skanowania: "2.809"
+Testowanie: assets/test/aven_fisher.png
+✅ SUKCES: Oczekiwano "aven fisher", otrzymano "Aven Fisher"
+Cały tekst: "Aven Fisher
+Creature Bird Soldier
+Flying
+When Aven Fisher dies, you may
+draw a card.
+The sane spears that catch their food
+today will defend their homes tomorrow.
+041/261 C
+DMREN >CHRISTOPHER MOELLER
+2/2
+M &©2023 Wizards of the Coast
+3"
+Czas skanowania: "2.74"
+Testowanie: assets/test/aven_heartstabber.png
+✅ SUKCES: Oczekiwano "aven heartstabber", otrzymano "Aven Heartstabber"
+Cały tekst: "Aven Heartstabber
+Creature - Bird Assassin
+Flying
+As long as there are five or more
+mana values among cards in your
+graveyard, Aven Heartstabber gets
++2/+2 and has deathtouch.
+When Aven Heartstabber dies, mill
+two cards, then draw a card.
+766/ 281 R
+SNC• EN >DAN SCOTT
+1/1
+M& O 2022 Wizards of the Coast"
+Czas skanowania: "3.027"
+Testowanie: assets/test/bag_end_porter.png
+✅ SUKCES: Oczekiwano "bag end porter", otrzymano "Bag End Porter"
+Cały tekst: "Bag End Porter
+Creature - Dwarf
+Whenever Bag End Porter attacks,
+it gets +X/+8 until end of turn,
+where X is the number of legendary
+Creatures you control.
+"Dwarves' tongues run on when
+speaking of their handiwork, they say."
+-Glóin
+C 0153
+LTR EN ►DẠNIEL CORREIA
+O MEE
+4/4
+TM &O 2023 Wizards of the Coast"
+Czas skanowania: "3.157"
+Testowanie: assets/test/baleful_stare.png
+✅ SUKCES: Oczekiwano "baleful stare", otrzymano "BalefulI Stare"
+Cały tekst: "BalefulI Stare
+Sorcery
+Target opponent reveals his or her
+hand. You draw a card for each
+Mountain and red card in it.
+"Though there is liude to be learned
+from your dust and stones, I shall wring
+them dry nevertheless."
+Randy Gallegos
+TM &O 1993-2005 Wizards of the Coast, Inc. 64350"
+Czas skanowania: "3.482"
+Testowanie: assets/test/baleful_strix.png
+✅ SUKCES: Oczekiwano "baleful strix", otrzymano "Baleful Strix"
+Cały tekst: "Baleful Strix
+Artifact Creafure- Bird
+Flying, deathtouch
+When Baleful Strix enters the
+battlefield, draw a card.
+Its beak rends flesh and bone, exposng
+the tender marrow of dream.
+181/351 U
+C16• EN >NILS HAMM
+1/1
+ru &C 2016 Wizards of the Coast"
+Czas skanowania: "2.8"
+Testowanie: assets/test/banisher_priest.png
+✅ SUKCES: Oczekiwano "banisher priest", otrzymano "Banisher Priest"
+Cały tekst: "Banisher Priest
+Creature - Human Cleric
+When Banisher Priest enters the
+battlefield, exile target creature an
+opponent controls until Banisher Priest
+leaves the battlefield. (That creature
+returns under its owner's control.)
+"Oathbreaker, I cast you out!"
+002/067 U
+DDO• EN WLLiAN MURAS
+2/2
+TN & O2015 Wizards of the Coast"
+Czas skanowania: "2.787"
+Testowanie: assets/test/barrensteppe_siege.png
+✅ SUKCES: Oczekiwano "barrensteppe siege", otrzymano "Barrensteppe Siege"
+Cały tekst: "Barrensteppe Siege
+Enchantment
+As this enchantment enters, choose Abzan or
+Mardu.
+• Abzan -At the beginning of your end step,
+put a +1/+1 counter on each creature you
+control.
+• Mardu– At the beginning of your end step,
+if a creature died under your control this
+turn, each opponent sacrifices a creature of
+their choice.
+R O171
+TDM • EN >TUAN DUONG CHU
+TM & 2025 Wizards of the Coast"
+Czas skanowania: "3.171"
+Testowanie: assets/test/benevolent_river_spirit.png
+✅ SUKCES: Oczekiwano "benevolent river spirit", otrzymano "Benevolent River Spirit"
+Cały tekst: "Benevolent River Spirit
+Creature - Spirit
+As an additional cost to cast this spell,
+waterbend 5. (While paying a vaterbend cost,
+you can tap yoUr artifacts and Creatures to help.
+Each one pays for 1)
+Flying, ward 2 (Whenever this creature becomes
+the target of a spell or ability an opponent
+controls, counter it unless that player pays 2.)
+When this creature enters, scry 2.
+U 0045
+TLA EN kM2UTAMETORI
+©2025 Viacom.
+4/5
+TM & 2025 Wizards of the Coast"
+Czas skanowania: "3.495"
+Testowanie: assets/test/black_market_tycoon.png
+✅ SUKCES: Oczekiwano "black market tycoon", otrzymano "Black Market Tycoon"
+Cały tekst: "Black Market Tycoon
+Creature
+At the beginning of your upkeep, Black
+Market Tycoon deals 2 damage to you
+for each Treasure you control.
+Cat Rogue
+C: Create a Treasure token.
+I have exactly what you need. The
+question is, how badly do you need it)"
+167/281
+R
+SNG• EN BROCK GROSSMAN
+2/2
+TM & © 2022 Wizards of the Coast"
+Czas skanowania: "3.033"
+Testowanie: assets/test/blossoming_sands.png
+❌ BŁĄD w assets/test/blossoming_sands.png: Oczekiwano "blossoming sands", ale OCR wykrył "Land"
+Cały tekst: "Land
+Blossoming Sands
+Blossoming Sands enters the battlefield
+tapped.
+When Blossoming Sands enters the
+battlefield, you gain 1 life.
+C:Add or *.
+243/280 C
+M 20
+M20 ỂN >SAM BURLEY
+TM &&O 2019 1Wizards of the Coast"
+Czas skanowania: "2.646"
+Testowanie: assets/test/boggart_mob.png
+✅ SUKCES: Oczekiwano "boggart mob", otrzymano "Boggart Mob"
+Cały tekst: "Boggart Mob
+Creature
+Goblin Warrior
+3
+Champion a Goblin When this comes into
+play, sacrfice it unless you remove another
+Goblin you control from the game. Vhen this
+leaves play, that card returns to play.)
+Whenever a Goblin you control deals
+Combat damage to a player, you may put
+a 1/1 black Goblin Rogue creature token
+into play.
+Thomas Denmark
+SM&O1993 2007 Wizards of the Coust, Inc. 304/303
+5/5"
+Czas skanowania: "3.532"
+Testowanie: assets/test/bound_in_silence.png
+❌ BŁĄD w assets/test/bound_in_silence.png: Oczekiwano "bound in silence", ale OCR wykrył "IIUNG"
+Cały tekst: "IIUNG
+NUA-BNNIP
+Bound in Silence
+Tribal Enchantment
+Enchant creature
+Rebel Aura
+Enchanted creature can't attack or
+block.
+A fight put off forever is already won.
+William Simpson
+TM &© 1993-2007 Wizards of the Coast, Inc. 20/180"
+Czas skanowania: "2.727"
+Testowanie: assets/test/braid_of_fire.png
+✅ SUKCES: Oczekiwano "braid of fire", otrzymano "Braid of Fire"
+Cały tekst: "Braid of Fire
+Enchantment
+Cumulative upkeep-Add to your
+mana pool. (At the beginning of your
+upkeep, put an age counter on this
+permanent, then sacrifice u unless you pay
+ts upkeep cost for each age counter on u.)
+"To a trained mind, the cold is but a
+momentary distraction."
+Cyril Van Der Haegen
+A993-2006 Wizards of clie Goas"
+Czas skanowania: "3.17"
+Testowanie: assets/test/bramble_armor.png
+✅ SUKCES: Oczekiwano "bramble armor", otrzymano "Bramble Armor"
+Cały tekst: "Bramble Armor
+455
+Artifact - Equipment
+When Bramble Armor enters the
+battlefield, attach it to target creature
+you control.
+Equipped creature gets +2/+1.
+Equip (0:Atach to target creature
+you control. Equip only as a sorcery.)
+DBL •EN ALESSANDRA PISANO
+TM &O 2022 Wizards of the Coast"
+Czas skanowania: "3.427"
+Testowanie: assets/test/burst_of_energy.png
+✅ SUKCES: Oczekiwano "burst of energy", otrzymano "Burst of Cergy"
+Cały tekst: "Burst of Cergy
+Instant
+Untap target permanent.
+I stand ready to die for our world.
+Who will stand woith me?"
+Radiant, archangel
+Illus, iylark Brill
+O19931999 Wizards of the Coast, Inc. 3/143"
+Czas skanowania: "2.699"
+Testowanie: assets/test/butcher_s_cleaver.png
+✅ SUKCES: Oczekiwano "butcher s cleaver", otrzymano "Butcher's Cleavcr"
+Cały tekst: "Butcher's Cleavcr
+Artifact Equipment
+Equipped creature gets +3/+0.
+As long as equipped creature is a
+Human, it has lifelink.
+Equip 3
+Meat is meat.
+Illus. Johann Bodin
+TM &2025 Wizards of the Coast 440
+3"
+Czas skanowania: "2.659"
+Testowanie: assets/test/candletrap.png
+✅ SUKCES: Oczekiwano "candletrap", otrzymano "Candletrap"
+Cały tekst: "Candletrap
+Enchantment -Aura
+Enchant creature
+Enchanted creature has defender.
+Prevent all combat damage that would be
+dealt by enchanted creature.
+2*, Sacrifice Candletrap: Exile
+Coven
+enchanted creature. Activate only if you
+control three or more creatures with
+different powers.
+O09/277 C
+MID
+. EN MANUEL CASTANÓN
+SM &C 2021 Wizards of the Coast"
+Czas skanowania: "3.421"
+Testowanie: assets/test/champion_of_the_flame.png
+✅ SUKCES: Oczekiwano "champion of the flame", otrzymano "Champion of the Flame"
+Cały tekst: "Champion of the Flame
+Creature -- Human Warrior
+Trample
+Champion of the Flame gets +2/+2 for
+each Aura and Equipment attached to it.
+Grand Warlord Radha's challengers are
+always defeated, but she rewards the most
+passionate with the Flanne of Keld. After
+that, they burn for her.
+167/361 C
+1/1
+CMR• EN WAYNE REYNOLDS
+TM & 2020 Wizards of the Coast"
+Czas skanowania: "3.067"
+Testowanie: assets/test/champion_of_the_perished.png
+✅ SUKCES: Oczekiwano "champion of the perished", otrzymano "Champion of the Perished"
+Cały tekst: "Champion of the Perished
+Creature Zombie
+Whenever another Zombie enters the
+battlefield under your control, put a +1/+1
+counter on Champion of the Perished.
+He rose from the graf for every cobbler,
+tanner, and fool vho'd been slaughtered in the
+parish-and they rose and shambled after him.
+071
+R
+SCD• EN >KEKAI KOTAKI
+1/1
+TM &&O 2022 Wizards of the Coast"
+Czas skanowania: "3.425"
+Testowanie: assets/test/chancellor_of_tales.png
+✅ SUKCES: Oczekiwano "chancellor of tales", otrzymano "Chancellor of Tales"
+Cały tekst: "Chancellor of Tales
+Creature Faerie Advisor
+Flying
+U 0045
+Whenever you cast an Adventure spell,
+you may copy it. You may choose new
+targets for the copy.
+so the knight stabbed the troll, the trol
+threw the knight off the bridge, and they
+both forgot about the sword."
+WOE •EN IoSHUA RAPHAEL
+2/3
+TM &O2023 Wizards of the Coast
+36"
+Czas skanowania: "3.193"
+Testowanie: assets/test/chancellor_of_the_forge.png
+✅ SUKCES: Oczekiwano "chancellor of the forge", otrzymano "Chancellor of the Forge"
+Cały tekst: "Chancellor of the Forge
+Creature
+Giant
+You may reveal this card from your opening
+hand. If you do, at the beginning of the first
+upkeep, put a 1/1 red Goblin creature token
+with haste onto the battlefield.
+When Chancellor of the Forge enters the
+battlefield, put X 1/l red Goblin creature
+tokens with haste onto the battlefield, where
+X is the number of creatures you control.
+Chippy,
+NIO93-201 Wizards of the Coast LL 8J
+5/5"
+Czas skanowania: "3.147"
+Testowanie: assets/test/channel.png
+✅ SUKCES: Oczekiwano "channel", otrzymano "Channel"
+Cały tekst: "Channel
+Sorcery
+COSt ot
+He cact
+Orevent daINa
+tO counter ths loss
+Illus. © Richard Thomas"
+Czas skanowania: "2.875"
+Testowanie: assets/test/circle_of_protection_white.png
+✅ SUKCES: Oczekiwano "circle of protection white", otrzymano "Circle of ProreccíoT: VWhíte"
+Cały tekst: "Circle of ProreccíoT: VWhíte
+Enchanitrrierit
+1: Prevent all damage against you
+from one white source. Ifa source
+deals damage tO you more than
+once in a turn, you may pay l
+each time to prevent the damage.
+Illus. Douglas Shuler
+1*
+©1995 Wizards of the Coast, Inc, Al rights reserved."
+Czas skanowania: "2.822"
+Testowanie: assets/test/clever_impersonator.png
+✅ SUKCES: Oczekiwano "clever impersonator", otrzymano "Clever mpersonator"
+Cały tekst: "Clever mpersonator
+Creature - Shapeshifter
+You may have Clever Imnpersonator
+enter the battlefield as a copy of any
+nonland permanent on the battlefield.
+Our own selves are the greatest obstacles
+to enlightenment."
+-Narset, khan of the Feskai
+082/302 M
+C19•EN >SLAWOMIR MANIAK
+0/0
+TM &C 2019 Wizards of the Coast"
+Czas skanowania: "3.018"
+Testowanie: assets/test/coiling_oracle.png
+✅ SUKCES: Oczekiwano "coiling oracle", otrzymano "Coiling Oracle"
+Cały tekst: "Coiling Oracle
+|||
+Creature -Snake Elf Druid
+When Coiling Oracle enters the
+battlefield, reveal the top card of your
+library. If it's a land card, put it onto the
+battlefield. Otherwise, put that card into
+your hand.
+1/1
+Snaking remnants of nature directed by a
+body of thought and progress, the oracles
+embody all that is Simic.
+194/331 C
+2X2• EN MARK ZUG
+TM &O 2022 Wizards of the Coast"
+Czas skanowania: "3.378"
+Testowanie: assets/test/control_magic.png
+✅ SUKCES: Oczekiwano "control magic", otrzymano "Control Magic"
+Cały tekst: "Control Magic
+Enchant Creatre
+Gain control of target creature.
+Ilus. Dameon Wilich
+200
+O1995 Wizards of the CoAst, Inc. All rights reserved."
+Czas skanowania: "2.295"
+Testowanie: assets/test/cosmic_rebirth.png
+✅ SUKCES: Oczekiwano "cosmic rebirth", otrzymano "Cosmic Rebirth"
+Cały tekst: "Cosmic Rebirth
+Instant
+Choose target permanent card in
+your graveyard. ff it has mana value
+3 or less, you may put it onto the
+battlefield. If you don't put if onto
+the battlefield, put it into your hand.
+You gain 3 life.
+U020S
+MAT *EN >0Zo
+TM &C 2023 Wizards of the Co2st"
+Czas skanowania: "3.246"
+Testowanie: assets/test/crookshank_kobolds.png
+✅ SUKCES: Oczekiwano "crookshank kobolds", otrzymano "Gookshank Kobolds"
+Cały tekst: "Gookshank Kobolds
+RSh94
+Sumaon Kobolds
+This card is a red spell when cast
+and Kobolds are a red creature.
+The Crookshank military boasts a
+Standng army of nearly twenty-four
+million, give or take twenty-two
+million.
+Illus. © 1994 Christopher Rush
+0/1"
+Czas skanowania: "2.777"
+Testowanie: assets/test/cruelclaw_s_heist.png
+✅ SUKCES: Oczekiwano "cruelclaw s heist", otrzymano "Cruelclaw's Heist"
+Cały tekst: "Cruelclaw's Heist
+Sorcery
+Gift a card (You may promise an opponent a
+giỰt as you cast this spell. If you do, they draw a
+card before its other effects.)
+Target opponent reveals their hand. You
+choose a nonland card from i. Exile that
+card. If the gift was promised, you may cast
+that card for as long as it remains exiled, and
+mana of any type can be spent to cast it.
+R O088
+BLB .EN
+Story Spotlight
+BRIAN VALEZA
+mtgstory.com
+TM & C 2024 Wizards of the Coast"
+Czas skanowania: "3.463"
+Testowanie: assets/test/curse_of_leeches_leeching_lurker.png
+❌ BŁĄD w assets/test/curse_of_leeches_leeching_lurker.png: Oczekiwano "curse of leeches leeching lurker", ale OCR wykrył "Curse of Leeches"
+Cały tekst: "Curse of Leeches
+Enchantment Aura Curse
+Enchant player
+As this permanent transforms into Curse
+of Leeches, attach it to a player.
+At the beginning of enchanted player's
+upkeep, they lose 1 life and you gain 1 life.
+Daybound (If a player casts no spells
+during their own turn, u becomes night
+next turn.)
+094/277 R
+MID• EN
+>URIAH VOTH
+4/4
+TM & 2021 Wizards of the Coast
+2"
+Czas skanowania: "3.435"
+Testowanie: assets/test/day_of_destiny.png
+✅ SUKCES: Oczekiwano "day of destiny", otrzymano "Day of Destiny"
+Cały tekst: "Day of Destiny
+Legendary Enchantment
+Legendary creatures you control get
++2/+2.
+<We can travel amywhere and
+everywhere in that old box, as you call
+it. Regardless of space and tine.
+-The First Doctor
+3
+R 0206
+WHO •EN >IRINA NORDSOL
+O BRC
+TM &O 2023 Wizards of the Coast"
+Czas skanowania: "3.004"
+Testowanie: assets/test/death_wind.png
+❌ BŁĄD w assets/test/death_wind.png: Oczekiwano "death wind", ale OCR wykrył "HTNE Death Wind"
+Cały tekst: "HTNE Death Wind
+HUA-HNI
+|nstant
+Target creature gets -X-X until end
+of turn.
+"I am a dragonslayer for Lord Silumgar.
+There is no dragon save him whom I fear
+-Xathi the Infallible
+095/264 U
+DTK• EN >NILS HAMM
+TM &© 2015 Wizards of the Coast"
+Czas skanowania: "2.95"
+Testowanie: assets/test/deathless_knight.png
+✅ SUKCES: Oczekiwano "deathless knight", otrzymano "Deathless Knight"
+Cały tekst: "Deathless Knight
+Creature Skeleton Knight
+Haste
+When you gain life for the first time
+each turn, return Deathless Knight
+from your graveyard to your hand.
+Headed to the wilds? Beware the dead
+riders woho serve the Shadow Queen."
+-Scalan, Edgewall innkeeper
+208/269 U
+ELD • EN >lGOR KIERYLUK
+4/2
+TM &O 2019 Wizards of the Coast"
+Czas skanowania: "3.362"
+Testowanie: assets/test/deathsprout.png
+✅ SUKCES: Oczekiwano "deathsprout", otrzymano "Deathsprout"
+Cały tekst: "Deathsprout
+(nstant
+Destroy target creature. Search your
+library for a basic land card, put it onto the
+battlefield tapped, then shuffle your library.
+They say nothing lasts forever. I say everything
+lasts forever, just not in the form you may be
+accustomed to.'3
+-Vraska
+189/ 264 U
+WAR• EN >SEB McKıINNON
+TM &©2019 Wizards of the Coast"
+Czas skanowania: "3.226"
+Testowanie: assets/test/decommission.png
+✅ SUKCES: Oczekiwano "decommission", otrzymano "Decommission"
+Cały tekst: "Decommission
+Instant
+Destroy target artifact or enchantment.
+Revolt - If a permanent you controlled
+left the battlefield this turn, you gain
+3 life.
+"A key weakness in the design is its
+vulnerability to repeated, forceful blows."
+M O76/184 C
+AER• EN losn HASS
+TM & C 2017 Wizards of the Coast"
+Czas skanowania: "3.593"
+Testowanie: assets/test/demon_of_fate_s_design.png
+✅ SUKCES: Oczekiwano "demon of fate s design", otrzymano "Demon of Fate's Design"
+Cały tekst: "Demon of Fate's Design
+Enchantment Creafure - Demon
+Flying, trample
+Once during each of your turns, you may cast
+an enchantment spell by paying life equal to
+its mana value rather than paying its mana
+Cost.
+2, Sacrifice another enchantment: Demon
+of Fate's Design gets +X/+0 until end of turn,
+where X is the sacrificed enchantment's mana
+value.
+RO137
+DSC EN > fAJAREKA SETIAWAN
+6/6
+TM & 2024 Wizards of the Coast"
+Czas skanowania: "3.547"
+Testowanie: assets/test/demon_s_grasp.png
+✅ SUKCES: Oczekiwano "demon s grasp", otrzymano "Demon's Grasp"
+Cały tekst: "Demon's Grasp
+SorcerY
+Target creature gets -5/-5 until end
+of turn.
+Take uwhat solace you can in the
+knowledge that you will not be here to
+witness Zendikar's demise."
+Ob Nixilis
+o43/076 C
+DDR EN DAYID GALLET
+D &C 2016 Wizards of the Coast"
+Czas skanowania: "3.265"
+Testowanie: assets/test/desecrate_reality.png
+✅ SUKCES: Oczekiwano "desecrate reality", otrzymano "Desecrate Reality"
+Cały tekst: "Desecrate Reality
+Instant
+For each opponent, exile up to one
+target permanent that player controls
+with an even mnana value. (Zero is even.)
+Adamant If at least three colorless
+mana was spent to cast this spell,
+return a permnanent card with an odd
+mana value from your graveyard to the
+battlefield.
+R 0714
+CMM •EN >E MINAYA
+TM &O 2023 Wizards of the Coast"
+Czas skanowania: "3.12"
+Testowanie: assets/test/dismal_backwater.png
+✅ SUKCES: Oczekiwano "dismal backwater", otrzymano "Dismal Backwater"
+Cały tekst: "Dismal Backwater
+Land
+Dismal Backwater enters the battlefield
+tapped.
+When Dismal Backwater enters the
+battlefield, you gain 1 life.
+:Add or .
+244/307 C
+C18• EN
+SAM BURLEY
+TM &
+201S Wizards of the Coast"
+Czas skanowania: "2.898"
+Testowanie: assets/test/doran_the_siege_tower.png
+✅ SUKCES: Oczekiwano "doran the siege tower", otrzymano "Doran, the Siege Tower"
+Cały tekst: "Doran, the Siege Tower
+Legendary Creature -- Treefolk Shaman
+Each creature assigns combat damage
+equal to its toughness rather than its
+power.
+Each year that passes rings you inwardly
+with memory and might. Wield your heart,
+and the world will tremble."
+Mark Zug
+TM &1993.2007 WizArds af he
+7/301
+0/5"
+Czas skanowania: "2.762"
+Testowanie: assets/test/dreamstone_hedron.png
+✅ SUKCES: Oczekiwano "dreamstone hedron", otrzymano "Dreamstone bedron"
+Cały tekst: "Dreamstone bedron
+Artifact
+C:Add ooo
+3, , Sacrifice Dreamstone
+Hedron: Draw three cards.
+Only the Eldrazi mind thinks in the
+warped paths required to open the
+hedrons and tap the power within.
+Illus. Eric Deschamps
+TM &2022 1Wizards of the Coast 139
+6"
+Czas skanowania: "2.934"
+Testowanie: assets/test/duress.png
+✅ SUKCES: Oczekiwano "duress", otrzymano "Duress"
+Cały tekst: "Duress
+Sorcery
+Target opponent reveals their hand.
+You choose a noncreature, nonland
+card from it. That player discards
+that card.
+“Give ofyourself, for compleation
+awaits the cleansed."
+-Nokar, priest of Sheoldred
+C 0606
+FDN• EN >PINDURSKI
+TM & 2024 Wizards of the Coast"
+Czas skanowania: "2.934"
+Testowanie: assets/test/dwarven_hammer.png
+✅ SUKCES: Oczekiwano "dwarven hammer", otrzymano "Dwarven Hammer"
+Cały tekst: "Dwarven Hammer
+Artifact– Equipment
+When Dwarven Hammer enters the
+battlefield, you may pay 2. If you
+do, create a 2/1l red Dwarf Berserker
+creature token, then attach Dwarven
+Hammer to it.
+Equipped creature gets +3/+0 and has
+trample.
+Equip 3
+133/285 U
+E62-67 Gates
+KHM EN RAQUL VITALE
+TM &
+2021 Wizards of che Coast"
+Czas skanowania: "3.238"
+Testowanie: assets/test/earthen_goo.png
+✅ SUKCES: Oczekiwano "earthen goo", otrzymano "Earthen Goo"
+Cały tekst: "Earthen Goo
+Creature O0ze
+Trample
+Cumulative upkeep or (At the
+beginning of your upkeep, put an age counter
+on this permanent, then sacrifice it unless
+you pay its upkeep cost for each age counter
+on it.)
+Earthen Goo gets +1/+1l for each age
+COunter on it.
+Nick Percival
+093-2006Wizards of he
+2/2"
+Czas skanowania: "3.093"
+Testowanie: assets/test/ebon_dragon.png
+✅ SUKCES: Oczekiwano "ebon dragon", otrzymano "Gbon Dragon"
+Cały tekst: "Gbon Dragon
+Summon Creature
+Flying
+When Ebon Dragon comes into
+play from your hand, you mnay
+force your opponent to choose
+and discard a card from his or
+her hand.
+Illus, Donato Giancola
+Cl997 Wizards of the Coast, Inc. Al rights reserved.
+S/40"
+Czas skanowania: "3.23"
+Testowanie: assets/test/ecological_appreciation.png
+✅ SUKCES: Oczekiwano "ecological appreciation", otrzymano "Ecological Appreciation"
+Cały tekst: "Ecological Appreciation
+Sorcery
+Search your library and graveyard for
+up to four creature cards with different
+names that each have mana value X
+or less and reveal them. An opponent
+chooses two of those cards. Shufle
+the chosen cards into your library and
+put the rest onto the battlefield. Exile
+Ecological Appreciation.
+128/275 M
+STX *EN >LIE SETIAWAN
+7M &C 2021 Wizards of the Coast"
+Czas skanowania: "3.351"
+Testowanie: assets/test/elrond_lord_of_rivendell.png
+✅ SUKCES: Oczekiwano "elrond lord of rivendell", otrzymano "Elrond, Lord of Rivendell"
+Cały tekst: "Elrond, Lord of Rivendell
+Legendary Creafure
+20
+Whenever Elrond, Lord of Rivendell or
+another creature enters the battlefield under
+your control, scry 1. If this is the second time
+this ability has resolved this turn, the Ring
+tempts you.
+U 0049
+LTR•
+Elf Noble
+This is the hour of the Shire-folk, when they arise
+from their quiet fields to shake the towers and
+counsels of the Great. Who of all the Wise could
+have foreseen it?»
+• EN RYAN YEE
+OMEB
+TM &
+3/2
+& 2023 Wizards of the Coast"
+Czas skanowania: "3.628"
+Testowanie: assets/test/ember_beast.png
+✅ SUKCES: Oczekiwano "ember beast", otrzymano "Ember Beast"
+Cały tekst: "Ember Beast
+Creature Beast
+Ember Beast can't attack or block
+alone.
+The only livestock that will survive for
+long in the Smelting District, ember
+beasts serve many functions-none of
+them willingly.
+David Rapoza
+2013 1zards ot thhe Coast
+3/4"
+Czas skanowania: "2.986"
+Testowanie: assets/test/enraged_giant.png
+✅ SUKCES: Oczekiwano "enraged giant", otrzymano "Enraged Giant"
+Cały tekst: "Enraged Giant
+Creature- Giant
+Improvise (Your artifacts can help cast this
+spell. Each artifact you tap after you're done
+activating mana abilities pays for 1)
+Trample, haste
+5@
+When fighting spilled over into Giants Walk,
+the aether weapons and swOoping airships
+angered the normally placid creatures.
+O80/184 U
+AER• EN >ANTHONY PALUMB0
+4/4
+M &O 2017 Wizards of the Coast"
+Czas skanowania: "3.218"
+Testowanie: assets/test/ertai_s_familiar.png
+✅ SUKCES: Oczekiwano "ertai s familiar", otrzymano "ertal's Familia"
+Cały tekst: "ertal's Familia
+Summon Illusion
+Phasing
+If Ertai's Familiar leaves play, put the
+top three cards of your library into
+your graveyard.
+6: Ertai's Familiar cannot phase out
+until the beginning of your nexXt
+upkeep.
+Hlus, Kipling West
+997 Wizards f te Coast, Ine Al rights zeserved.
+2/2
+10"
+Czas skanowania: "2.892"
+Testowanie: assets/test/eshki_dragonclaw.png
+✅ SUKCES: Oczekiwano "eshki dragonclaw", otrzymano "Eshki Dragonclaw"
+Cały tekst: "Eshki Dragonclaw
+R O182
+Legendary Creature
+Vigilance, trample, ward 1
+Human Warrior
+At the beginning of combat on your turn,
+if you've cast both a creature spell and a
+noncreature spell this turn, draw a card and
+put two +1/+1 counters on Eshki Dragonclaw.
+"The Twice Whisperer heals. The Dragonclaw
+protects. Together, we will rebuild the Temur"
+TOM •EN >TRAN NGUYEN
+4/4
+TM &2025 Wizards of the Coast"
+Czas skanowania: "3.56"
+Testowanie: assets/test/evolved_sleeper.png
+❌ BŁĄD w assets/test/evolved_sleeper.png: Oczekiwano "evolved sleeper", ale OCR wykrył "Creature - Human"
+Cały tekst: "Creature - Human
+Evolved Sleeper
+: Evolved Sleeper becomes a Human Cleric
+with base power and toughness 2/2.
+1:If Evolved Sleeper is a Cleric, put a
+deathtouch counter on it and it becomes a
+Phyrexian Human Cleric with base power and
+toughness 3/3.
+1:If Evolved Sleeper is a Phyrexian, put
+a +l/+1 counter on it, then you dravw a card
+and you lose I life.
+O93/281 R
+DMU EN ►IASON A. ENGLE
+1/1
+TM &O 2022 Wizards of the Coast"
+Czas skanowania: "3.527"
+Testowanie: assets/test/evolving_wilds.png
+❌ BŁĄD w assets/test/evolving_wilds.png: Oczekiwano "evolving wilds", ale OCR wykrył "OYNWLDS"
+Cały tekst: "OYNWLDS
+LarD
+C, Sacrifice Evolving Wilds:
+Search your library for a basic
+land card, put it onto the
+battlefield tapped, then shuffle.
+Lightning strikes, fire burns, and
+chaos reigns.
+Tlas. Ju Quanouat
+2024
+Wtd"
+Czas skanowania: "2.934"
+Testowanie: assets/test/ezrim_agency_chief.png
+✅ SUKCES: Oczekiwano "ezrim agency chief", otrzymano "Ezrim, Agency Chief"
+Cały tekst: "Ezrim, Agency Chief
+Legendary Creature - Archon Detective
+Flying
+When Ezrim, Agency Chief enters the
+battlefield, investigate twice. (1o investigate,
+create a Clhue token. It's an artifact with 2,
+Sacrifice this artifact: Draw a card.")
+1, Sacrifice an artifact: Ezrim gains your
+choice of vigilance, lifelink, or hexproof
+until end of turn.
+R 0202
+MKM EN >ASON A. ENGLE
+5/5
+TM & 2024 Wizards of the Coast"
+Czas skanowania: "3.233"
+Testowanie: assets/test/faceless_one.png
+✅ SUKCES: Oczekiwano "faceless one", otrzymano "Faceless One"
+Cały tekst: "Faceless One
+Legendary Enchantment Creature Background
+If Faceless One is your commander,
+choose a color before the game
+begins. Faceless One is the chosen
+color.
+Choosea Background (You can have
+a Background as a second commander.)
+O01/361 S
+CLB. EN GABOLEPS
+3/3
+TM &© 2022 Wizards of the Coast"
+Czas skanowania: "3.421"
+Testowanie: assets/test/farrelite_priest.png
+✅ SUKCES: Oczekiwano "farrelite priest", otrzymano "Farrelíre Drizst"
+Cały tekst: "Farrelíre Drizst
+SurnraOD Cleric
+1
+l:Add* to your mana pool, Play
+this ability as an interrúpt. If more
+than 3 is spent in this way during
+one turn, bury Farrelite Priest at
+end of turn
+Akhough their methods were often
+brutal Farvel's follozeers believed in
+the preservation of justice and virue.
+Illus. Phil Foglio
+©1994 Wizards of the Coast, Inc. All rights reserved."
+Czas skanowania: "3.254"
+Testowanie: assets/test/fioran_reformist.png
+✅ SUKCES: Oczekiwano "fioran reformist", otrzymano "Fioran Reformist"
+Cały tekst: "Fioran Reformist
+Creature
+Human Advisor
+R
+When CARDNAME enters the battlefield, if a
+player is the monarch, get rid of the monarchy.
+Democracy is in effect until CARDNAME
+leaves the battlefield. (At the beginning of each
+player's end step, if they control more
+creatures than each other player, they drawa
+card. Players can't become the monarch.)
+CONFIDENTIAL 7/13/2023 DA1 RWO3
+3/3"
+Czas skanowania: "3.25"
+Testowanie: assets/test/firebolt.png
+✅ SUKCES: Oczekiwano "firebolt", otrzymano "Firebolt"
+Cały tekst: "Firebolt
+Sorcery
+Firebolt deals 2 damage to target
+creature or player.
+Flashback 4 (You may cast this card
+Jrom your graveyard for its flashback
+cost. Then exile it.)
+Reach out and torch someone.
+049/062 C
+JVC • EN >RON SPENCER
+TM &C 2014 Wizards of the Coast"
+Czas skanowania: "3.01"
+Testowanie: assets/test/fleshbag_marauder.png
+✅ SUKCES: Oczekiwano "fleshbag marauder", otrzymano "Fleshbag Marauder"
+Cały tekst: "Fleshbag Marauder
+Creature --Zombie Warrior
+When Fleshbag Marauder enters the
+battlefield, each player sacrifices a
+Creature.
+Grixis is a world where the only things found
+in abundance are death and decay. Corpses,
+whole or in part, are the standard currency
+among necromancers and denons.
+SPete Venters
+M & O 1993-2011 Wizards of the Coast LLC 83/318
+3/1"
+Czas skanowania: "3.441"
+Testowanie: assets/test/fog_elemental.png
+✅ SUKCES: Oczekiwano "fog elemental", otrzymano "Fog elemental"
+Cały tekst: "Fog elemental
+Summon Elemental
+Flying
+4 20
+If Fog Elemental attacks or blocks,
+bury it at end of combat.
+Ive seen fog so thick you could cut it,
+but none that could cut me,"
+Hlus. fon Mutt
+-Tahngarth of the Weatherlight
+414
+i997 Wizards of the Coast, Inc. AH righrs reserved"
+Czas skanowania: "2.854"
+Testowanie: assets/test/force_of_savagery.png
+✅ SUKCES: Oczekiwano "force of savagery", otrzymano "Force of Savagery"
+Cały tekst: "Force of Savagery
+Creature Elemental
+Trample
+“Life cannot be created and then
+abandoned. It must be nurtured and fed
+sO that t may express its ripened might."
+-Freyalise
+Dan Scott
+19932007 Wizards of th
+8/0"
+Czas skanowania: "2.658"
+Testowanie: assets/test/fortify.png
+✅ SUKCES: Oczekiwano "fortify", otrzymano "Fortify"
+Cały tekst: "Fortify
+Instant
+Choose one
+• Creatures you control get +2/+0 until
+end of turn.
+2
+• Creatures you control get +0/+2 until
+end of turn.
+"Where metal is tainted and wood is scarce,
+we are best armed by faith."
+-Tavalus, acolyte of Korlis
+O17/249 C
+MM2• EN >CHRISTOPHER MOELLER
+IM &O 2015 Wizards of the Coast"
+Czas skanowania: "3.039"
+Testowanie: assets/test/garna_bloodfist_of_keld.png
+✅ SUKCES: Oczekiwano "garna bloodfist of keld", otrzymano "Garna, Bloodfist of Keld 00"
+Cały tekst: "Garna, Bloodfist of Keld 00
+Legendary Creature Human Berserker
+Whenever another creature you
+cOntrol dies, draw a card if it
+299
+was attacking. Otherwise, Garna,
+Bloodfist of Keld deals 1 damage to
+each opponent.
+DMU EN >BENJAMIN EE
+4/3
+J & C 2022 Wizards of the Coast"
+Czas skanowania: "3.18"
+Testowanie: assets/test/generous_gift.png
+❌ BŁĄD w assets/test/generous_gift.png: Oczekiwano "generous gift", ale OCR wykrył "023"
+Cały tekst: "023
+Instant
+Generous Gift
+Destroy target permanent. Its
+controller creates a 3/3 green
+Elephant creature token.
+The best presents are impossible to regift.
+SCD• EN >KEY WALKER
+M &C 2022 Wizards oť the Coast"
+Czas skanowania: "3.265"
+Testowanie: assets/test/giant_adephage.png
+❌ BŁĄD w assets/test/giant_adephage.png: Oczekiwano "giant adephage", ale OCR wykrył "293"
+Cały tekst: "293
+Giant Adephage
+Creature - nsect
+Trample
+"To a creature like that, we muSt seem lhke,
+well, bugs."
+Whenever Giant Adephage deals combat
+damage to a player, create a token that's a
+copy of Giant Adephage.
+-Dars Gostok, Firefist captain
+M
+NCC• EN >CHRISTINE CHOI
+504
+7/7
+TM &C 2022 Wizards of the Coast"
+Czas skanowania: "4.0"
+Testowanie: assets/test/gifts_ungiven.png
+✅ SUKCES: Oczekiwano "gifts ungiven", otrzymano "Gifts Ungiven"
+Cały tekst: "Gifts Ungiven
+Instant
+Search your library for up to four cards
+with different names and reveal them.
+|Target opponent chooses two of those
+cards. Put the chosen cards into your
+graveyard and the rest into your hand.
+Then shuffle your library.
+Q05/O08 R
+3)
+SSI: EN CHRIS RALLIS
+SM & 2018 Wizards o the Coast"
+Czas skanowania: "3.354"
+Testowanie: assets/test/grave_shell_scarab.png
+✅ SUKCES: Oczekiwano "grave shell scarab", otrzymano "Grave-Shell Scarab"
+Cały tekst: "Grave-Shell Scarab
+Creature
+Insect
+1, Sacrifice Grave-Shell Scarab: Draw
+a card.
+Dredge l (If you would draw à card,
+instead you may put exactly one card fron
+the top of your library into your graveyard. If
+you do, return this card from your graveyard
+to your hand. Otherwise, draw a card.)
+Pete Venters
+TM83993-2005 Wizards of the Coast, Ir
+211/306
+4/4"
+Czas skanowania: "3.318"
+Testowanie: assets/test/greatsword.png
+✅ SUKCES: Oczekiwano "greatsword", otrzymano "Greatsword"
+Cały tekst: "Greatsword
+Artifact Equipment
+Equipped creature gets +3/+0.
+Equip 3 (3:Attach to target creature
+you control. Equip only as a sorcery.)
+The only blow that matters is the killing
+blow.
+116/136
+U
+GN3• EN >NIc KLEIN
+TM &O 2022 Wizards of the Coast"
+Czas skanowania: "2.855"
+Testowanie: assets/test/gwenom_remorseless.png
+❌ BŁĄD w assets/test/gwenom_remorseless.png: Oczekiwano "gwenom remorseless", ale OCR wykrył "MO056"
+Cały tekst: "MO056
+Gwenom, Remorseless
+Legendary Creature -Symbiote Spider Hero
+Deathtouch, lifelink
+Whenever Gwenom attacks, until end
+of turn, you may look at the top card
+of your library any time and you may
+play cards fromn the top of your library.
+If you cast a spell this way, pay life
+equal to its mana value rather than pay
+1ts mana cost.
+SPM EN >oRDIGAN
+OMARVEL
+4/4
+&2025 Wizards of the Coast
+3"
+Czas skanowania: "3.247"
+Testowanie: assets/test/gyruda_doom_of_depths.png
+✅ SUKCES: Oczekiwano "gyruda doom of depths", otrzymano "Gyruda, Doom of Depths"
+Cały tekst: "Gyruda, Doom of Depths
+Legendary Creature - Demon Kraken
+Companion -- Your starting deck contains only
+cards with even converted mana costs. (1f this
+card is your chosen compamon, you may cast t
+Once from outside the game.)
+When Gyruda enters the battlefield, each player
+puts the top four cards of their library into their
+graveyard. Put a creature card with an even
+Converted mana cost from among those cards
+onto the battlefield under your control.
+221/274 R
+IKO• EN >TYLER JACODSON
+6/6
+IM & O 2020 Wizards of the Coast"
+Czas skanowania: "3.834"
+Testowanie: assets/test/halo_forager.png
+✅ SUKCES: Oczekiwano "halo forager", otrzymano "Halo Forager"
+Cały tekst: "Halo Forager
+Creature - Faerie Rogue
+Flying
+When Halo Forager enters the battlefield,
+you may pay X. When you do, you may
+cast target instant or sorcery card with
+mana value X from a graveyard without
+paying its mana cost. If that spell would
+be put into a graveyard, exile it instead.
+U O139
+WOC•EN >KEVIN SIDHARTA
+3/1
+TM &O 2023 Wizards of the Coast"
+Czas skanowania: "4.257"
+Testowanie: assets/test/hand_that_feeds.png
+✅ SUKCES: Oczekiwano "hand that feeds", otrzymano "Hand That Feeds"
+Cały tekst: "Hand That Feeds
+Creature -- Mutant
+Deliriun
+Whenever Hand That Feeds
+attacks while there are four or more card types
+among cards in your graveyard, it gets +2/+0
+and gains menace until end of turn. (lt can't
+be blocked except by two or more creatures.)
+:0139
+In the darkness, Lana reached for Shay's hand
+and squeezed it for comfort. Then she heard Shay
+call to her from the next room.
+2/2
+DSK EN Loic CANAYAGGIA
+TM & 2024 Wizards of the Coast"
+Czas skanowania: "3.489"
+Testowanie: assets/test/harsh_mentor.png
+✅ SUKCES: Oczekiwano "harsh mentor", otrzymano "Harsh Mentor"
+Cały tekst: "Harsh Mentor
+R0221
+Creature -Human Cleric
+Whenever an opponent activates an ability
+of an artifact, creature, or land on the
+battlefield, if it isn't a mana ability, Harsh
+Mentor deals 2 damage to that player.
+A time may come soon when there will be
+need of valor without renown. Yet the deeds will
+not be less valiant because they are unpraised.
+-Aragorn
+LTC •EN ELZABETH PEIRÓ
+O MEE
+2/2
+TM &O 2023 Wizards of the Coast"
+Czas skanowania: "3.241"
+Testowanie: assets/test/honden_of_infinite_rage.png
+✅ SUKCES: Oczekiwano "honden of infinite rage", otrzymano "Honden of Infinite Rage"
+Cały tekst: "Honden of Infinite Rage
+Legendary Enchantment - Shrine
+At the beginning of your upkeep,
+Honden of Infinite Rage deals damage
+to target creature or player equal to
+the number of Shrines you control.
+To the sorrow of all, is rage became
+focused on those who once stoked it.
+134/249 U
+EMA• EN >lOHN AVON
+TM & C 2016 Wizards of the Coast"
+Czas skanowania: "3.064"
+Testowanie: assets/test/hostile_takeover.png
+✅ SUKCES: Oczekiwano "hostile takeover", otrzymano "Hostile Takeover"
+Cały tekst: "Hostile Takeover
+Sorcery
+Up to one target creature has base power
+and toughness 1/1 until end of turn. Up to
+One other target creature has base power
+and toughness 4/4 until end of turn. Then
+Hostile Takeover deals 3 damage to each
+Creature.
+Ob Nixilis smiled, It had been over one
+thousand vears since hs last conquest.
+191/281 R Story Spotight
+SNC *EN VINCENT PROCE
+mtgstory.com
+M&C 2022 Wizacds of the Coast"
+Czas skanowania: "3.437"
+Testowanie: assets/test/howling_wolf.png
+✅ SUKCES: Oczekiwano "howling wolf", otrzymano "howling Wolf"
+Cały tekst: "howling Wolf
+Creature Wolf
+When Howling Wolf comes into play,
+you may search your library for up to
+three Howling Wolf cards, reveal them,
+and put them into your hand. If you
+do, shuffle your library.
+Iihus. eather Hudson
+C1993-{999 WiRrds of the Caast, Inc. 2521350
+2/2"
+Czas skanowania: "3.199"
+Testowanie: assets/test/hullbreaker_horror.png
+✅ SUKCES: Oczekiwano "hullbreaker horror", otrzymano "Hullbreaker Horror"
+Cały tekst: "Hullbreaker Horror
+Creafure -- Kraken Horror
+Flash
+This spell can't be countered.
+Whenever you cast a spell, cho0se up to
+One
+Return target spell you don't control to
+its owner's hand.
+Return target nonland permanent to its
+owner's hand.
+O63/277 R
+7/8
+VOW EN ►SVETLIN VELINOY
+TM&2021 Wizards of the Coast"
+Czas skanowania: "3.032"
+Testowanie: assets/test/inspiring_veteran.png
+✅ SUKCES: Oczekiwano "inspiring veteran", otrzymano "Inspiring Veteran"
+Cały tekst: "Inspiring Veteran
+Creature- Human Knight
+Other Knights you control get +1/+1.
+"I fight for my daughter, who may not
+set foot on a battlefield for many years.
+Remember who you fight for."
+194/269 U
+ELD • EN >SCOTT MURPHY
+2/2
+TM & C 2019 Wizards of the Coast"
+Czas skanowania: "2.76"
+Testowanie: assets/test/intrusive_packbeast.png
+✅ SUKCES: Oczekiwano "intrusive packbeast", otrzymano "Intrusive Packbeast"
+Cały tekst: "Intrusive Packbeast
+Creature -- Beast
+Vigilance
+When Intrusive Packbeast enters
+the battlefield, tap up to two target
+creatures your opponents control.
+Good at carrying things. Really good at
+knocking them down.
+o17/259 c
+3/3
+GRN. EN ASON FELIX
+TM & C 2018 Wizards of the Coast"
+Czas skanowania: "3.188"
+Testowanie: assets/test/invade_the_city.png
+❌ BŁĄD w assets/test/invade_the_city.png: Oczekiwano "invade the city", ale OCR wykrył "Sorcery"
+Cały tekst: "Sorcery
+Amass X, where X is the number of instant
+and sorcery cards in your graveyard. (Put
+X +1/+1 counters on an Army you control. If
+yOu don't control one, create a 0/0 black Zombie
+Army creature token first.)
+Death
+201/264 U
+Invade the City
+greeted the world with a roar of desert air.
+WAR•EN >SUNG CHOI
+TM & C 2019 Wizards of the Coast"
+Czas skanowania: "3.037"
+Testowanie: assets/test/invigorating_surge.png
+✅ SUKCES: Oczekiwano "invigorating surge", otrzymano "Invigorating Surge"
+Cały tekst: "Invigorating Surge
+Instant
+Put a +1/+1 counter on target
+creature you control, then double the
+number of +1/+1 counters on that
+Creature.
+M21)
+For hydras, most problems can be solved
+with the addition of a few extra heads.
+190/274 U
+M21 EN RANDY VARGAS
+IM & © 2020 Wizards of the Coast"
+Czas skanowania: "2.786"
+Testowanie: assets/test/island.png
+✅ SUKCES: Oczekiwano "island", otrzymano "Island"
+Cały tekst: "Island
+Basic Land - sland
+292/302 L
+CI9 EN >FLORIAN DE GESINCOURT
+TM & C 2019 Wizards of the Coast"
+Czas skanowania: "2.113"
+Testowanie: assets/test/island_1.png
+✅ SUKCES: Oczekiwano "island 1", otrzymano "Island"
+Cały tekst: "Island
+Basic Land Island
+Anthony S. Waters
+TM &O993-2012 Wizards of the Coast LLC 39/90"
+Czas skanowania: "2.496"
+Testowanie: assets/test/ivory_tower.png
+✅ SUKCES: Oczekiwano "ivory tower", otrzymano "Ivory ToWer"
+Cały tekst: "Ivory ToWer
+ArtifaCt
+During your upkeep phase, gain 1
+life for each card in your hand
+above four.
+Valuing scholarship above all else, the
+inhabitants of the lvory Tbwer reward
+those who sacrifice power for
+knowledge.
+Ilas. O Margaret Organ-Keen"
+Czas skanowania: "2.857"
+Testowanie: assets/test/jade_mage.png
+✅ SUKCES: Oczekiwano "jade mage", otrzymano "Jade Mage"
+Cały tekst: "Jade Mage
+Creature
+Human Shaman
+2: Put a 1/1 green Saproling
+Creature token onto the battlefield.
+We are one with the wild things. Life
+blooms from our fingertips and nature
+responds to our summons."
+Jade creed
+zzy
+M &1993 2013 Wizards of the Coast LLC 18t249
+2/1"
+Czas skanowania: "3.087"
+Testowanie: assets/test/judith_the_scourge_diva.png
+✅ SUKCES: Oczekiwano "judith the scourge diva", otrzymano "Judith, the Scourge Diva"
+Cały tekst: "Judith, the Scourge Diva
+Legendary Creature Human Shaman
+Other Creatures you control get +1/+0.
+Whenever a nontoken creature you
+control dies, Judith, the Scourge Diva
+deals 1 damage to any target.
+At the end of the shou, she stands alone on
+a stage brilliant wih blood.
+S10
+R
+2X2 * EN WESLEY BURT
+2/2
+TM &C2022 WizArds of he Coast"
+Czas skanowania: "3.145"
+Testowanie: assets/test/juggernaut.png
+✅ SUKCES: Oczekiwano "juggernaut", otrzymano "JuggeTnaut"
+Cały tekst: "JuggeTnaut
+ArtitaCt Creature
+Must attack each turn if possible.
+Can't be blocked by walls.
+We had taken refuge in a small cave,
+thinking the entrance was too narrow
+for it to follow. To our horror, its
+giganic head smashed into the
+mountainside, ripping itself a new
+entrance.
+Illus, © Dan Frazier
+5/3
+4"
+Czas skanowania: "3.095"
+Testowanie: assets/test/kayla_s_music_box.png
+✅ SUKCES: Oczekiwano "kayla s music box", otrzymano "Kayla's Music Box"
+Cały tekst: "Kayla's Music Box
+Legendary Artifact
+*, :Look at the top card of your library,
+then exile it face down. (You nay look at
+it any time.)
+e:Until end of turn, you may play cards
+you own exiled with Kayla's Music Box.
+Kayla wvondered if Urza's repair of the music
+box was a display of affection, or just of skill.
+Illus. Aaron Miller
+TM&O 2022 Wizards of the Coast 15/38
+2"
+Czas skanowania: "3.695"
+Testowanie: assets/test/kindred_charge.png
+❌ BŁĄD w assets/test/kindred_charge.png: Oczekiwano "kindred charge", ale OCR wykrył "a"
+Cały tekst: "a
+Sorcery
+Kindred Charge
+Choose a creature type, For each creature
+you contro! of the chosen type, create
+a token that's a copy of that Creature.
+Those tokens gain haste. Exile them at the
+beginning of the next end step.
+Anyone can live next door, but when you fight
+to defend your neighbors, you become a
+-Rho, veteran hero
+MO058 BLB Specia! Guest
+SPG• EN MELIVO; CERAN
+village.
+TM &O 2024 Wizards of the Coast"
+Czas skanowania: "3.22"
+Testowanie: assets/test/kiora_sovereign_of_the_deep.png
+❌ BŁĄD w assets/test/kiora_sovereign_of_the_deep.png: Oczekiwano "kiora sovereign of the deep", ale OCR wykrył "inderArkist Mnkka NivtaIYhunaO"
+Cały tekst: "inderArkist Mnkka NivtaIYhunaO
+cirl
+Kiora, Sovereign of the Deep 30
+Legendary Creature Merfolk Noble X
+Vigilance, ward 3
+Whenever you cast a Kraken, Leviathan,
+Octopus, or Serpent spell from your hand,
+look at the top X cards of your ibrary, where
+X is that spell's mana value. You may cast a
+spell with mana value less than X from among
+them without paying its mana cost. Prut the
+rest on the bottom of your library in a random
+order.
+MO135S
+MAT *EN CHRIS RASLLIS
+4/5
+TM & O2023 Wizards of the Coast"
+Czas skanowania: "3.942"
+Testowanie: assets/test/kruin_outlaw_terror_of_kruin_pass.png
+❌ BŁĄD w assets/test/kruin_outlaw_terror_of_kruin_pass.png: Oczekiwano "kruin outlaw terror of kruin pass", ale OCR wykrył "Kruin Outlaw"
+Cały tekst: "Kruin Outlaw
+Creature
+Human Rogue Werewolf
+First strike
+At the beginning of each upkeep,
+if no spells were cast last turn,
+transform this creature.
+Hold tight. I've got a surprise for
+them.»
+R O161
+NR.EN ►DAVID RAPOZA
+3/3
+2/2
+TM &O 2025 Wizards of the Coast"
+Czas skanowania: "3.926"
+Testowanie: assets/test/kynaios_and_tiro_of_meletis.png
+✅ SUKCES: Oczekiwano "kynaios and tiro of meletis", otrzymano "Kynaios and Tiro of MeletisO"
+Cały tekst: "Kynaios and Tiro of MeletisO
+Legendary Creature - Human Soldier
+At the beginning of your end step,
+draw a card. Each player may put a
+land card from his or her hand onto
+the battlefield, then each opponent
+who didn't draws a card.
+"Look what we fought for. Look what
+we built together."
+036/351 M
+C16 *EN
+WILLIAN MURAI
+2/8
+TM &O 2016Wizards of the CoaSt"
+Czas skanowania: "3.374"
+Testowanie: assets/test/lhurgoyf.png
+✅ SUKCES: Oczekiwano "lhurgoyf", otrzymano "Lhurgoyf"
+Cały tekst: "Lhurgoyf
+Creature - Lhurgoyf
+200
+Lhurgoyf's power is equal to the
+number of creature cards in all
+graveyards and its toughness is equal
+to that number plus 1.
+Ach! Hans, run! I's the lhurgoyf!"
+Saffi Eriksdotter, last words
+141/312 R
+CM2 EN PETE VENTERS
+*/1+*
+TM &C 2018 Wizards of the Coast"
+Czas skanowania: "2.961"
+Testowanie: assets/test/liliana_death_mage.png
+✅ SUKCES: Oczekiwano "liliana death mage", otrzymano "Liliana, Death Mage"
+Cały tekst: "Liliana, Death Mage
+Legendary Planeswalker - Liliana M21)
++11
+Return up to one target creature card
+from your graveyard to your hand.
+-3:Destroy target creature. Its controller
+loses 2 life.
+-7:1arget opponent loses 2 life for each
+Creature card in their graveyard.
+328
+M
+M21 * EN >KIERAN YANNER
+TM &C 2020 Wizards of the Coast"
+Czas skanowania: "3.387"
+Testowanie: assets/test/llanowar_elves.png
+✅ SUKCES: Oczekiwano "llanowar elves", otrzymano "Llanowar Elves"
+Cały tekst: "Llanowar Elves
+Creature - Elf Druid
+P:Add
+O05/005 P 30th Anniversary
+PRM*EN >h<IAREKU NISHIKI
+1/1
+IM &O 2022 Wizards of the Coast"
+Czas skanowania: "2.889"
+Testowanie: assets/test/lord_of_extinction.png
+05:28 +0: OCR Accuracy Tests - assets/test Sprawdź wszystkie obrazy z test - did not complete [E]
+05:28 +0: (tearDownAll) - did not complete [E]
+05:28 +0: Some tests failed.

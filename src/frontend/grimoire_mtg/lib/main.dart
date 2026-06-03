@@ -124,7 +124,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         setState(() {
           _recognizedText = isSent 
             ? "Sukces! Tekst zapisany: \n\n$result" 
-            : "Tekst rozpoznany, ale nie udało się go wysłać do API.";
+            : "Tekst rozpoznany, ale nie udało się go wysłać do API. Tekst zapisany: \n\n$result";
         });
       } else {
         setState(() => _recognizedText = "Nie wykryto tekstu.");

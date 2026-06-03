@@ -18,7 +18,7 @@ default destination is test
 3. type:
 - only_card -> no background
 - hd -> full hd with background
--  d -> 800x600
+- ld -> 800x600
 - mono_bg -> white background
 
 default type is hd

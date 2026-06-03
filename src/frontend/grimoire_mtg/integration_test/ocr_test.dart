@@ -7,12 +7,12 @@ import 'package:grimoire_mtg/scanner/text_scanner.dart';
 
 
 // to run:
-// flutter test integration_test/ocr_test.dart --dart-define=PATH=folder_name -d emulator-5554
+// flutter test integration_test/ocr_test.dart -d emulator-5554
 String extractExpectedName(String filePath) {
   final fileName = filePath.split('/').last;
 
   return fileName
-      .replaceAll('_final.png', '')
+      .replaceAll('.png', '')
       .replaceAll('_', ' ')
       .toLowerCase()
       .trim();
@@ -56,7 +56,7 @@ int levenshtein(String s, String t) {
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  const dataset_path = String.fromEnvironment('PATH', defaultValue: 'hd');
+  const dataset_path = String.fromEnvironment('PATH', defaultValue: 'test');
 
   group('OCR Accuracy Tests - assets/$dataset_path', () {
     final ocrService = TextScanner(); // Twoja klasa OCR
@@ -104,6 +104,7 @@ void main() {
             failures.add('❌ BŁĄD w $assetPath: Oczekiwano "$expectedText", ale OCR wykrył "$firstLine"');
             print(failures.last);
           }
+          print('Cały tekst: "$resultText"');
           print('Czas skanowania: "$time_elapsed"');
         } catch (e) {
           failures.add('💥 CRASH w $assetPath: $e');

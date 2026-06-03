@@ -51,7 +51,7 @@ describe('Google Auth Flow', () => {
         const res = await request(app).get('/api/auth/google/callback');
 
         expect(res.status).toBe(302);
-        expect(res.header.location).toBe(`${process.env.FE_BASE_URL}/api/user/me`);
+        expect(res.header.location).toBe(`${process.env.FE_BASE_URL}/`);
 
         const cookies = res.header['set-cookie'];
         expect(cookies).toBeDefined();
@@ -80,7 +80,7 @@ describe('Google Auth Flow', () => {
         expect(res.body.message).toBe('An error occurred during authentication');
     });
 
-    it('should redirect to /api/user/me when FE_BASE_URL is empty', async () => {
+    it('should redirect to / when FE_BASE_URL is empty', async () => {
         const originalUrl = process.env.FE_BASE_URL;
         process.env.FE_BASE_URL = '';
 
@@ -92,7 +92,7 @@ describe('Google Auth Flow', () => {
         const res = await request(app).get('/api/auth/google/callback');
 
         expect(res.status).toBe(302);
-        expect(res.header.location).toBe('/api/user/me');
+        expect(res.header.location).toBe('/');
         expect(res.header.location).not.toContain('accessToken=');
 
         const cookies = res.header['set-cookie'];

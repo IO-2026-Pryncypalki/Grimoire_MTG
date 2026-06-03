@@ -208,6 +208,10 @@ export const deleteForUser = async (deckId: string, userId: string): Promise<boo
     return deletedCount > 0;
 };
 
+export const touchDeckUpdatedAt = async (deckId: string): Promise<void> => {
+    await DeckModel.update({ updatedAt: new Date() }, { where: { id: deckId } });
+};
+
 export interface AddDeckCardData {
     scryfallId: string;
     quantity: number;
@@ -250,6 +254,7 @@ export const addCardToDeckForUser = async (
         const currentQuantity = existing.get('quantity') as number;
         await existing.update({ quantity: currentQuantity + input.quantity });
         await existing.reload({ include: [{ model: CardModel }] });
+        await touchDeckUpdatedAt(deckId);
         return toDeckCardRecord(existing);
     }
 
@@ -268,6 +273,7 @@ export const addCardToDeckForUser = async (
         throw new Error('Failed to load deck card');
     }
 
+    await touchDeckUpdatedAt(deckId);
     return toDeckCardRecord(withCard);
 };
 
@@ -293,6 +299,7 @@ export const removeCardFromDeckForUser = async (
 
     if (newQuantity <= 0) {
         await existing.destroy();
+        await touchDeckUpdatedAt(deckId);
         return { removed: true };
     }
 
@@ -303,6 +310,7 @@ export const removeCardFromDeckForUser = async (
 
     await existing.update({ quantity: newQuantity });
     await existing.reload({ include: [{ model: CardModel }] });
+    await touchDeckUpdatedAt(deckId);
 
     return {
         removed: false,

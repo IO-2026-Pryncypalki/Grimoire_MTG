@@ -47,6 +47,7 @@ export default class CollectionEntry {
         });
     }
 
+    public getId(): string           { return this.id; }
     public getCard(): Card           { return this.card; }
     public getQuantity(): number     { return this.quantity; }
     public getCondition(): string    { return this.condition; }

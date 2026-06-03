@@ -1,30 +1,25 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:grimoire_mtg/main.dart';
+import 'package:grimoire_mtg/models/card.dart';
+import 'package:grimoire_mtg/models/scan.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('CardDto parses JSON', () {
+    final card = CardDto.fromJson({
+      'scryfallId': '00000000-0000-0000-0000-000000000001',
+      'name': 'Lightning Bolt',
+      'setCode': 'M21',
+      'price': 1.25,
+    });
+    expect(card.name, 'Lightning Bolt');
+    expect(card.price, 1.25);
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('ScanResponse detects unique resolution', () {
+    final scan = ScanResponse.fromJson({
+      'resolution': 'unique',
+      'cards': [],
+      'total': 0,
+    });
+    expect(scan.isUnique, isTrue);
   });
 }

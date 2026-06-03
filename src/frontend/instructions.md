@@ -50,4 +50,30 @@ flutter run
 
 it may take a while to start.
 
-## 6. Enjoy :\)
+## 6. Backend URL (API)
+
+The app talks to the backend at `http://localhost:3000` by default. Override with `--dart-define`:
+
+```bash
+# Android emulator → host machine
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
+
+# Physical device on same LAN (replace with your machine IP)
+flutter run --dart-define=API_BASE_URL=http://192.168.1.100:3000
+
+# Flutter Web (backend must allow CORS for your web origin)
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3000
+```
+
+Set backend `FE_BASE_URL` to your **Flutter Web origin** (the URL shown when you run `flutter run -d chrome`, e.g. `http://localhost:54321`). Do **not** set it to the backend URL — after Google login the browser is redirected there and the Flutter app loads your profile UI (not raw JSON).
+
+Example `.env`:
+
+```
+BE_BASE_URL=http://localhost:3000
+FE_BASE_URL=http://localhost:54321
+```
+
+Restart the backend after changing `FE_BASE_URL`.
+
+## 7. Enjoy :\)

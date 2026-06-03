@@ -96,15 +96,16 @@ router.get('/', requireJwt, async (req: Request, res: Response) => {
         const collection = await Collection.load(user.id, filters);
 
         const entries = collection.getEntries().map(entry => ({
+            collectionEntryId: entry.getId(),
             scryfallId: entry.getCard().getScryfallId(),
-            name:       entry.getCard().getName(),
-            setCode:    entry.getCard().getSetCode(),
-            imageUrl:   entry.getCard().getImageUrl(),
-            price:      entry.getCard().getCurrentPrice(),
-            quantity:   entry.getQuantity(),
-            condition:  entry.getCondition(),
-            isFoil:     entry.getIsFoil(),
-            notes:      entry.getNotes(),
+            name: entry.getCard().getName(),
+            setCode: entry.getCard().getSetCode(),
+            imageUrl: entry.getCard().getImageUrl(),
+            price: entry.getCard().getCurrentPrice(),
+            quantity: entry.getQuantity(),
+            condition: entry.getCondition(),
+            isFoil: entry.getIsFoil(),
+            notes: entry.getNotes(),
         }));
 
         return res.status(200).json({

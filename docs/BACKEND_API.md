@@ -16,11 +16,12 @@ Backend REST API dla aplikacji do zarządzania kolekcją kart Magic: The Gatheri
 5. [Endpointy — Cards](#endpointy--cards)
 6. [Endpointy — Collection](#endpointy--collection)
 7. [Endpointy — Decks](#endpointy--decks)
-8. [Flow — wersja mobilna (skanowanie)](#flow--wersja-mobilna-skanowanie)
-9. [Flow — wersja webowa (wyszukiwanie)](#flow--wersja-webowa-wyszukiwanie)
-10. [Flow — wspólne funkcjonalności](#flow--wspólne-funkcjonalności)
-11. [Funkcjonalności dodatkowe](#funkcjonalności-dodatkowe)
-12. [Kody błędów i limity](#kody-błędów-i-limity)
+8. [Endpointy — Sync](#endpointy--sync)
+9. [Flow — wersja mobilna (skanowanie)](#flow--wersja-mobilna-skanowanie)
+10. [Flow — wersja webowa (wyszukiwanie)](#flow--wersja-webowa-wyszukiwanie)
+11. [Flow — wspólne funkcjonalności](#flow--wspólne-funkcjonalności)
+12. [Funkcjonalności dodatkowe](#funkcjonalności-dodatkowe)
+13. [Kody błędów i limity](#kody-błędów-i-limity)
 
 ---
 
@@ -165,7 +166,7 @@ Rozpoczyna logowanie przez Google OAuth 2.0. Przekierowuje użytkownika na stron
 Callback OAuth po autoryzacji Google.
 
 **Auth:** nie wymagana (obsługiwane przez Passport)  
-**Response:** redirect 302 na `{FE_BASE_URL}/api/user/me` z ustawionymi cookies:
+**Response:** redirect 302 na `{FE_BASE_URL}/` (strona Flutter Web) z ustawionymi cookies:
 
 | Cookie | httpOnly | TTL (domyślnie) |
 |--------|----------|-----------------|
@@ -806,6 +807,40 @@ Usuwa przypisanie fizycznych kopii.
 
 ---
 
+## Endpointy — Sync
+
+Endpointy do wykrywania zmian w kolekcji i taliach użytkownika (cross-device sync, polling).
+
+### `GET /api/sync/status`
+
+Zwraca znaczniki czasu ostatniej modyfikacji kolekcji i talii zalogowanego użytkownika.
+
+**Auth:** wymagany (`requireJwt`)
+
+**Response 200:**
+```json
+{
+  "collectionUpdatedAt": "2026-06-03T12:00:00.000Z",
+  "decksUpdatedAt": "2026-06-03T12:05:00.000Z",
+  "syncToken": "2026-06-03T12:05:00.000Z"
+}
+```
+
+| Pole | Opis |
+|------|------|
+| `collectionUpdatedAt` | `MAX(collection_entries.updated_at)` dla użytkownika (epoch ISO jeśli brak wpisów) |
+| `decksUpdatedAt` | `MAX(decks.updated_at)` dla użytkownika (epoch ISO jeśli brak talii) |
+| `syncToken` | Późniejszy z dwóch powyższych timestampów (porównanie leksykograficzne ISO) |
+
+**Użycie w kliencie:** poll co ~5 s w tle aplikacji. Gdy `syncToken` się zmieni:
+
+- jeśli zmieniło się `collectionUpdatedAt` → odśwież `GET /api/collection`
+- jeśli zmieniło się `decksUpdatedAt` → odśwież `GET /api/decks` (oraz otwarty `GET /api/decks/:id` jeśli dotyczy)
+
+Mutacje decków (karty, assignments) aktualizują `decks.updated_at` rodzica. Mutacje kolekcji aktualizują `collection_entries.updated_at`.
+
+---
+
 ## Flow — wersja mobilna (skanowanie)
 
 ### 1. Logowanie
@@ -978,6 +1013,17 @@ DELETE .../assignments/:id   → usuń przypisanie
 GET /api/user/me     → dane + statystyki
 PATCH /api/user/me   → zmiana username
 ```
+
+### Synchronizacja między urządzeniami (live sync)
+
+```
+Co ~5 s (aplikacja na pierwszym planie):
+GET /api/sync/status → porównaj syncToken z poprzednią wartością
+  → zmiana collectionUpdatedAt → GET /api/collection
+  → zmiana decksUpdatedAt      → GET /api/decks (+ otwarty deck)
+```
+
+Po każdej lokalnej mutacji klient odświeża odpowiedni store natychmiast (nie czeka na poll). Konflikty: last-write-wins po stronie serwera.
 
 ### Odświeżanie sesji (web)
 

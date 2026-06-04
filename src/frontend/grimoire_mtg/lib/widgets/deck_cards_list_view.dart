@@ -107,7 +107,10 @@ class DeckCardsListView extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FillStatusIndicator(fillStatus: card.fillStatus),
+          FillStatusIndicator(
+            fillStatus: card.fillStatus,
+            inCollection: card.inCollection,
+          ),
           actions.menuButton(card),
         ],
       ),

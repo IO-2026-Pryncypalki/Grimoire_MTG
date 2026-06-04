@@ -56,7 +56,10 @@ class DeckCardActions {
             ListTile(
               title: Text(card.name ?? card.scryfallId),
               subtitle: Text('${card.quantity}x'),
-              trailing: FillStatusIndicator(fillStatus: card.fillStatus),
+              trailing: FillStatusIndicator(
+                fillStatus: card.fillStatus,
+                inCollection: card.inCollection,
+              ),
             ),
             if (card.fillStatus.unfilledQty > 0)
               ListTile(

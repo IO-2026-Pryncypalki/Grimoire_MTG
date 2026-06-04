@@ -1,3 +1,4 @@
+import { Op, QueryTypes } from 'sequelize';
 import sequelize from '../config/database';
 import { Deck as DeckModel } from '../models/Deck';
 import { DeckCard as DeckCardModel } from '../models/DeckCard';
@@ -380,4 +381,135 @@ export const findAssignmentOnDeckCard = async (
 export const getFilledQuantityOnDeckCard = async (deckCardId: string): Promise<number> => {
     const assignments = await getAssignmentsForDeckCard(deckCardId);
     return assignments.reduce((sum, a) => sum + a.quantity, 0);
+};
+
+export interface CollectionEntryAssignmentLocation {
+    id: string;
+    deckCardId: string;
+    deckId: string;
+    deckName: string;
+    quantity: number;
+}
+
+export const listAssignmentsForCollectionEntry = async (
+    userId: string,
+    collectionEntryId: string,
+    excludeDeckCardId?: string,
+): Promise<CollectionEntryAssignmentLocation[]> => {
+    const rows = await DeckCardAssignmentModel.findAll({
+        where: { collectionEntryId },
+        include: [
+            {
+                model: DeckCardModel,
+                required: true,
+                where: excludeDeckCardId ? { id: { [Op.ne]: excludeDeckCardId } } : undefined,
+                include: [
+                    {
+                        model: DeckModel,
+                        required: true,
+                        where: { userId },
+                    },
+                ],
+            },
+        ],
+        order: [['id', 'ASC']],
+    });
+
+    return rows.map((row) => {
+        const raw = row.get() as Record<string, unknown>;
+        const deckCard = (row as InstanceType<typeof DeckCardAssignmentModel> & {
+            DeckCard?: InstanceType<typeof DeckCardModel> & { Deck?: InstanceType<typeof DeckModel> };
+        }).DeckCard;
+        const deckCardRaw = deckCard?.get() as Record<string, unknown> | undefined;
+        const deck = deckCard?.Deck;
+        const deckRaw = deck?.get() as Record<string, unknown> | undefined;
+
+        return {
+            id: raw.id as string,
+            deckCardId: raw.deckCardId as string,
+            deckId: deckCardRaw?.deckId as string,
+            deckName: (deckRaw?.name as string) ?? '',
+            quantity: raw.quantity as number,
+        };
+    });
+};
+
+export interface ReclaimCollectionEntryResult {
+    reclaimed: number;
+    affectedDeckIds: string[];
+}
+
+export const reclaimCollectionEntryQuantity = async (
+    userId: string,
+    collectionEntryId: string,
+    amount: number,
+    excludeDeckCardId: string,
+): Promise<ReclaimCollectionEntryResult> => {
+    if (amount <= 0) {
+        return { reclaimed: 0, affectedDeckIds: [] };
+    }
+
+    const elsewhere = await listAssignmentsForCollectionEntry(
+        userId,
+        collectionEntryId,
+        excludeDeckCardId,
+    );
+
+    let remaining = amount;
+    let reclaimed = 0;
+    const affectedDeckIds = new Set<string>();
+
+    for (const assignment of elsewhere) {
+        if (remaining <= 0) {
+            break;
+        }
+
+        affectedDeckIds.add(assignment.deckId);
+
+        if (assignment.quantity <= remaining) {
+            await deleteAssignment(assignment.id);
+            reclaimed += assignment.quantity;
+            remaining -= assignment.quantity;
+        } else {
+            await updateAssignmentQuantity(assignment.id, assignment.quantity - remaining);
+            reclaimed += remaining;
+            remaining = 0;
+        }
+    }
+
+    return {
+        reclaimed,
+        affectedDeckIds: [...affectedDeckIds],
+    };
+};
+
+export const getOwnedCardNamesForUser = async (
+    userId: string,
+    cardNames: string[],
+): Promise<Set<string>> => {
+    const normalized = [
+        ...new Set(
+            cardNames.map((name) => normalizeCardName(name)).filter((n) => n.length > 0),
+        ),
+    ];
+
+    if (normalized.length === 0) {
+        return new Set();
+    }
+
+    const rows = await sequelize.query<{ name: string }>(
+        `
+        SELECT DISTINCT lower(trim(c.name)) AS name
+        FROM collection_entries ce
+        INNER JOIN cards c ON c.scryfall_id = ce.scryfall_id
+        WHERE ce.user_id = :userId
+          AND lower(trim(c.name)) IN (:names)
+        `,
+        {
+            replacements: { userId, names: normalized },
+            type: QueryTypes.SELECT,
+        },
+    );
+
+    return new Set(rows.map((row) => row.name));
 };

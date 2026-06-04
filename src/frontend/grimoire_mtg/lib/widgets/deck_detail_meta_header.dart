@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/deck.dart';
+import '../utils/deck_validator.dart';
 import '../utils/responsive.dart';
+import 'deck_status_chips.dart';
 
 class DeckDetailMetaHeader extends StatelessWidget {
   const DeckDetailMetaHeader({super.key, required this.deck});
@@ -16,27 +18,18 @@ class DeckDetailMetaHeader extends StatelessWidget {
       0,
       (sum, c) => sum + c.fillStatus.filledQty,
     );
-    final validity = deck.isValid;
+    final unfilledCopies = totalUnfilledCopies(deck);
 
     final formatLine = Text(
       deck.format,
       style: theme.textTheme.titleSmall,
     );
     final statsLine = Text(
-      '${deck.cards.length} pozycji • $totalCopies kopii • $filledCopies/$totalCopies przypisane',
+      '${deck.cards.length} pozycji • $totalCopies kopii • $filledCopies przypisane'
+      '${unfilledCopies > 0 ? ' • $unfilledCopies brak' : ''}',
       style: theme.textTheme.bodyMedium,
     );
-    final validityChip = validity == null
-        ? null
-        : Chip(
-            avatar: Icon(
-              validity ? Icons.check_circle : Icons.error_outline,
-              size: 18,
-              color: validity ? Colors.green : Colors.orange,
-            ),
-            label: Text(validity ? 'Poprawny' : 'Wymaga uwagi'),
-            visualDensity: VisualDensity.compact,
-          );
+    final statusChips = DeckStatusChips(deck: deck);
 
     if (context.isMediumUp) {
       return Card(
@@ -66,10 +59,11 @@ class DeckDetailMetaHeader extends StatelessWidget {
                     formatLine,
                     const SizedBox(height: 4),
                     statsLine,
+                    const SizedBox(height: 8),
+                    statusChips,
                   ],
                 ),
               ),
-              if (validityChip != null) validityChip,
             ],
           ),
         ),
@@ -86,10 +80,8 @@ class DeckDetailMetaHeader extends StatelessWidget {
           const SizedBox(height: 8),
           Text(deck.description!),
         ],
-        if (validityChip != null) ...[
-          const SizedBox(height: 8),
-          validityChip,
-        ],
+        const SizedBox(height: 8),
+        statusChips,
         const SizedBox(height: 8),
       ],
     );

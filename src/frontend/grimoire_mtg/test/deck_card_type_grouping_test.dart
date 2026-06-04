@@ -9,6 +9,7 @@ DeckCardItem _card(String name, String? typeLine) => DeckCardItem(
       board: 'main',
       name: name,
       typeLine: typeLine,
+      inCollection: true,
       fillStatus: FillStatusDto(
         quantity: 1,
         filledQty: 0,

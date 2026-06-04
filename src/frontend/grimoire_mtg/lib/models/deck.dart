@@ -119,6 +119,7 @@ class DeckCardItem {
     this.typeLine,
     this.imageUrl,
     this.imageUrlHiRes,
+    this.inCollection = false,
     required this.fillStatus,
     this.formatWarning,
   });
@@ -132,6 +133,7 @@ class DeckCardItem {
   final String? typeLine;
   final String? imageUrl;
   final String? imageUrlHiRes;
+  final bool inCollection;
   final FillStatusDto fillStatus;
   final FormatWarningDto? formatWarning;
 
@@ -145,6 +147,7 @@ class DeckCardItem {
         typeLine: json['typeLine'] as String?,
         imageUrl: json['imageUrl'] as String?,
         imageUrlHiRes: json['imageUrlHiRes'] as String?,
+        inCollection: json['inCollection'] as bool? ?? false,
         fillStatus: FillStatusDto.fromJson(
           json['fillStatus'] as Map<String, dynamic>,
         ),
@@ -190,6 +193,25 @@ class DeckDetails extends DeckListItem {
   }
 }
 
+class AssignmentTransferSourceDto {
+  AssignmentTransferSourceDto({
+    required this.deckId,
+    required this.deckName,
+    required this.quantity,
+  });
+
+  final String deckId;
+  final String deckName;
+  final int quantity;
+
+  factory AssignmentTransferSourceDto.fromJson(Map<String, dynamic> json) =>
+      AssignmentTransferSourceDto(
+        deckId: json['deckId'] as String,
+        deckName: json['deckName'] as String? ?? '',
+        quantity: json['quantity'] as int? ?? 0,
+      );
+}
+
 class CollectionOptionDto {
   CollectionOptionDto({
     required this.collectionEntryId,
@@ -197,8 +219,11 @@ class CollectionOptionDto {
     required this.isFoil,
     required this.entryQuantity,
     required this.assignedTotal,
+    required this.assignedOnSlot,
+    required this.assignedElsewhere,
     required this.availableToAssign,
     required this.scryfallId,
+    required this.transferSources,
     this.setCode,
     this.name,
     this.isExactPrinting = true,
@@ -209,11 +234,14 @@ class CollectionOptionDto {
   final bool isFoil;
   final int entryQuantity;
   final int assignedTotal;
+  final int assignedOnSlot;
+  final int assignedElsewhere;
   final int availableToAssign;
   final String scryfallId;
   final String? setCode;
   final String? name;
   final bool isExactPrinting;
+  final List<AssignmentTransferSourceDto> transferSources;
 
   factory CollectionOptionDto.fromJson(Map<String, dynamic> json) =>
       CollectionOptionDto(
@@ -222,11 +250,16 @@ class CollectionOptionDto {
         isFoil: json['isFoil'] as bool? ?? false,
         entryQuantity: json['entryQuantity'] as int,
         assignedTotal: json['assignedTotal'] as int,
+        assignedOnSlot: json['assignedOnSlot'] as int? ?? 0,
+        assignedElsewhere: json['assignedElsewhere'] as int? ?? 0,
         availableToAssign: json['availableToAssign'] as int,
         scryfallId: json['scryfallId'] as String,
         setCode: json['setCode'] as String?,
         name: json['name'] as String?,
         isExactPrinting: json['isExactPrinting'] as bool? ?? true,
+        transferSources: (json['transferSources'] as List<dynamic>? ?? [])
+            .map((e) => AssignmentTransferSourceDto.fromJson(e as Map<String, dynamic>))
+            .toList(),
       );
 }
 

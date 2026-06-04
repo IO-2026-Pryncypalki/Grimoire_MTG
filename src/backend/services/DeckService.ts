@@ -14,12 +14,14 @@ import {
     type DeckRecord,
     type UpdateDeckData,
 } from '../repositories/DeckRepository';
+import { getOwnedCardNamesForUser } from '../repositories/DeckCardAssignmentRepository';
 import {
     assignCollectionEntry,
     buildDeckCardFillStatus,
     type AssignCollectionEntryInput,
     type DeckCardFillStatus,
 } from './DeckCardAssignmentService';
+import { normalizeCardName } from '../utils/cardNameMatch';
 import { ensureCardInDb } from './CardService';
 import {
     getWarningForCard,
@@ -64,6 +66,7 @@ export interface DeckCardItem {
     typeLine: string | null;
     imageUrl: string | null;
     imageUrlHiRes: string | null;
+    inCollection: boolean;
     fillStatus: DeckCardFillStatus;
     formatWarning: FormatWarningDto | null;
 }
@@ -94,9 +97,15 @@ export interface AddDeckCardResult {
     formatWarning: FormatWarningDto | null;
 }
 
+const isCardInCollection = (name: string | null, ownedNames: Set<string>): boolean => {
+    const normalized = normalizeCardName(name);
+    return normalized.length > 0 && ownedNames.has(normalized);
+};
+
 const toDeckCardItem = (
     card: DeckCardRecord,
     formatWarning: FormatWarningDto | null = null,
+    ownedNames: Set<string> = new Set(),
 ): DeckCardItem => ({
     id: card.id,
     scryfallId: card.scryfallId,
@@ -107,6 +116,7 @@ const toDeckCardItem = (
     typeLine: card.typeLine,
     imageUrl: card.imageUrl,
     imageUrlHiRes: card.imageUrlHiRes,
+    inCollection: isCardInCollection(card.name, ownedNames),
     fillStatus: buildDeckCardFillStatus(card.quantity, card.assignments.map((a) => ({
         id: a.id,
         deckCardId: card.id,
@@ -180,10 +190,16 @@ export const getDeckDetails = async (userId: string, deckId: string): Promise<De
         cards.map((card) => card.scryfallId),
         deckMeta.format,
     );
+    const ownedNames = await getOwnedCardNamesForUser(
+        userId,
+        cards.map((card) => card.name).filter((name): name is string => name != null),
+    );
 
     return {
         ...toDeckListItem(deckMeta),
-        cards: cards.map((card) => toDeckCardItem(card, warnings.get(card.scryfallId) ?? null)),
+        cards: cards.map((card) =>
+            toDeckCardItem(card, warnings.get(card.scryfallId) ?? null, ownedNames),
+        ),
     };
 };
 
@@ -271,10 +287,12 @@ export const addCardToDeck = async (
     const deck = await getByIdForUserWithCards(deckId, userId);
     const updatedCard = deck?.cards.find((c) => c.id === card.id);
     const formatWarning = await getWarningForCard(input.scryfallId, deckMeta.format);
-    const deckCardItem = toDeckCardItem(
-        updatedCard ?? { ...card, assignments: [] },
-        formatWarning,
+    const cardRecord = updatedCard ?? { ...card, assignments: [] };
+    const ownedNames = await getOwnedCardNamesForUser(
+        userId,
+        cardRecord.name ? [cardRecord.name] : [],
     );
+    const deckCardItem = toDeckCardItem(cardRecord, formatWarning, ownedNames);
 
     return {
         card: deckCardItem,
@@ -299,8 +317,12 @@ export const removeCardFromDeck = async (
         quantity,
     );
 
+    const ownedNames = result.card?.name
+        ? await getOwnedCardNamesForUser(userId, [result.card.name])
+        : new Set<string>();
+
     return {
         removed: result.removed,
-        card: result.card ? toDeckCardItem(result.card) : undefined,
+        card: result.card ? toDeckCardItem(result.card, null, ownedNames) : undefined,
     };
 };

@@ -4,6 +4,8 @@ jest.mock('../src/backend/repositories/DeckCardAssignmentRepository', () => ({
     getAssignmentsForDeckCard: jest.fn(),
     getAssignedTotalsByCollectionEntry: jest.fn(),
     listCollectionEntriesForCardName: jest.fn(),
+    listAssignmentsForCollectionEntry: jest.fn(),
+    reclaimCollectionEntryQuantity: jest.fn(),
     createAssignment: jest.fn(),
     findAssignmentOnDeckCard: jest.fn(),
     updateAssignmentQuantity: jest.fn(),
@@ -30,6 +32,8 @@ import {
     getAssignmentsForDeckCard,
     getAssignedTotalsByCollectionEntry,
     listCollectionEntriesForCardName,
+    listAssignmentsForCollectionEntry,
+    reclaimCollectionEntryQuantity,
     createAssignment,
     findAssignmentOnDeckCard,
 } from '../src/backend/repositories/DeckCardAssignmentRepository';
@@ -46,6 +50,11 @@ const SCRYFALL_B = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 describe('DeckCardAssignment by name', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+        (listAssignmentsForCollectionEntry as jest.Mock).mockResolvedValue([]);
+        (reclaimCollectionEntryQuantity as jest.Mock).mockResolvedValue({
+            reclaimed: 0,
+            affectedDeckIds: [],
+        });
         (getAssignedTotalsByCollectionEntry as jest.Mock).mockResolvedValue(new Map());
         (getAssignmentsForDeckCard as jest.Mock).mockResolvedValue([]);
         (findAssignmentOnDeckCard as jest.Mock).mockResolvedValue(null);
@@ -86,6 +95,16 @@ describe('DeckCardAssignment by name', () => {
                     setCode: 'LEA',
                     quantity: 3,
                     condition: 'LP',
+                    isFoil: false,
+                },
+            ]);
+            (getAssignmentsForDeckCard as jest.Mock).mockResolvedValue([
+                {
+                    id: 'assign-slot',
+                    deckCardId: DECK_CARD_ID,
+                    collectionEntryId: ENTRY_A,
+                    quantity: 2,
+                    condition: 'NM',
                     isFoil: false,
                 },
             ]);

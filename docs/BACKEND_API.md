@@ -625,6 +625,7 @@ Szczegóły decku z listą kart, statusem wypełnienia i ostrzeżeniami formatu.
         "typeLine": "Instant",
         "imageUrl": "https://...",
         "imageUrlHiRes": "https://...",
+        "inCollection": true,
         "fillStatus": {
           "quantity": 4,
           "filledQty": 2,
@@ -637,6 +638,10 @@ Szczegóły decku z listą kart, statusem wypełnienia i ostrzeżeniami formatu.
   }
 }
 ```
+
+| Pole | Opis |
+|------|------|
+| `inCollection` | `true` gdy użytkownik ma w kolekcji co najmniej jeden wpis o **tej samej nazwie** karty (dopasowanie po znormalizowanej nazwie, jak przy przypisywaniu) |
 
 ---
 
@@ -756,12 +761,17 @@ Zwraca wpisy z kolekcji pasujące do karty w decku **po nazwie** (dowolny printi
       "condition": "NM",
       "isFoil": false,
       "entryQuantity": 4,
-      "assignedTotal": 2,
-      "availableToAssign": 2,
+      "assignedTotal": 4,
+      "assignedOnSlot": 0,
+      "assignedElsewhere": 4,
+      "availableToAssign": 4,
       "scryfallId": "uuid",
       "setCode": "M21",
       "name": "Lightning Bolt",
-      "isExactPrinting": true
+      "isExactPrinting": true,
+      "transferSources": [
+        { "deckId": "uuid", "deckName": "Burn", "quantity": 4 }
+      ]
     }
   ]
 }
@@ -770,6 +780,10 @@ Zwraca wpisy z kolekcji pasujące do karty w decku **po nazwie** (dowolny printi
 | Pole | Opis |
 |------|------|
 | `isExactPrinting` | `true` gdy wpis kolekcji ma ten sam `scryfallId` co slot w talii |
+| `assignedOnSlot` | Kopie tego wpisu już przypisane do **tego** slotu w talii |
+| `assignedElsewhere` | Kopie przypisane w **innych** taliach (`assignedTotal - assignedOnSlot`) |
+| `availableToAssign` | Ile można dodać do tego slotu (`entryQuantity - assignedOnSlot`); może wymagać przeniesienia z innej talii |
+| `transferSources` | Talie, z których kopie zostaną zdjęte przy przypisaniu (gdy `assignedElsewhere > 0`) |
 
 **Błędy:** `400` — karta w talii bez nazwy (`Deck card has no name`).
 
@@ -803,6 +817,8 @@ Preferuje dokładny printing, potem inne wersje (kolejność: `setCode`, `condit
 ### `POST /api/decks/:id/cards/:deckCardId/assignments`
 
 Przypisuje fizyczne kopie z kolekcji do slotu w decku.
+
+Jeśli wpis jest już przypisany w innej talii, serwer **zdejmuje** wymaganą liczbę kopii z innych slotów (najstarsze przypisanie pierwsze), aktualizuje `decksUpdatedAt` źródłowych talii, a następnie przypisuje do docelowego slotu.
 
 **Body:**
 ```json
@@ -1078,7 +1094,7 @@ PATCH .../assignments/:id    → zmień ilość
 DELETE .../assignments/:id   → usuń przypisanie
 ```
 
-`fillStatus.unfilledQty > 0` sygnalizuje w UI, że slot decku nie ma przypisanych wszystkich fizycznych kopii.
+`fillStatus.unfilledQty > 0` sygnalizuje w UI, że slot decku nie ma przypisanych wszystkich fizycznych kopii. `inCollection: false` oznacza brak karty w kolekcji (UI nie pokazuje zielonego checkmarka nawet przy pełnym `fillStatus`).
 
 ### Profil użytkownika
 

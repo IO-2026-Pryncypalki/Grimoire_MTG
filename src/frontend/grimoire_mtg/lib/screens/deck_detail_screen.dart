@@ -102,17 +102,36 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     try {
       await context.read<AuthService>().api.updateDeck(
             widget.deckId,
-            isValid: result.isValid,
+            isValid: result.isFormatValid,
             lastValidatedAt: DateTime.now().toUtc().toIso8601String(),
           );
       if (mounted) {
+        final body = StringBuffer();
+        if (result.formatMessages.isEmpty) {
+          body.writeln('Format: bez uwag.');
+        } else {
+          body.writeln('Format:');
+          for (final m in result.formatMessages) {
+            body.writeln('• $m');
+          }
+        }
+        body.writeln();
+        if (result.isFullyAssigned) {
+          body.writeln('Przypisania: wszystkie kopie z kolekcji.');
+        } else if (result.assignmentMessages.isEmpty) {
+          body.writeln('Przypisania: brak kart w talii.');
+        } else {
+          body.writeln('Przypisania:');
+          for (final m in result.assignmentMessages) {
+            body.writeln('• $m');
+          }
+        }
+
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: Text(result.isValid ? 'Deck poprawny' : 'Problemy w decku'),
-            content: result.messages.isEmpty
-                ? const Text('Brak uwag.')
-                : Text(result.messages.join('\n')),
+            title: const Text('Walidacja talii'),
+            content: Text(body.toString().trim()),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
             ],
@@ -212,6 +231,11 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
 
     if (selected == null) return;
 
+    if (selected.assignedElsewhere > 0) {
+      final confirmed = await _confirmTransferAssignment(selected);
+      if (confirmed != true) return;
+    }
+
     final qty = selected.availableToAssign.clamp(1, card.fillStatus.unfilledQty);
     try {
       await api.assignToDeck(
@@ -228,6 +252,37 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     }
   }
 
+  Future<bool?> _confirmTransferAssignment(CollectionOptionDto option) {
+    final sources = option.transferSources
+        .map((s) => '${s.quantity}× z talii „${s.deckName}”')
+        .join('\n');
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Przenieść kopie?'),
+        content: Text(
+          'Ten wpis ma ${option.assignedElsewhere} kopii przypisanych w innej talii.\n\n'
+          'Przypisywanie tutaj usunie je stamtąd:\n$sources',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Przenieś')),
+        ],
+      ),
+    );
+  }
+
+  String _collectionOptionSubtitle(CollectionOptionDto o) {
+    final version = o.isExactPrinting
+        ? (o.setCode ?? '')
+        : '${o.setCode ?? '?'} • inna wersja';
+    final base = 'Dostępne: ${o.availableToAssign} • $version';
+    if (o.assignedElsewhere > 0) {
+      return '$base\n${o.assignedElsewhere} w innej talii — przypisanie przeniesie kopie';
+    }
+    return base;
+  }
+
   Future<CollectionOptionDto?> _showCollectionOptionPicker(
     List<CollectionOptionDto> options,
   ) {
@@ -238,16 +293,11 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
           children: [
             const ListTile(title: Text('Przypisz kopie z kolekcji')),
             ...options.map(
-              (o) {
-                final version = o.isExactPrinting
-                    ? (o.setCode ?? '')
-                    : '${o.setCode ?? '?'} • inna wersja';
-                return ListTile(
-                  title: Text('${o.condition}${o.isFoil ? ' Foil' : ''}'),
-                  subtitle: Text('Dostępne: ${o.availableToAssign} • $version'),
-                  onTap: () => onSelect(o),
-                );
-              },
+              (o) => ListTile(
+                title: Text('${o.condition}${o.isFoil ? ' Foil' : ''}'),
+                subtitle: Text(_collectionOptionSubtitle(o)),
+                onTap: () => onSelect(o),
+              ),
             ),
           ],
         ),

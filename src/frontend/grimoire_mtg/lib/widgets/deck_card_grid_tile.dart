@@ -122,7 +122,10 @@ class DeckCardGridTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    FillStatusIndicator(fillStatus: card.fillStatus),
+                    FillStatusIndicator(
+                      fillStatus: card.fillStatus,
+                      inCollection: card.inCollection,
+                    ),
                   ],
                 ),
               ),

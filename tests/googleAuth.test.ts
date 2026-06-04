@@ -51,13 +51,14 @@ describe('Google Auth Flow', () => {
         const res = await request(app).get('/api/auth/google/callback');
 
         expect(res.status).toBe(302);
-        expect(res.header.location).toBe(`${process.env.FE_BASE_URL}/`);
+        expect(res.header.location).toBe(
+            `${process.env.FE_BASE_URL}/#accessToken=fake-access-token-123&refreshToken=fake-refresh-token-456`,
+        );
 
         const cookies = res.header['set-cookie'];
         expect(cookies).toBeDefined();
         expect(cookies.some((c: string) => c.includes('accessToken=fake-access-token-123'))).toBe(true);
         expect(cookies.some((c: string) => c.includes('refreshToken=fake-refresh-token-456'))).toBe(true);
-        expect(res.header.location).not.toContain('accessToken=');
     });
 
     it('should return 401 if passport fails to provide user data', async () => {
@@ -92,8 +93,7 @@ describe('Google Auth Flow', () => {
         const res = await request(app).get('/api/auth/google/callback');
 
         expect(res.status).toBe(302);
-        expect(res.header.location).toBe('/');
-        expect(res.header.location).not.toContain('accessToken=');
+        expect(res.header.location).toBe('/#accessToken=abc&refreshToken=szubidubi');
 
         const cookies = res.header['set-cookie'];
         expect(cookies).toBeDefined();

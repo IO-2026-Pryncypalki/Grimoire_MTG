@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
 import '../state/deck_store.dart';
+import '../utils/responsive.dart';
+import '../utils/sync_after_mutation.dart';
 import '../widgets/api_error_view.dart';
 import 'create_deck_screen.dart';
 import 'deck_detail_screen.dart';
@@ -34,6 +36,22 @@ class _DeckOverviewScreenState extends State<DeckOverviewScreen> {
       appBar: AppBar(
         title: const Text('Moje Talie'),
         actions: [
+          if (context.isMediumUp)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                final created = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
+                );
+                if (created == true && mounted) {
+                  await context.read<DeckStore>().refresh();
+                  await context.read<AuthService>().reloadProfile();
+                  await syncAfterLocalMutation(context);
+                }
+              },
+              tooltip: 'Nowa talia',
+            ),
           if (store.refreshing)
             const Padding(
               padding: EdgeInsets.all(16),
@@ -79,19 +97,22 @@ class _DeckOverviewScreenState extends State<DeckOverviewScreen> {
                           },
                         ),
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final created = await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
-          );
-          if (created == true && mounted) {
-            await context.read<DeckStore>().refresh();
-            await context.read<AuthService>().reloadProfile();
-          }
-        },
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: context.isMediumUp
+          ? null
+          : FloatingActionButton(
+              onPressed: () async {
+                final created = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
+                );
+                if (created == true && mounted) {
+                  await context.read<DeckStore>().refresh();
+                  await context.read<AuthService>().reloadProfile();
+                  await syncAfterLocalMutation(context);
+                }
+              },
+              child: const Icon(Icons.add),
+            ),
     );
   }
 }

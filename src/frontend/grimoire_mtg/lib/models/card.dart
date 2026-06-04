@@ -1,3 +1,5 @@
+import '../utils/json_parse.dart';
+
 class CardDto {
   CardDto({
     required this.scryfallId,
@@ -27,7 +29,7 @@ class CardDto {
         collectorNumber: json['collectorNumber'] as String?,
         lang: json['lang'] as String?,
         imageUrl: json['imageUrl'] as String?,
-        price: (json['price'] as num?)?.toDouble(),
+        price: readDouble(json['price']),
       );
 }
 
@@ -80,9 +82,9 @@ class CardDetailDto extends CardDto {
         collectorNumber: json['collectorNumber'] as String?,
         lang: json['lang'] as String?,
         imageUrl: json['imageUrl'] as String?,
-        price: (json['price'] as num?)?.toDouble(),
+        price: readDouble(json['price']),
         manaCost: json['manaCost'] as String?,
-        cmc: (json['cmc'] as num?)?.toDouble(),
+        cmc: readDouble(json['cmc']),
         typeLine: json['typeLine'] as String?,
         oracleText: json['oracleText'] as String?,
         power: json['power'] as String?,
@@ -96,10 +98,10 @@ class CardDetailDto extends CardDto {
                 ?.map((e) => e.toString())
                 .toList() ??
             [],
-        priceUsd: (json['priceUsd'] as num?)?.toDouble(),
-        priceUsdFoil: (json['priceUsdFoil'] as num?)?.toDouble(),
-        priceEur: (json['priceEur'] as num?)?.toDouble(),
-        priceEurFoil: (json['priceEurFoil'] as num?)?.toDouble(),
+        priceUsd: readDouble(json['priceUsd']),
+        priceUsdFoil: readDouble(json['priceUsdFoil']),
+        priceEur: readDouble(json['priceEur']),
+        priceEurFoil: readDouble(json['priceEurFoil']),
         scryfallUri: json['scryfallUri'] as String?,
       );
 }

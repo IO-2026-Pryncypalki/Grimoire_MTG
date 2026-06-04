@@ -6,6 +6,8 @@ import '../models/scan.dart';
 import '../services/auth_service.dart';
 import '../state/collection_store.dart';
 import '../state/deck_store.dart';
+import '../utils/sync_after_mutation.dart';
+import '../utils/card_grid.dart';
 import '../widgets/add_to_collection_sheet.dart';
 import '../widgets/mtg_card_tile.dart';
 import 'card_detail_screen.dart';
@@ -17,13 +19,10 @@ class ScanResultScreen extends StatelessWidget {
   final ScanResponse scanResult;
 
   Future<void> _addToCollection(BuildContext context, CardDto card) async {
-    final added = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => AddToCollectionSheet(
-        scryfallId: card.scryfallId,
-        initialName: card.name,
-      ),
+    final added = await showAddToCollection(
+      context,
+      scryfallId: card.scryfallId,
+      initialName: card.name,
     );
     if (added == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -68,6 +67,7 @@ class ScanResultScreen extends StatelessWidget {
       await context.read<CollectionStore>().refresh(silent: true);
       await context.read<DeckStore>().refresh(silent: true);
       await context.read<AuthService>().reloadProfile();
+      await syncAfterLocalMutation(context);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Dodano do kolekcji i talii')),
@@ -120,10 +120,7 @@ class ScanResultScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Wybierz wariant')),
       body: GridView.builder(
         padding: const EdgeInsets.all(8),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.65,
-        ),
+        gridDelegate: cardGridDelegate(context),
         itemCount: cards.length,
         itemBuilder: (context, index) {
           final card = cards[index];

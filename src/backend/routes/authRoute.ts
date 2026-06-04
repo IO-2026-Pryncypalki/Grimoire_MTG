@@ -16,6 +16,14 @@ const webFrontendRedirectUrl = (): string => {
     return base.length > 0 ? `${base}/` : '/';
 };
 
+const webFrontendRedirectWithTokens = (
+    accessToken: string,
+    refreshToken: string,
+): string => {
+    const fragment = `accessToken=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}`;
+    return `${webFrontendRedirectUrl()}#${fragment}`;
+};
+
 async function createSessionAndTokens(
     userId: string,
     userAgent: string,
@@ -122,7 +130,7 @@ router.get(
             }
 
             setAuthCookies(res, accessToken, refreshToken);
-            return res.status(302).redirect(webFrontendRedirectUrl());
+            return res.status(302).redirect(webFrontendRedirectWithTokens(accessToken, refreshToken));
         } catch (error) {
             return res.status(500).json({ message: 'An error occurred during authentication', error });
         }

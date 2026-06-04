@@ -8,6 +8,7 @@ class CollectionStore extends ChangeNotifier {
   CollectionStore(this._auth);
 
   AuthService _auth;
+  Future<void>? _inFlight;
 
   CollectionResponse? data;
   bool loading = false;
@@ -21,15 +22,28 @@ class CollectionStore extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    if (_inFlight != null) {
+      await _inFlight;
+      return;
+    }
     loading = true;
     error = null;
     notifyListeners();
-    await _fetch();
-    loading = false;
-    notifyListeners();
+    _inFlight = _fetch();
+    try {
+      await _inFlight;
+    } finally {
+      _inFlight = null;
+      loading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> refresh({bool silent = false}) async {
+    if (_inFlight != null) {
+      await _inFlight;
+      return;
+    }
     if (silent && data != null) {
       refreshing = true;
       notifyListeners();
@@ -38,18 +52,27 @@ class CollectionStore extends ChangeNotifier {
       error = null;
       notifyListeners();
     }
-    await _fetch();
-    loading = false;
-    refreshing = false;
-    notifyListeners();
+    _inFlight = _fetch();
+    try {
+      await _inFlight;
+    } finally {
+      _inFlight = null;
+      loading = false;
+      refreshing = false;
+      notifyListeners();
+    }
   }
 
   Future<void> refreshIfStale({Duration maxAge = const Duration(seconds: 30)}) async {
+    if (data == null) {
+      if (!loading) await load();
+      return;
+    }
     if (lastFetchedAt != null &&
         DateTime.now().difference(lastFetchedAt!) < maxAge) {
       return;
     }
-    await refresh(silent: data != null);
+    await refresh(silent: true);
   }
 
   void setFilters(CollectionFilters value) {
@@ -67,6 +90,7 @@ class CollectionStore extends ChangeNotifier {
     refreshing = false;
     error = null;
     lastFetchedAt = null;
+    _inFlight = null;
     notifyListeners();
   }
 
@@ -77,6 +101,11 @@ class CollectionStore extends ChangeNotifier {
       lastFetchedAt = DateTime.now();
     } on ApiException catch (e) {
       error = e.message;
+    } catch (e, stack) {
+      error = 'Nie udało się wczytać kolekcji';
+      if (kDebugMode) {
+        debugPrint('CollectionStore fetch failed: $e\n$stack');
+      }
     }
   }
 }

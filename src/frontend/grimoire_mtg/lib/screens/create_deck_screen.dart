@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../state/deck_store.dart';
+import '../utils/sync_after_mutation.dart';
+import '../widgets/content_width.dart';
 import '../widgets/deck_format_dropdown.dart';
 
 class CreateDeckScreen extends StatefulWidget {
@@ -41,6 +43,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
           );
       await context.read<DeckStore>().refresh(silent: true);
       await context.read<AuthService>().reloadProfile();
+      await syncAfterLocalMutation(context);
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (mounted) {
@@ -69,10 +72,12 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
+      body: ContentWidth(
+        maxWidth: 480,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -94,7 +99,8 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
               ),
               maxLines: 2,
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

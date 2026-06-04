@@ -49,6 +49,10 @@ class ApiClient {
     return headers;
   }
 
+  Future<Map<String, String>> _getHeaders() async {
+    return _headers(json: false);
+  }
+
   Future<http.Response> _send(Future<http.Response> Function() request) async {
     var response = await request();
     if (response.statusCode == 401 && await refreshSession()) {
@@ -79,7 +83,7 @@ class ApiClient {
     Map<String, String>? query,
   }) async {
     final response = await _send(
-      () async => _client.get(_uri(path, query), headers: await _headers()),
+      () async => _client.get(_uri(path, query), headers: await _getHeaders()),
     );
     _throwIfError(response);
     final body = _decodeBody(response);

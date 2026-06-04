@@ -4,7 +4,39 @@ import 'package:provider/provider.dart';
 import '../api/api_exception.dart';
 import '../services/auth_service.dart';
 import '../state/collection_store.dart';
+import '../utils/responsive.dart';
+import '../utils/sync_after_mutation.dart';
 import 'condition_selector.dart';
+import 'content_width.dart';
+
+Future<bool?> showAddToCollection(
+  BuildContext context, {
+  required String scryfallId,
+  String? initialName,
+}) {
+  final sheet = AddToCollectionSheet(
+    scryfallId: scryfallId,
+    initialName: initialName,
+  );
+
+  if (context.isMediumUp) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: ContentWidth(
+          maxWidth: 420,
+          child: sheet,
+        ),
+      ),
+    );
+  }
+
+  return showModalBottomSheet<bool>(
+    context: context,
+    isScrollControlled: true,
+    builder: (_) => sheet,
+  );
+}
 
 class AddToCollectionSheet extends StatefulWidget {
   const AddToCollectionSheet({
@@ -37,6 +69,7 @@ class _AddToCollectionSheetState extends State<AddToCollectionSheet> {
           );
       await context.read<CollectionStore>().refresh(silent: true);
       await context.read<AuthService>().reloadProfile();
+      await syncAfterLocalMutation(context);
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (mounted) {

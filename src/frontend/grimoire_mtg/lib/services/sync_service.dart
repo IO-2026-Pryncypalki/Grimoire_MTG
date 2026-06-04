@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import '../models/sync_status.dart';
 import '../state/collection_store.dart';
 import '../state/deck_detail_store.dart';
 import '../state/deck_store.dart';
@@ -65,14 +66,27 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     if (futures.isNotEmpty) {
       await Future.wait(futures);
     }
-    await _pollOnce(initialSeed: true);
+    await _seedFromServer();
   }
 
   Future<void> forceSync() async {
-    await _pollOnce(initialSeed: _lastSyncToken == null);
+    await _pollOnce();
+  }
+
+  Future<void> markSyncedAfterLocalWrite() async {
+    await _seedFromServer();
+  }
+
+  Future<void> _seedFromServer() async {
+    try {
+      final status = await _auth.api.getSyncStatus();
+      _applyStatus(status);
+    } catch (_) {}
   }
 
   void _onAuthChanged() {
+    if (_auth.isLoading) return;
+
     if (_auth.isAuthenticated) {
       _resetTokens();
       unawaited(_bootstrapAfterAuth());
@@ -92,6 +106,12 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     _lastDecksUpdatedAt = null;
   }
 
+  void _applyStatus(SyncStatus status) {
+    _lastSyncToken = status.syncToken;
+    _lastCollectionUpdatedAt = status.collectionUpdatedAt;
+    _lastDecksUpdatedAt = status.decksUpdatedAt;
+  }
+
   void _startPolling() {
     _stopPolling();
     if (!_auth.isAuthenticated || !_foreground) return;
@@ -103,24 +123,20 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     _timer = null;
   }
 
-  Future<void> _pollOnce({bool initialSeed = false}) async {
+  Future<void> _pollOnce() async {
     if (!_auth.isAuthenticated || !_foreground) return;
 
     try {
       final status = await _auth.api.getSyncStatus();
 
-      if (initialSeed || _lastSyncToken == null) {
-        _lastSyncToken = status.syncToken;
-        _lastCollectionUpdatedAt = status.collectionUpdatedAt;
-        _lastDecksUpdatedAt = status.decksUpdatedAt;
-        return;
-      }
-
-      if (status.syncToken == _lastSyncToken) return;
-
       final collectionChanged =
+          _lastCollectionUpdatedAt == null ||
           status.collectionUpdatedAt != _lastCollectionUpdatedAt;
-      final decksChanged = status.decksUpdatedAt != _lastDecksUpdatedAt;
+      final decksChanged =
+          _lastDecksUpdatedAt == null ||
+          status.decksUpdatedAt != _lastDecksUpdatedAt;
+
+      if (!collectionChanged && !decksChanged) return;
 
       if (collectionChanged) {
         await _collectionStore.refresh(silent: true);
@@ -135,9 +151,7 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
         await _auth.reloadProfile();
       }
 
-      _lastSyncToken = status.syncToken;
-      _lastCollectionUpdatedAt = status.collectionUpdatedAt;
-      _lastDecksUpdatedAt = status.decksUpdatedAt;
+      _applyStatus(status);
     } catch (_) {
       // Keep stale data; retry on next interval.
     }

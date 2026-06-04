@@ -8,9 +8,12 @@ import '../services/sync_service.dart';
 import '../state/deck_detail_store.dart';
 import '../state/deck_store.dart';
 import '../utils/deck_validator.dart';
+import '../utils/responsive.dart';
+import '../utils/sync_after_mutation.dart';
 import '../widgets/api_error_view.dart';
+import '../widgets/content_width.dart';
 import '../widgets/fill_status_indicator.dart';
-import 'card_search_screen.dart';
+import 'add_card_to_deck_screen.dart';
 
 class DeckDetailScreen extends StatefulWidget {
   const DeckDetailScreen({super.key, required this.deckId});
@@ -47,6 +50,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     await context.read<DeckDetailStore>().refresh(widget.deckId);
     await context.read<DeckStore>().refresh(silent: true);
     await context.read<AuthService>().reloadProfile();
+    await syncAfterLocalMutation(context);
   }
 
   Future<void> _validateAndSave(DeckDetails deck) async {
@@ -142,24 +146,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
       return;
     }
 
-    final selected = await showModalBottomSheet<CollectionOptionDto>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const ListTile(title: Text('Przypisz kopie z kolekcji')),
-            ...options.map(
-              (o) => ListTile(
-                title: Text('${o.condition}${o.isFoil ? ' Foil' : ''}'),
-                subtitle: Text('Dostępne: ${o.availableToAssign}'),
-                onTap: () => Navigator.pop(ctx, o),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    final selected = await _showCollectionOptionPicker(options);
 
     if (selected == null) return;
 
@@ -177,6 +164,45 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
       }
     }
+  }
+
+  Future<CollectionOptionDto?> _showCollectionOptionPicker(
+    List<CollectionOptionDto> options,
+  ) {
+    Widget buildPicker(void Function(CollectionOptionDto option) onSelect) {
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(title: Text('Przypisz kopie z kolekcji')),
+            ...options.map(
+              (o) => ListTile(
+                title: Text('${o.condition}${o.isFoil ? ' Foil' : ''}'),
+                subtitle: Text('Dostępne: ${o.availableToAssign}'),
+                onTap: () => onSelect(o),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (context.isMediumUp) {
+      return showDialog<CollectionOptionDto>(
+        context: context,
+        builder: (ctx) => Dialog(
+          child: ContentWidth(
+            maxWidth: 420,
+            child: buildPicker((o) => Navigator.pop(ctx, o)),
+          ),
+        ),
+      );
+    }
+
+    return showModalBottomSheet<CollectionOptionDto>(
+      context: context,
+      builder: (ctx) => buildPicker((o) => Navigator.pop(ctx, o)),
+    );
   }
 
   List<DeckCardItem> _cardsForBoard(DeckDetails deck, String board) {
@@ -210,6 +236,17 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
       appBar: AppBar(
         title: Text(deck.name),
         actions: [
+          if (context.isMediumUp)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddCardToDeckScreen(deckId: widget.deckId),
+                ),
+              ).then((_) => _refreshStores()),
+              tooltip: 'Dodaj kartę',
+            ),
           IconButton(
             icon: const Icon(Icons.fact_check),
             onPressed: () => _validateAndSave(deck),
@@ -218,62 +255,80 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
           IconButton(icon: const Icon(Icons.delete), onPressed: _deleteDeck),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => detailStore.refresh(widget.deckId),
-        child: ListView(
-          padding: const EdgeInsets.all(12),
-          children: [
-            Text('${deck.format} • ${deck.cards.length} pozycji'),
-            if (deck.description != null) Text(deck.description!),
-            const SizedBox(height: 8),
-            for (final board in deckBoards) ...[
-              if (_cardsForBoard(deck, board).isNotEmpty) ...[
-                Text(
-                  board.toUpperCase(),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                ..._cardsForBoard(deck, board).map(
-                  (card) => ListTile(
-                    leading: card.imageUrl != null
-                        ? Image.network(card.imageUrl!, width: 40, fit: BoxFit.cover)
-                        : const Icon(Icons.style),
-                    title: Text('${card.quantity}x ${card.name ?? card.scryfallId}'),
-                    subtitle: card.formatWarning != null
-                        ? Text(
-                            card.formatWarning!.message,
-                            style: const TextStyle(color: Colors.orange),
-                          )
-                        : Text(card.setCode ?? ''),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FillStatusIndicator(fillStatus: card.fillStatus),
-                        if (card.fillStatus.unfilledQty > 0)
-                          IconButton(
-                            icon: const Icon(Icons.link),
-                            onPressed: () => _assignCopies(card),
-                            tooltip: 'Przypisz',
+      body: ContentWidth(
+        maxWidth: 960,
+        child: RefreshIndicator(
+          onRefresh: () => detailStore.refresh(widget.deckId),
+          child: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              Text('${deck.format} • ${deck.cards.length} pozycji'),
+              if (deck.description != null) Text(deck.description!),
+              const SizedBox(height: 8),
+              for (final board in deckBoards) ...[
+                if (_cardsForBoard(deck, board).isNotEmpty) ...[
+                  Text(
+                    board.toUpperCase(),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  ..._cardsForBoard(deck, board).map(
+                    (card) => ListTile(
+                      leading: card.imageUrl != null
+                          ? Image.network(card.imageUrl!, width: 40, fit: BoxFit.cover)
+                          : const Icon(Icons.style),
+                      title: Text('${card.quantity}x ${card.name ?? card.scryfallId}'),
+                      subtitle: card.formatWarning != null
+                          ? Text(
+                              card.formatWarning!.message,
+                              style: const TextStyle(color: Colors.orange),
+                            )
+                          : Text(card.setCode ?? ''),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          FillStatusIndicator(fillStatus: card.fillStatus),
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert),
+                            onSelected: (value) {
+                              if (value == 'assign') {
+                                _assignCopies(card);
+                              } else if (value == 'remove') {
+                                _removeCard(card);
+                              }
+                            },
+                            itemBuilder: (ctx) => [
+                              if (card.fillStatus.unfilledQty > 0)
+                                const PopupMenuItem(
+                                  value: 'assign',
+                                  child: Text('Przypisz kopie'),
+                                ),
+                              const PopupMenuItem(
+                                value: 'remove',
+                                child: Text('Usuń z talii'),
+                              ),
+                            ],
                           ),
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () => _removeCard(card),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ],
-          ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CardSearchScreen()),
-        ).then((_) => _refreshStores()),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: context.isMediumUp
+          ? null
+          : FloatingActionButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddCardToDeckScreen(deckId: widget.deckId),
+                ),
+              ).then((_) => _refreshStores()),
+              child: const Icon(Icons.add),
+            ),
     );
   }
 }

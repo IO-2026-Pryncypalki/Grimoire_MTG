@@ -1,4 +1,5 @@
 import 'card.dart';
+import '../utils/json_parse.dart';
 
 const cardConditions = ['M', 'NM', 'GD', 'LP', 'MP', 'HP', 'DMG'];
 
@@ -34,10 +35,10 @@ class CollectionEntryDto {
         name: json['name'] as String?,
         setCode: json['setCode'] as String?,
         imageUrl: json['imageUrl'] as String?,
-        price: (json['price'] as num?)?.toDouble(),
-        quantity: json['quantity'] as int,
-        condition: json['condition'] as String,
-        isFoil: json['isFoil'] as bool? ?? false,
+        price: readDouble(json['price']),
+        quantity: readInt(json['quantity'], defaultValue: 1),
+        condition: json['condition'] as String? ?? 'NM',
+        isFoil: readBool(json['isFoil']),
         notes: json['notes'] as String?,
       );
 
@@ -58,10 +59,10 @@ class CollectionResponse {
 
   factory CollectionResponse.fromJson(Map<String, dynamic> json) =>
       CollectionResponse(
-        entries: (json['entries'] as List<dynamic>)
+        entries: (json['entries'] as List<dynamic>? ?? [])
             .map((e) => CollectionEntryDto.fromJson(e as Map<String, dynamic>))
             .toList(),
-        totalValue: (json['totalValue'] as num?)?.toDouble() ?? 0,
+        totalValue: readDouble(json['totalValue']) ?? 0,
       );
 }
 

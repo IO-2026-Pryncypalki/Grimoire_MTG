@@ -112,6 +112,7 @@ export default class Collection {
         }
 
         await row.reload({ include: [{ model: CardModel }] });
+        await row.update({ updatedAt: new Date() });
         const domainEntry = CollectionEntry.fromModel(row);
 
         const memIdx = this.entries.findIndex(e =>

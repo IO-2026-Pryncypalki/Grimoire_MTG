@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
 import '../services/auth_service.dart';
+import '../widgets/content_width.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -75,10 +76,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       appBar: AppBar(title: const Text('Profil Użytkownika')),
       body: user == null
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
+          : ContentWidth(
+              maxWidth: 480,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
                   const CircleAvatar(radius: 50, child: Icon(Icons.person, size: 50)),
                   const SizedBox(height: 16),
                   if (_editing)
@@ -138,7 +141,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     title: const Text('Usuń konto'),
                     onTap: _deleteAccount,
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
     );

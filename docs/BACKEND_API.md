@@ -166,7 +166,7 @@ Rozpoczyna logowanie przez Google OAuth 2.0. Przekierowuje użytkownika na stron
 Callback OAuth po autoryzacji Google.
 
 **Auth:** nie wymagana (obsługiwane przez Passport)  
-**Response:** redirect 302 na `{FE_BASE_URL}/` (strona Flutter Web) z ustawionymi cookies:
+**Response:** redirect 302 na `{FE_BASE_URL}/#accessToken=...&refreshToken=...` (Flutter Web zapisuje tokeny w `sessionStorage` i używa `Authorization: Bearer`) oraz ustawia cookies:
 
 | Cookie | httpOnly | TTL (domyślnie) |
 |--------|----------|-----------------|

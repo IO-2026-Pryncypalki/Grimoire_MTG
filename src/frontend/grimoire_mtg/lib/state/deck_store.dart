@@ -8,6 +8,7 @@ class DeckStore extends ChangeNotifier {
   DeckStore(this._auth);
 
   AuthService _auth;
+  Future<void>? _inFlight;
 
   List<DeckListItem> decks = [];
   bool loading = false;
@@ -20,15 +21,28 @@ class DeckStore extends ChangeNotifier {
   }
 
   Future<void> load() async {
+    if (_inFlight != null) {
+      await _inFlight;
+      return;
+    }
     loading = true;
     error = null;
     notifyListeners();
-    await _fetch();
-    loading = false;
-    notifyListeners();
+    _inFlight = _fetch();
+    try {
+      await _inFlight;
+    } finally {
+      _inFlight = null;
+      loading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> refresh({bool silent = false}) async {
+    if (_inFlight != null) {
+      await _inFlight;
+      return;
+    }
     if (silent && decks.isNotEmpty) {
       refreshing = true;
       notifyListeners();
@@ -37,18 +51,27 @@ class DeckStore extends ChangeNotifier {
       error = null;
       notifyListeners();
     }
-    await _fetch();
-    loading = false;
-    refreshing = false;
-    notifyListeners();
+    _inFlight = _fetch();
+    try {
+      await _inFlight;
+    } finally {
+      _inFlight = null;
+      loading = false;
+      refreshing = false;
+      notifyListeners();
+    }
   }
 
   Future<void> refreshIfStale({Duration maxAge = const Duration(seconds: 30)}) async {
+    if (decks.isEmpty) {
+      if (!loading) await load();
+      return;
+    }
     if (lastFetchedAt != null &&
         DateTime.now().difference(lastFetchedAt!) < maxAge) {
       return;
     }
-    await refresh(silent: decks.isNotEmpty);
+    await refresh(silent: true);
   }
 
   void clear() {
@@ -57,6 +80,7 @@ class DeckStore extends ChangeNotifier {
     refreshing = false;
     error = null;
     lastFetchedAt = null;
+    _inFlight = null;
     notifyListeners();
   }
 
@@ -67,6 +91,11 @@ class DeckStore extends ChangeNotifier {
       lastFetchedAt = DateTime.now();
     } on ApiException catch (e) {
       error = e.message;
+    } catch (e, stack) {
+      error = 'Nie udało się wczytać talii';
+      if (kDebugMode) {
+        debugPrint('DeckStore fetch failed: $e\n$stack');
+      }
     }
   }
 }

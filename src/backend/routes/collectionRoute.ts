@@ -225,7 +225,7 @@ router.patch('/:scryfallId', requireJwt, async (req: Request, res: Response) => 
         if (!entry) return res.status(404).json({ message: 'Entry not found' });
 
         if (delta !== undefined) {
-            entry.updateQuantity(delta);
+            await collection.updateEntryQuantity(entry, delta);
             collection.pruneEmpty();
         }
         if (notes !== undefined) entry.setNotes(notes);
@@ -249,11 +249,15 @@ router.delete('/:scryfallId', requireJwt, async (req: Request, res: Response) =>
                         : undefined;
 
         const collection = await Collection.load(user.id);
-        collection.removeCard(scryfallId, condition, isFoil);
+        const removed = await collection.removeCard(scryfallId, condition, isFoil);
+        if (removed === 0) {
+            return res.status(404).json({ message: 'Entry not found' });
+        }
         publishSyncForUser(user.id);
         return res.status(200).json({ message: 'Entry removed' });
-    } catch (error) {
-        return res.status(500).json({ message: 'Failed to remove entry', error });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to remove entry';
+        return res.status(500).json({ message });
     }
 });
 

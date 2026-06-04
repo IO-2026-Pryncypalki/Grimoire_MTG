@@ -3,7 +3,13 @@ jest.mock('../src/backend/models/CollectionEntry', () => ({
         findOrCreate: jest.fn().mockResolvedValue([{}, true]),
         destroy:      jest.fn().mockResolvedValue(1),
         findAll:      jest.fn().mockResolvedValue([]),
+        update:       jest.fn().mockResolvedValue([1]),
     }
+}));
+
+jest.mock('../src/backend/repositories/CollectionEntryRepository', () => ({
+    deleteCollectionEntries: jest.fn(),
+    touchCollectionEntryUpdatedAt: jest.fn(),
 }));
 
 jest.mock('../src/backend/models/Card', () => ({
@@ -16,6 +22,7 @@ jest.mock('../src/backend/models/Card', () => ({
 import Collection from '../src/backend/collection/Collection';
 import Card from '../src/backend/collection/Card';
 import { Card as CardModel } from '../src/backend/models/Card';
+import { deleteCollectionEntries } from '../src/backend/repositories/CollectionEntryRepository';
 
 describe('Collection', () => {
   const makeCard = (id = 'abc-123', price: number | null = 10.0) => new Card({
@@ -58,16 +65,26 @@ describe('Collection', () => {
   });
 
   describe('removeCard(scryfallId)', () => {
-    test('usuwa istniejący wpis', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    test('usuwa istniejący wpis po potwierdzeniu w bazie', async () => {
+      (deleteCollectionEntries as jest.Mock).mockResolvedValue(1);
       const col = makeCollection();
       col.addCard(makeCard());
-      col.removeCard('abc-123');
+      const removed = await col.removeCard('abc-123');
+      expect(removed).toBe(1);
       expect(col.getEntry('abc-123')).toBeNull();
     });
 
-    test('nie rzuca błędu dla nieistniejącego scryfallId', () => {
+    test('zostawia wpisy gdy baza nic nie usunęła', async () => {
+      (deleteCollectionEntries as jest.Mock).mockResolvedValue(0);
       const col = makeCollection();
-      expect(() => col.removeCard('nieistniejace-id')).not.toThrow();
+      col.addCard(makeCard());
+      const removed = await col.removeCard('nieistniejace-id');
+      expect(removed).toBe(0);
+      expect(col.getEntry('abc-123')).not.toBeNull();
     });
   });
 

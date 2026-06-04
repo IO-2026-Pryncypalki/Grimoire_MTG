@@ -112,3 +112,36 @@ describe('POST /api/collection', () => {
         expect(res.status).toBe(429);
     });
 });
+
+describe('DELETE /api/collection/:scryfallId', () => {
+    const mockRemoveCard = jest.fn();
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        (Collection.load as jest.Mock).mockResolvedValue({
+            removeCard: mockRemoveCard,
+        });
+    });
+
+    test('200 gdy wpis usunięty', async () => {
+        mockRemoveCard.mockResolvedValue(1);
+
+        const res = await request(app)
+            .delete(`/api/collection/${CARD_ID}`)
+            .query({ condition: 'NM', isFoil: 'false' });
+
+        expect(res.status).toBe(200);
+        expect(mockRemoveCard).toHaveBeenCalledWith(CARD_ID, 'NM', false);
+    });
+
+    test('404 gdy brak wpisu', async () => {
+        mockRemoveCard.mockResolvedValue(0);
+
+        const res = await request(app)
+            .delete(`/api/collection/${CARD_ID}`)
+            .query({ condition: 'NM', isFoil: 'false' });
+
+        expect(res.status).toBe(404);
+        expect(res.body.message).toBe('Entry not found');
+    });
+});

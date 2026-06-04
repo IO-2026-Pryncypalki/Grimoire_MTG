@@ -31,6 +31,11 @@ class _CardSearchBodyState extends State<CardSearchBody> {
   List<CardDto> _results = [];
   bool _loading = false;
   String? _error;
+  String? _lastQuery;
+  bool _hasSearched = false;
+  bool _noMatch = false;
+  List<String> _didYouMean = const [];
+  String _searchMode = 'direct';
 
   @override
   void dispose() {
@@ -45,6 +50,10 @@ class _CardSearchBodyState extends State<CardSearchBody> {
       setState(() {
         _results = [];
         _error = null;
+        _hasSearched = false;
+        _noMatch = false;
+        _didYouMean = const [];
+        _lastQuery = null;
       });
       return;
     }
@@ -55,12 +64,17 @@ class _CardSearchBodyState extends State<CardSearchBody> {
     setState(() {
       _loading = true;
       _error = null;
+      _lastQuery = query;
     });
     try {
-      final cards = await context.read<AuthService>().api.searchCards(query);
+      final result = await context.read<AuthService>().api.searchCards(query);
       if (mounted) {
         setState(() {
-          _results = cards;
+          _results = result.cards;
+          _noMatch = result.noMatch;
+          _didYouMean = result.didYouMean;
+          _searchMode = result.searchMode;
+          _hasSearched = true;
           _loading = false;
         });
       }
@@ -68,10 +82,64 @@ class _CardSearchBodyState extends State<CardSearchBody> {
       if (mounted) {
         setState(() {
           _error = e.message;
+          _hasSearched = true;
           _loading = false;
         });
       }
     }
+  }
+
+  void _searchSuggestion(String name) {
+    _controller.text = name;
+    _controller.selection = TextSelection.collapsed(offset: name.length);
+    _search(name);
+  }
+
+  Widget _buildEmptyState() {
+    if (!_hasSearched || (_lastQuery?.length ?? 0) < 2) {
+      return Center(child: Text(widget.emptyHint));
+    }
+
+    if (_noMatch && _results.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Nie znaleziono kart dla „$_lastQuery”',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              if (_didYouMean.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Czy chodziło Ci o:',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _didYouMean
+                      .map(
+                        (name) => ActionChip(
+                          label: Text(name),
+                          onPressed: () => _searchSuggestion(name),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Center(child: Text(widget.emptyHint));
   }
 
   @override
@@ -91,11 +159,26 @@ class _CardSearchBodyState extends State<CardSearchBody> {
           ),
         ),
         if (_loading) const LinearProgressIndicator(),
+        if (_hasSearched &&
+            !_loading &&
+            _error == null &&
+            _results.isNotEmpty &&
+            _searchMode == 'autocomplete')
+          Material(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Text(
+                'Pokazano wyniki dla podobnych nazw',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ),
+          ),
         Expanded(
           child: _error != null
               ? ApiErrorView(message: _error!, onRetry: () => _search(_controller.text))
               : _results.isEmpty
-                  ? Center(child: Text(widget.emptyHint))
+                  ? _buildEmptyState()
                   : ContentWidth(
                       maxWidth: 1400,
                       child: GridView.builder(

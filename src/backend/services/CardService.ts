@@ -1,17 +1,29 @@
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 import Card from '../collection/Card';
 import { Card as CardModel } from '../models/Card';
 import { extractLegalitiesRows } from '../deck/scryfallFormatMap';
 import { hasLegalities, upsertCardLegalities } from '../repositories/CardLegalityRepository';
 import { mapScryfallJsonToCard, scryfallJsonToCardModelFields } from '../scanner/scryfallCardMapper';
+import {
+    buildOrQueryFromNames,
+    buildScryfallSearchQuery,
+    fetchAutocompleteNames,
+    ScryfallSearchMode,
+    searchScryfallCards,
+} from '../scanner/scryfallSearch';
 
 const SCRYFALL_BASE = 'https://api.scryfall.com';
 const RATE_LIMIT_MS = 100;
+const LOCAL_TRGM_THRESHOLD = 0.25;
+const LOCAL_TRGM_LIMIT = 20;
 let lastRequestTime = 0;
 
 export interface SearchCardsResult {
     cards: Card[];
     total: number;
+    noMatch: boolean;
+    didYouMean: string[];
+    searchMode: ScryfallSearchMode;
 }
 
 async function waitForRateLimit(): Promise<void> {
@@ -65,46 +77,83 @@ function mergeSearchResults(scryfallCards: Card[], localCards: Card[]): Card[] {
     return merged;
 }
 
-export async function searchCards(cardName: string): Promise<SearchCardsResult> {
-    const query = assertNonEmptyCardName(cardName);
-
+async function findLocalCardsByIlike(query: string): Promise<Card[]> {
     const localRows = await CardModel.findAll({
         where: { name: { [Op.iLike]: `%${query}%` } },
         limit: 50,
     });
-    const localCards = localRows.map(row =>
+    return localRows.map(row =>
         Card.fromModel(row as InstanceType<typeof CardModel>),
     );
+}
 
-    const searchUrl =
-        `${SCRYFALL_BASE}/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=name`;
+async function findLocalCardsByTrgm(
+    query: string,
+): Promise<{ cards: Card[]; names: string[] }> {
+    const localRows = await CardModel.findAll({
+        where: Sequelize.where(
+            Sequelize.fn('similarity', Sequelize.col('name'), query),
+            Op.gt,
+            LOCAL_TRGM_THRESHOLD,
+        ),
+        order: [[Sequelize.fn('similarity', Sequelize.col('name'), query), 'DESC']],
+        limit: LOCAL_TRGM_LIMIT,
+    });
+    const cards = localRows.map(row =>
+        Card.fromModel(row as InstanceType<typeof CardModel>),
+    );
+    const names = cards
+        .map((c) => c.getName())
+        .filter((n): n is string => n != null);
+    return { cards, names };
+}
 
-    await waitForRateLimit();
-    const response = await fetch(searchUrl);
+export async function searchCards(cardName: string): Promise<SearchCardsResult> {
+    const query = assertNonEmptyCardName(cardName);
 
-    if (response.status === 429) {
-        throw new Error('Scryfall Rate Limit Exceeded');
+    const localIlikeCards = await findLocalCardsByIlike(query);
+    let searchMode: ScryfallSearchMode = 'direct';
+    let didYouMean: string[] = [];
+
+    const primaryResult = await searchScryfallCards(buildScryfallSearchQuery(query));
+    let scryfallCards = primaryResult?.cards ?? [];
+    let total = primaryResult?.total ?? 0;
+
+    if (scryfallCards.length === 0) {
+        const suggestions = await fetchAutocompleteNames(query);
+        if (suggestions.length > 0) {
+            didYouMean = suggestions.slice(0, 5);
+            const orQuery = buildOrQueryFromNames(suggestions);
+            const fallbackResult = await searchScryfallCards(orQuery);
+            if (fallbackResult && fallbackResult.cards.length > 0) {
+                scryfallCards = fallbackResult.cards;
+                total = fallbackResult.total;
+                searchMode = 'autocomplete';
+            }
+        }
     }
 
-    if (response.status === 404) {
-        return {
-            cards: localCards,
-            total: localCards.length,
-        };
+    let localCards = localIlikeCards;
+    if (localIlikeCards.length === 0) {
+        const trgm = await findLocalCardsByTrgm(query);
+        if (trgm.cards.length > 0) {
+            localCards = trgm.cards;
+            if (searchMode === 'direct' && scryfallCards.length === 0) {
+                searchMode = 'local_fuzzy';
+                didYouMean = trgm.names.slice(0, 5);
+            }
+        }
     }
 
-    if (!response.ok) {
-        throw new Error('Scryfall search failed');
-    }
-
-    const data = (await response.json()) as Record<string, unknown>;
-    const total = (data.total_cards as number) ?? 0;
-    const items = (data.data as Record<string, unknown>[]) ?? [];
-    const scryfallCards = items.map(mapScryfallJsonToCard);
+    const cards = mergeSearchResults(scryfallCards, localCards);
+    const mergedTotal = Math.max(total, cards.length, localCards.length);
 
     return {
-        cards: mergeSearchResults(scryfallCards, localCards),
-        total: Math.max(total, scryfallCards.length),
+        cards,
+        total: mergedTotal,
+        noMatch: cards.length === 0,
+        didYouMean,
+        searchMode,
     };
 }
 

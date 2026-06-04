@@ -196,17 +196,49 @@ describe('searchCards', () => {
         expect(result.total).toBe(2);
         expect(result.cards[0].getName()).toBe('Lightning Bolt');
         expect(CardModel.create).not.toHaveBeenCalled();
-        expect(fetchMock.mock.calls[0][0]).toContain('/cards/search?q=lightning');
+        expect(fetchMock.mock.calls[0][0]).toContain('/cards/search?q=name%3Alightning');
+        expect(result.noMatch).toBe(false);
     });
 
-    test('404 od Scryfall zwraca pustą listę lub tylko lokalne wyniki', async () => {
-        fetchMock.mockResolvedValue({ ok: false, status: 404 });
+    test('404 od Scryfall zwraca noMatch gdy brak autocomplete i trgm', async () => {
+        fetchMock
+            .mockResolvedValueOnce({ ok: false, status: 404 })
+            .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: [] }) });
         (CardModel.findAll as jest.Mock).mockResolvedValue([]);
 
         const result = await searchCards('unknownxyz');
 
-        expect(result).toEqual({ cards: [], total: 0 });
+        expect(result.cards).toEqual([]);
+        expect(result.noMatch).toBe(true);
+        expect(result.searchMode).toBe('direct');
         expect(CardModel.create).not.toHaveBeenCalled();
+    });
+
+    test('używa autocomplete gdy pierwsze wyszukiwanie puste', async () => {
+        fetchMock
+            .mockResolvedValueOnce({ ok: false, status: 404 })
+            .mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({ data: ['Lightning Bolt'] }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    total_cards: 1,
+                    data: [scryfallPayload],
+                }),
+            });
+        (CardModel.findAll as jest.Mock).mockResolvedValue([]);
+
+        const result = await searchCards('lighning bolt');
+
+        expect(result.cards).toHaveLength(1);
+        expect(result.searchMode).toBe('autocomplete');
+        expect(result.didYouMean).toContain('Lightning Bolt');
+        expect(result.noMatch).toBe(false);
+        expect(fetchMock.mock.calls[1][0]).toContain('/cards/autocomplete');
     });
 
     test('łączy wyniki Scryfall z lokalną bazą bez duplikatów', async () => {

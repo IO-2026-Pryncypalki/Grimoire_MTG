@@ -1,4 +1,5 @@
 import '../models/card.dart';
+import '../models/card_search_result.dart';
 import '../models/collection.dart';
 import '../models/deck.dart';
 import '../models/scan.dart';
@@ -32,11 +33,9 @@ class GrimoireApi {
     );
   }
 
-  Future<List<CardDto>> searchCards(String cardName) async {
+  Future<CardSearchResult> searchCards(String cardName) async {
     final json = await _client.post('/api/cards/search', body: {'cardName': cardName});
-    return (json['cards'] as List<dynamic>)
-        .map((e) => CardDto.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return CardSearchResult.fromJson(json);
   }
 
   Future<ScanResponse> scanCard(String plaintext) async {

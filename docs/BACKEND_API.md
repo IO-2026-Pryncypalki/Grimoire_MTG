@@ -298,11 +298,20 @@ Wyszukuje karty po nazwie — **głównie dla wersji webowej**.
 ```json
 {
   "cards": [ /* CardDto[] */ ],
-  "total": 42
+  "total": 42,
+  "noMatch": false,
+  "didYouMean": [],
+  "searchMode": "direct"
 }
 ```
 
-Wyniki łączą dane ze Scryfall (`unique=prints`) z kartami już zapisanymi lokalnie.
+| Pole | Typ | Opis |
+|------|-----|------|
+| `noMatch` | boolean | `true` gdy po wyszukaniu (w tym autouzupełnianiu) nie ma żadnej karty |
+| `didYouMean` | string[] | Propozycje nazw ze Scryfall autocomplete lub lokalnego dopasowania trigram |
+| `searchMode` | string | `direct`, `autocomplete` (wyniki z podobnych nazw), lub `local_fuzzy` (tylko lokalna baza) |
+
+Wyniki łączą dane ze Scryfall (`unique=prints`) z kartami już zapisanymi lokalnie. Dla zwykłych nazw bez składni Scryfall zapytanie jest wysyłane jako `name:{cardName}`. Gdy pierwsze wyszukiwanie nie zwraca kart, backend próbuje Scryfall autocomplete i dopasowanie trigram (`pg_trgm`) w lokalnej tabeli `cards`.
 
 **Błędy:** `400` — brak `cardName`; `429` — limit Scryfall; `500` — błąd wyszukiwania.
 

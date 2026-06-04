@@ -39,6 +39,9 @@ router.post('/search', requireJwt, async (req: Request, res: Response) => {
         return res.status(200).json({
             cards: result.cards.map(toCardDto),
             total: result.total,
+            noMatch: result.noMatch,
+            didYouMean: result.didYouMean,
+            searchMode: result.searchMode,
         });
     } catch (error: unknown) {
         return mapScryfallError(error, res, 'Search failed');

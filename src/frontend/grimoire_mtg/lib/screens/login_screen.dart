@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../services/auth_service.dart';
+import '../widgets/content_width.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -12,38 +13,49 @@ class LoginScreen extends StatelessWidget {
 
     return Scaffold(
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.auto_stories,
-                size: 80,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Grimoire MTG',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8),
-              const Text('Zarządzaj kolekcją i taliami Magic'),
-              const SizedBox(height: 32),
-              if (auth.error != null) ...[
-                Text(
-                  auth.error!,
-                  style: const TextStyle(color: Colors.redAccent),
-                  textAlign: TextAlign.center,
+        child: ContentWidth(
+          maxWidth: 480,
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.auto_stories,
+                  size: 80,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
+                Text(
+                  'Grimoire MTG',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 8),
+                const Text('Zarządzaj kolekcją i taliami Magic'),
+                const SizedBox(height: 32),
+                if (auth.error != null) ...[
+                  Text(
+                    auth.error!,
+                    style: const TextStyle(color: Colors.redAccent),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (auth.canRetryRestore) ...[
+                  FilledButton.icon(
+                    onPressed: auth.isLoading ? null : () => auth.retryRestoreSession(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Spróbuj ponownie'),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                FilledButton.icon(
+                  onPressed: auth.isLoading ? null : () => auth.login(),
+                  icon: const Icon(Icons.login),
+                  label: const Text('Zaloguj przez Google'),
+                ),
               ],
-              FilledButton.icon(
-                onPressed: auth.isLoading ? null : () => auth.login(),
-                icon: const Icon(Icons.login),
-                label: const Text('Zaloguj przez Google'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

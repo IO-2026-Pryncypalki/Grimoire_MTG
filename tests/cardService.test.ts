@@ -3,6 +3,7 @@ jest.mock('../src/backend/models/Card', () => ({
         findByPk: jest.fn(),
         findAll: jest.fn(),
         create: jest.fn(),
+        upsert: jest.fn(),
     },
 }));
 
@@ -239,31 +240,42 @@ describe('getCardDetails', () => {
         jest.clearAllMocks();
         fetchMock = jest.fn();
         global.fetch = fetchMock;
+        (upsertCardLegalities as jest.Mock).mockResolvedValue(undefined);
+        (CardModel.upsert as jest.Mock).mockResolvedValue(undefined);
+        fetchMock.mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => scryfallPayload,
+        });
     });
 
-    test('zwraca kartę z bazy bez Scryfall', async () => {
+    test('odświeża kartę ze Scryfall i zapisuje do bazy', async () => {
         (CardModel.findByPk as jest.Mock).mockResolvedValue(dbCardModel());
 
         const card = await getCardDetails(CARD_ID);
 
         expect(card.getName()).toBe('Lightning Bolt');
         expect(card.getOracleText()).toBe('Lightning Bolt deals 3 damage to any target.');
-        expect(fetchMock).not.toHaveBeenCalled();
-        expect(CardModel.create).not.toHaveBeenCalled();
+        expect(fetchMock).toHaveBeenCalledWith(
+            `https://api.scryfall.com/cards/${CARD_ID}`,
+        );
+        expect(CardModel.upsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                scryfallId: CARD_ID,
+                name: 'Lightning Bolt',
+                imageUri: 'https://example.com/bolt.jpg',
+            }),
+        );
+        expect(upsertCardLegalities).toHaveBeenCalled();
     });
 
-    test('pobiera ze Scryfall bez zapisu do bazy', async () => {
+    test('zwraca domenę ze Scryfall gdy upsert nie ma wiersza w bazie', async () => {
         (CardModel.findByPk as jest.Mock).mockResolvedValue(null);
-        fetchMock.mockResolvedValue({
-            ok: true,
-            status: 200,
-            json: async () => scryfallPayload,
-        });
 
         const card = await getCardDetails(CARD_ID);
 
         expect(card.getScryfallId()).toBe(CARD_ID);
         expect(card.getTypeLine()).toBe('Instant');
-        expect(CardModel.create).not.toHaveBeenCalled();
+        expect(CardModel.upsert).toHaveBeenCalled();
     });
 });

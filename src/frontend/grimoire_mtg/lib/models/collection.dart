@@ -10,6 +10,7 @@ class CollectionEntryDto {
     this.name,
     this.setCode,
     this.imageUrl,
+    this.imageUrlHiRes,
     this.price,
     required this.quantity,
     required this.condition,
@@ -22,6 +23,7 @@ class CollectionEntryDto {
   final String? name;
   final String? setCode;
   final String? imageUrl;
+  final String? imageUrlHiRes;
   final double? price;
   final int quantity;
   final String condition;
@@ -35,6 +37,7 @@ class CollectionEntryDto {
         name: json['name'] as String?,
         setCode: json['setCode'] as String?,
         imageUrl: json['imageUrl'] as String?,
+        imageUrlHiRes: json['imageUrlHiRes'] as String?,
         price: readDouble(json['price']),
         quantity: readInt(json['quantity'], defaultValue: 1),
         condition: json['condition'] as String? ?? 'NM',
@@ -47,6 +50,7 @@ class CollectionEntryDto {
         name: name,
         setCode: setCode,
         imageUrl: imageUrl,
+        imageUrlHiRes: imageUrlHiRes,
         price: price,
       );
 }

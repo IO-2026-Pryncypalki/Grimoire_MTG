@@ -109,15 +109,18 @@ export async function searchCards(cardName: string): Promise<SearchCardsResult> 
 }
 
 export async function getCardDetails(scryfallId: string): Promise<Card> {
-    const existing = await CardModel.findByPk(scryfallId);
-    if (existing) {
-        return Card.fromModel(existing as InstanceType<typeof CardModel>);
-    }
-
     const data = await fetchScryfallJson(
         `${SCRYFALL_BASE}/cards/${encodeURIComponent(scryfallId)}`,
     );
-    return mapScryfallJsonToCard(data);
+    const fields = scryfallJsonToCardModelFields(data);
+    await CardModel.upsert(fields);
+    await syncCardLegalitiesFromScryfall(scryfallId, data);
+
+    const row = await CardModel.findByPk(scryfallId);
+    if (!row) {
+        return mapScryfallJsonToCard(data);
+    }
+    return Card.fromModel(row as InstanceType<typeof CardModel>);
 }
 
 export async function syncCardLegalitiesFromScryfall(

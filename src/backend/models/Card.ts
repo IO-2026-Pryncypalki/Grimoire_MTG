@@ -76,6 +76,16 @@ export const Card = sequelize.define('Card', {
         field: 'image_uri',
         allowNull: true,
     },
+    imageUriLarge: {
+        type: DataTypes.TEXT,
+        field: 'image_uri_large',
+        allowNull: true,
+    },
+    imageUriPng: {
+        type: DataTypes.TEXT,
+        field: 'image_uri_png',
+        allowNull: true,
+    },
     priceUsd: {
         type: DataTypes.DECIMAL(10, 2),
         field: 'price_usd',

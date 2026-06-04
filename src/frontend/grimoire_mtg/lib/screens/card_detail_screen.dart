@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +15,8 @@ import '../widgets/add_to_collection_sheet.dart';
 import '../widgets/api_error_view.dart';
 import '../widgets/collection_entry_panel.dart';
 import '../widgets/content_width.dart';
-import '../widgets/mtg_card_tile.dart';
+import '../utils/scryfall_image_url.dart';
+import '../widgets/mtg_network_card_image.dart';
 
 class CardDetailScreen extends StatefulWidget {
   const CardDetailScreen({
@@ -276,8 +276,17 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     );
   }
 
+  bool _hasDisplayableImage(CardDetailDto card) {
+    return cardImageUrlForDisplay(
+          imageUrl: card.imageUrl,
+          imageUrlHiRes: card.imageUrlHiRes,
+          tier: CardImageTier.detail,
+        ) !=
+        null;
+  }
+
   Widget _buildCardImage(CardDetailDto card) {
-    if (card.imageUrl == null) return const SizedBox.shrink();
+    if (!_hasDisplayableImage(card)) return const SizedBox.shrink();
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
@@ -285,8 +294,10 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
         aspectRatio: kMtgCardAspectRatio,
         child: ColoredBox(
           color: Colors.black12,
-          child: CachedNetworkImage(
-            imageUrl: card.imageUrl!,
+          child: MtgNetworkCardImage(
+            imageUrl: card.imageUrl,
+            imageUrlHiRes: card.imageUrlHiRes,
+            tier: CardImageTier.detail,
             fit: BoxFit.contain,
           ),
         ),
@@ -312,6 +323,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
 
     final card = _card!;
     final wide = context.isMediumUp;
+    final showImage = _hasDisplayableImage(card);
 
     return Scaffold(
       appBar: AppBar(title: Text(card.name ?? 'Karta')),
@@ -323,12 +335,12 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
               ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (card.imageUrl != null)
+                    if (showImage)
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 320),
                         child: _buildCardImage(card),
                       ),
-                    if (card.imageUrl != null) const SizedBox(width: 24),
+                    if (showImage) const SizedBox(width: 24),
                     Expanded(child: _buildDetails(card)),
                   ],
                 )

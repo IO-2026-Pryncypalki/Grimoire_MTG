@@ -1,7 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../models/deck.dart';
+import '../utils/scryfall_image_url.dart';
+import 'mtg_network_card_image.dart';
 import 'deck_card_actions.dart';
 import 'fill_status_indicator.dart';
 
@@ -36,13 +37,11 @@ class DeckCardGridTile extends StatelessWidget {
               ColoredBox(
                 color: Colors.black12,
                 child: card.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: card.imageUrl!,
+                    ? MtgNetworkCardImage(
+                        imageUrl: card.imageUrl,
+                        imageUrlHiRes: card.imageUrlHiRes,
+                        tier: CardImageTier.grid,
                         fit: BoxFit.contain,
-                        placeholder: (context, url) =>
-                            const Center(child: CircularProgressIndicator()),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.broken_image),
                       )
                     : const Center(child: Icon(Icons.style, size: 48)),
               ),

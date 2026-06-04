@@ -102,6 +102,7 @@ router.get('/', requireJwt, async (req: Request, res: Response) => {
             name: entry.getCard().getName(),
             setCode: entry.getCard().getSetCode(),
             imageUrl: entry.getCard().getImageUrl(),
+            imageUrlHiRes: entry.getCard().getImageUrlHiRes('grid'),
             price: entry.getCard().getCurrentPrice(),
             quantity: entry.getQuantity(),
             condition: entry.getCondition(),

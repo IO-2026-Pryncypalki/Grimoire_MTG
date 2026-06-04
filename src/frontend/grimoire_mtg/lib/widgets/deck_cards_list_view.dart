@@ -4,7 +4,9 @@ import '../models/deck.dart';
 import '../utils/deck_board_layout.dart';
 import 'deck_board_header.dart';
 import 'deck_card_actions.dart';
+import '../utils/scryfall_image_url.dart';
 import 'fill_status_indicator.dart';
+import 'mtg_network_card_image.dart';
 
 class DeckCardsListView extends StatelessWidget {
   const DeckCardsListView({
@@ -38,7 +40,18 @@ class DeckCardsListView extends StatelessWidget {
         (card) => ListTile(
           onTap: () => actions.onOpenDetail(card),
           leading: card.imageUrl != null
-              ? Image.network(card.imageUrl!, width: 40, fit: BoxFit.cover)
+              ? SizedBox(
+                  width: 40,
+                  height: 56,
+                  child: MtgNetworkCardImage(
+                    imageUrl: card.imageUrl,
+                    imageUrlHiRes: card.imageUrlHiRes,
+                    tier: CardImageTier.thumbnail,
+                    width: 40,
+                    height: 56,
+                    fit: BoxFit.cover,
+                  ),
+                )
               : const Icon(Icons.style),
           title: Text('${card.quantity}x ${card.name ?? card.scryfallId}'),
           subtitle: card.formatWarning != null

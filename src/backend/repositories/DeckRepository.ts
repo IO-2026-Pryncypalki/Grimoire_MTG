@@ -3,6 +3,7 @@ import { DeckCard as DeckCardModel } from '../models/DeckCard';
 import { DeckCardAssignment as DeckCardAssignmentModel } from '../models/DeckCardAssignment';
 import { CollectionEntry as CollectionEntryModel } from '../models/CollectionEntry';
 import { Card as CardModel } from '../models/Card';
+import { scryfallHiResFromStoredNormal } from '../scanner/scryfallImageUrl';
 import { getFilledQuantityOnDeckCard } from './DeckCardAssignmentRepository';
 
 export type DeckBoard = 'main' | 'sideboard' | 'commander';
@@ -62,6 +63,7 @@ export interface DeckCardRecord {
     name: string | null;
     setCode: string | null;
     imageUrl: string | null;
+    imageUrlHiRes: string | null;
     assignments: DeckCardAssignmentRecord[];
 }
 
@@ -132,6 +134,11 @@ const toDeckCardRecord = (deckCardRow: InstanceType<typeof DeckCardModel>): Deck
         name: (cardRaw?.name as string | null) ?? null,
         setCode: (cardRaw?.setCode as string | null) ?? null,
         imageUrl: (cardRaw?.imageUri as string | null) ?? null,
+        imageUrlHiRes: (cardRaw?.imageUriLarge as string | null)
+            ?? scryfallHiResFromStoredNormal(
+                (cardRaw?.imageUri as string | null) ?? null,
+                'grid',
+            ),
         assignments,
     };
 };

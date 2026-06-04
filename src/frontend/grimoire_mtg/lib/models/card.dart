@@ -9,6 +9,7 @@ class CardDto {
     this.collectorNumber,
     this.lang,
     this.imageUrl,
+    this.imageUrlHiRes,
     this.price,
   });
 
@@ -19,6 +20,7 @@ class CardDto {
   final String? collectorNumber;
   final String? lang;
   final String? imageUrl;
+  final String? imageUrlHiRes;
   final double? price;
 
   factory CardDto.fromJson(Map<String, dynamic> json) => CardDto(
@@ -29,6 +31,7 @@ class CardDto {
         collectorNumber: json['collectorNumber'] as String?,
         lang: json['lang'] as String?,
         imageUrl: json['imageUrl'] as String?,
+        imageUrlHiRes: json['imageUrlHiRes'] as String?,
         price: readDouble(json['price']),
       );
 }
@@ -42,6 +45,7 @@ class CardDetailDto extends CardDto {
     super.collectorNumber,
     super.lang,
     super.imageUrl,
+    super.imageUrlHiRes,
     super.price,
     this.manaCost,
     this.cmc,
@@ -82,6 +86,7 @@ class CardDetailDto extends CardDto {
         collectorNumber: json['collectorNumber'] as String?,
         lang: json['lang'] as String?,
         imageUrl: json['imageUrl'] as String?,
+        imageUrlHiRes: json['imageUrlHiRes'] as String?,
         price: readDouble(json['price']),
         manaCost: json['manaCost'] as String?,
         cmc: readDouble(json['cmc']),

@@ -65,9 +65,12 @@ POST /api/auth/logout lub ponowne logowanie
   "collectorNumber": "234",
   "lang": "en",
   "imageUrl": "https://...",
+  "imageUrlHiRes": "https://...",
   "price": 1.25
 }
 ```
+
+`imageUrl` — Scryfall `normal` (~488×680), do małych miniaturek. `imageUrlHiRes` — wyższa rozdzielczość (`large` w listach/siatkach; w szczegółach karty endpoint zwraca `png` → `large` → `normal`).
 
 ### CardDetailDto (szczegóły karty)
 
@@ -380,6 +383,7 @@ Pobiera kolekcję użytkownika z opcjonalnymi filtrami.
       "name": "Lightning Bolt",
       "setCode": "M21",
       "imageUrl": "https://...",
+      "imageUrlHiRes": "https://...",
       "price": 1.25,
       "quantity": 4,
       "condition": "NM",
@@ -610,6 +614,7 @@ Szczegóły decku z listą kart, statusem wypełnienia i ostrzeżeniami formatu.
         "name": "Lightning Bolt",
         "setCode": "M21",
         "imageUrl": "https://...",
+        "imageUrlHiRes": "https://...",
         "fillStatus": {
           "quantity": 4,
           "filledQty": 2,

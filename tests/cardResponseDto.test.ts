@@ -22,8 +22,24 @@ describe('toCardDto', () => {
       collectorNumber: '333',
       lang: 'en',
       imageUrl: 'https://example.com/bolt.jpg',
+      imageUrlHiRes: 'https://example.com/bolt.jpg',
       price: 1.5,
     });
+  });
+
+  test('derives Scryfall hi-res from normal CDN url', () => {
+    const normal =
+      'https://cards.scryfall.io/normal/front/a/b/abc.jpg';
+    const card = new Card({
+      id: 'abc-123',
+      name: 'Bolt',
+      image_uris: { normal },
+      prices: { usd: 1, usd_foil: 0, eur: 0, eur_foil: 0 },
+    });
+
+    expect(toCardDto(card).imageUrlHiRes).toBe(
+      'https://cards.scryfall.io/large/front/a/b/abc.jpg',
+    );
   });
 });
 
@@ -56,6 +72,7 @@ describe('toCardDetailDto', () => {
       collectorNumber: '333',
       lang: 'en',
       imageUrl: 'https://example.com/bolt.jpg',
+      imageUrlHiRes: 'https://example.com/bolt.jpg',
       price: 1.5,
       manaCost: '{R}',
       cmc: 1,
@@ -72,5 +89,20 @@ describe('toCardDetailDto', () => {
       priceEurFoil: 2.5,
       scryfallUri: 'https://scryfall.com/card/tsr/333',
     });
+  });
+
+  test('detail hi-res uses png on Scryfall CDN', () => {
+    const normal =
+      'https://cards.scryfall.io/normal/front/a/b/abc.jpg';
+    const card = new Card({
+      id: 'abc-123',
+      name: 'Bolt',
+      image_uris: { normal },
+      prices: { usd: 1, usd_foil: 0, eur: 0, eur_foil: 0 },
+    });
+
+    expect(toCardDetailDto(card).imageUrlHiRes).toBe(
+      'https://cards.scryfall.io/png/front/a/b/abc.png',
+    );
   });
 });

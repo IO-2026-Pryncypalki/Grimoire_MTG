@@ -62,6 +62,7 @@ export interface DeckCardItem {
     name: string | null;
     setCode: string | null;
     imageUrl: string | null;
+    imageUrlHiRes: string | null;
     fillStatus: DeckCardFillStatus;
     formatWarning: FormatWarningDto | null;
 }
@@ -103,6 +104,7 @@ const toDeckCardItem = (
     name: card.name,
     setCode: card.setCode,
     imageUrl: card.imageUrl,
+    imageUrlHiRes: card.imageUrlHiRes,
     fillStatus: buildDeckCardFillStatus(card.quantity, card.assignments.map((a) => ({
         id: a.id,
         deckCardId: card.id,

@@ -1,11 +1,11 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/card.dart';
+import '../utils/scryfall_image_url.dart';
+import 'mtg_network_card_image.dart';
 
-/// Scryfall normal image ratio (488×680).
-const kMtgCardAspectRatio = 488 / 680;
+export 'mtg_network_card_image.dart' show kMtgCardAspectRatio;
 
 class MtgCardTile extends StatelessWidget {
   const MtgCardTile({
@@ -39,13 +39,11 @@ class MtgCardTile extends StatelessWidget {
               child: ColoredBox(
                 color: Colors.black12,
                 child: card.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: card.imageUrl!,
+                    ? MtgNetworkCardImage(
+                        imageUrl: card.imageUrl,
+                        imageUrlHiRes: card.imageUrlHiRes,
+                        tier: CardImageTier.grid,
                         fit: BoxFit.contain,
-                        placeholder: (context, url) =>
-                            const Center(child: CircularProgressIndicator()),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.broken_image),
                       )
                     : const Center(child: Icon(Icons.style, size: 48)),
               ),

@@ -1,3 +1,5 @@
+import { QueryTypes } from 'sequelize';
+import sequelize from '../config/database';
 import { Deck as DeckModel } from '../models/Deck';
 import { DeckCard as DeckCardModel } from '../models/DeckCard';
 import { DeckCardAssignment as DeckCardAssignmentModel } from '../models/DeckCardAssignment';
@@ -93,6 +95,61 @@ export const listByUser = async (userId: string): Promise<DeckRecord[]> => {
         order: [['updatedAt', 'DESC']],
     });
     return rows.map((row) => toDeckRecord(row));
+};
+
+export interface DeckCardSummaryRecord {
+    deckId: string;
+    board: DeckBoard;
+    quantity: number;
+    scryfallId: string;
+    name: string | null;
+    typeLine: string | null;
+    filledQty: number;
+}
+
+export const listDeckCardSummariesForUser = async (
+    userId: string,
+): Promise<DeckCardSummaryRecord[]> => {
+    const rows = await sequelize.query<{
+        deck_id: string;
+        board: DeckBoard;
+        quantity: number;
+        scryfall_id: string;
+        name: string | null;
+        type_line: string | null;
+        filled_qty: string;
+    }>(
+        `
+        SELECT
+            d.id AS deck_id,
+            dc.board,
+            dc.quantity,
+            dc.scryfall_id,
+            c.name,
+            c.type_line,
+            COALESCE(SUM(dca.quantity), 0)::int AS filled_qty
+        FROM decks d
+        INNER JOIN deck_cards dc ON dc.deck_id = d.id
+        LEFT JOIN cards c ON c.scryfall_id = dc.scryfall_id
+        LEFT JOIN deck_card_assignments dca ON dca.deck_card_id = dc.id
+        WHERE d.user_id = :userId
+        GROUP BY d.id, dc.id, dc.board, dc.quantity, dc.scryfall_id, c.name, c.type_line
+        `,
+        {
+            replacements: { userId },
+            type: QueryTypes.SELECT,
+        },
+    );
+
+    return rows.map((row) => ({
+        deckId: row.deck_id,
+        board: row.board,
+        quantity: row.quantity,
+        scryfallId: row.scryfall_id,
+        name: row.name,
+        typeLine: row.type_line,
+        filledQty: Number(row.filled_qty),
+    }));
 };
 
 export const getByIdForUser = async (deckId: string, userId: string): Promise<DeckRecord | null> => {

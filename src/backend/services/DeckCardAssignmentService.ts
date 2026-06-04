@@ -49,7 +49,10 @@ export interface CollectionEntryOption {
     assignedTotal: number;
     assignedOnSlot: number;
     assignedElsewhere: number;
+    /** Wolne kopie wpisu (nieprzypisane nigdzie). */
     availableToAssign: number;
+    /** Maks. kopii możliwych na ten slot (wolne + przeniesienie z innych talii). */
+    assignableToSlot: number;
     scryfallId: string;
     setCode: string | null;
     name: string | null;
@@ -184,7 +187,8 @@ const buildOptionsFromEntries = async (
         const assignedTotal = assignedTotals.get(entry.id) ?? 0;
         const assignedOnSlot = assignedOnSlotByEntry.get(entry.id) ?? 0;
         const assignedElsewhere = Math.max(0, assignedTotal - assignedOnSlot);
-        const availableToAssign = Math.max(0, entry.quantity - assignedOnSlot);
+        const availableToAssign = Math.max(0, entry.quantity - assignedTotal);
+        const assignableToSlot = Math.max(0, entry.quantity - assignedOnSlot);
 
         let transferSources: AssignmentTransferSource[] = [];
         if (assignedElsewhere > 0) {
@@ -218,6 +222,7 @@ const buildOptionsFromEntries = async (
             assignedOnSlot,
             assignedElsewhere,
             availableToAssign,
+            assignableToSlot,
             scryfallId: entry.scryfallId,
             setCode: entry.setCode,
             name: entry.name,
@@ -484,10 +489,10 @@ export const assignDeckFromCollectionByName = async (
 
         while (remaining > 0) {
             const options = await listCollectionOptionsForDeckCard(userId, deckId, card.id);
-            const next = options.find((o) => o.availableToAssign > 0);
+            const next = options.find((o) => o.assignableToSlot > 0);
             if (!next) break;
 
-            const qty = Math.min(remaining, next.availableToAssign);
+            const qty = Math.min(remaining, next.assignableToSlot);
             await assignCollectionEntry(userId, deckId, card.id, {
                 collectionEntryId: next.collectionEntryId,
                 quantity: qty,

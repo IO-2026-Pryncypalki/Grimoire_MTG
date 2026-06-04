@@ -83,6 +83,8 @@ class DeckListItem {
     this.description,
     this.isValid,
     this.lastValidatedAt,
+    this.isFormatValid = false,
+    this.isFullyAssigned = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -93,6 +95,8 @@ class DeckListItem {
   final String? description;
   final bool? isValid;
   final String? lastValidatedAt;
+  final bool isFormatValid;
+  final bool isFullyAssigned;
   final String createdAt;
   final String updatedAt;
 
@@ -103,6 +107,8 @@ class DeckListItem {
         description: json['description'] as String?,
         isValid: json['isValid'] as bool?,
         lastValidatedAt: json['lastValidatedAt'] as String?,
+        isFormatValid: json['isFormatValid'] as bool? ?? false,
+        isFullyAssigned: json['isFullyAssigned'] as bool? ?? false,
         createdAt: json['createdAt'] as String,
         updatedAt: json['updatedAt'] as String,
       );
@@ -167,6 +173,8 @@ class DeckDetails extends DeckListItem {
     super.description,
     super.isValid,
     super.lastValidatedAt,
+    super.isFormatValid,
+    super.isFullyAssigned,
     required super.createdAt,
     required super.updatedAt,
     required this.cards,
@@ -183,6 +191,8 @@ class DeckDetails extends DeckListItem {
       description: deck['description'] as String?,
       isValid: deck['isValid'] as bool?,
       lastValidatedAt: deck['lastValidatedAt'] as String?,
+      isFormatValid: deck['isFormatValid'] as bool? ?? false,
+      isFullyAssigned: deck['isFullyAssigned'] as bool? ?? false,
       createdAt: deck['createdAt'] as String,
       updatedAt: deck['updatedAt'] as String,
       cards: (deck['cards'] as List<dynamic>?)
@@ -222,6 +232,7 @@ class CollectionOptionDto {
     required this.assignedOnSlot,
     required this.assignedElsewhere,
     required this.availableToAssign,
+    required this.assignableToSlot,
     required this.scryfallId,
     required this.transferSources,
     this.setCode,
@@ -237,6 +248,7 @@ class CollectionOptionDto {
   final int assignedOnSlot;
   final int assignedElsewhere;
   final int availableToAssign;
+  final int assignableToSlot;
   final String scryfallId;
   final String? setCode;
   final String? name;
@@ -253,6 +265,8 @@ class CollectionOptionDto {
         assignedOnSlot: json['assignedOnSlot'] as int? ?? 0,
         assignedElsewhere: json['assignedElsewhere'] as int? ?? 0,
         availableToAssign: json['availableToAssign'] as int,
+        assignableToSlot: json['assignableToSlot'] as int? ??
+            json['availableToAssign'] as int,
         scryfallId: json['scryfallId'] as String,
         setCode: json['setCode'] as String?,
         name: json['name'] as String?,

@@ -11,7 +11,7 @@ class DeckValidationResult {
   /// Zgodność z regułami formatu (liczba kart, limity kopii, legalność).
   final bool isFormatValid;
 
-  /// Wszystkie kopie w talii mają przypisanie z kolekcji (`unfilledQty == 0`).
+  /// Wszystkie karty obecne w kolekcji mają pełne przypisanie (`unfilledQty == 0`).
   final bool isFullyAssigned;
 
   final List<String> formatMessages;
@@ -26,10 +26,11 @@ int totalUnfilledCopies(DeckDetails deck) =>
 int countCardsNotInCollection(DeckDetails deck) =>
     deck.cards.where((c) => !c.inCollection).length;
 
-/// Wszystkie sloty mają przypisane fizyczne kopie (niezależnie od formatu).
+/// Wszystkie sloty z kartą w kolekcji mają pełne przypisanie fizycznych kopii.
 bool isDeckFullyAssigned(DeckDetails deck) {
-  if (deck.cards.isEmpty) return false;
-  return totalUnfilledCopies(deck) == 0;
+  final inCollection = deck.cards.where((c) => c.inCollection).toList();
+  if (inCollection.isEmpty) return false;
+  return inCollection.every((c) => c.fillStatus.unfilledQty <= 0);
 }
 
 List<String> _collectFormatMessages(DeckDetails deck) {
@@ -60,12 +61,16 @@ List<String> _collectFormatMessages(DeckDetails deck) {
 
 List<String> _collectAssignmentMessages(DeckDetails deck) {
   final messages = <String>[];
-  final unfilledCopies = totalUnfilledCopies(deck);
-  if (unfilledCopies > 0) {
-    final unfilledSlots =
-        deck.cards.where((c) => c.fillStatus.unfilledQty > 0).length;
+  final unfilledInCollection = deck.cards
+      .where((c) => c.inCollection && c.fillStatus.unfilledQty > 0)
+      .toList();
+  if (unfilledInCollection.isNotEmpty) {
+    final unfilledCopies = unfilledInCollection.fold<int>(
+      0,
+      (sum, c) => sum + c.fillStatus.unfilledQty,
+    );
     messages.add(
-      '$unfilledSlots pozycji bez pełnego przypisania ($unfilledCopies kopii).',
+      '${unfilledInCollection.length} pozycji w kolekcji bez pełnego przypisania ($unfilledCopies kopii).',
     );
   }
 

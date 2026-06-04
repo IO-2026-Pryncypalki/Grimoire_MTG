@@ -39,11 +39,13 @@ class _DeckOverviewScreenState extends State<DeckOverviewScreen> {
     }
   }
 
-  void _openDeck(String deckId) {
-    Navigator.push(
+  Future<void> _openDeck(String deckId) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => DeckDetailScreen(deckId: deckId)),
     );
+    if (!mounted) return;
+    await context.read<DeckStore>().refresh(silent: true);
   }
 
   int _gridCrossAxisCount(double width) {

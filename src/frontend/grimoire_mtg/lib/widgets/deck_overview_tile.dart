@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/deck.dart';
+import 'deck_list_status_icons.dart';
 
 class DeckOverviewTile extends StatelessWidget {
   const DeckOverviewTile({
@@ -17,17 +18,7 @@ class DeckOverviewTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final formatIcon = deck.isValid == true
-        ? Tooltip(
-            message: 'Format OK (ostatnia walidacja)',
-            child: Icon(Icons.rule, color: Colors.green.shade600, size: 20),
-          )
-        : deck.isValid == false
-            ? Tooltip(
-                message: 'Format: uwagi (ostatnia walidacja)',
-                child: Icon(Icons.rule_folder, color: Colors.orange.shade700, size: 20),
-              )
-            : null;
+    final statusIcons = DeckListStatusIcons(deck: deck);
 
     if (compact) {
       return ListTile(
@@ -37,7 +28,8 @@ class DeckOverviewTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (formatIcon != null) formatIcon,
+            statusIcons,
+            const SizedBox(width: 4),
             const Icon(Icons.arrow_forward_ios, size: 16),
           ],
         ),
@@ -58,7 +50,7 @@ class DeckOverviewTile extends StatelessWidget {
                 children: [
                   Icon(Icons.style, color: theme.colorScheme.primary, size: 28),
                   const Spacer(),
-                  if (formatIcon != null) formatIcon,
+                  statusIcons,
                 ],
               ),
               const SizedBox(height: 12),

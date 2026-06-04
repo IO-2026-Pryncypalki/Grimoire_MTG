@@ -220,14 +220,19 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     }
 
     if (!mounted) return;
-    if (options.isEmpty) {
+    final assignable = options.where((o) => o.assignableToSlot > 0).toList();
+    if (assignable.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Brak kopii o tej nazwie w kolekcji')),
+        const SnackBar(
+          content: Text(
+            'Brak dostępnych kopii — wszystkie są już przypisane w innych taliach',
+          ),
+        ),
       );
       return;
     }
 
-    final selected = await _showCollectionOptionPicker(options);
+    final selected = await _showCollectionOptionPicker(assignable);
 
     if (selected == null) return;
 
@@ -236,7 +241,8 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
       if (confirmed != true) return;
     }
 
-    final qty = selected.availableToAssign.clamp(1, card.fillStatus.unfilledQty);
+    final maxQty = selected.assignableToSlot.clamp(1, card.fillStatus.unfilledQty);
+    final qty = maxQty;
     try {
       await api.assignToDeck(
         deckId: widget.deckId,
@@ -276,11 +282,13 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final version = o.isExactPrinting
         ? (o.setCode ?? '')
         : '${o.setCode ?? '?'} • inna wersja';
-    final base = 'Dostępne: ${o.availableToAssign} • $version';
-    if (o.assignedElsewhere > 0) {
-      return '$base\n${o.assignedElsewhere} w innej talii — przypisanie przeniesie kopie';
+    if (o.availableToAssign > 0) {
+      return 'Wolne: ${o.availableToAssign} • do slotu: ${o.assignableToSlot} • $version';
     }
-    return base;
+    if (o.assignedElsewhere > 0) {
+      return 'Przenieś do ${o.assignableToSlot} • ${o.assignedElsewhere} w innej talii • $version';
+    }
+    return 'Do slotu: ${o.assignableToSlot} • $version';
   }
 
   Future<CollectionOptionDto?> _showCollectionOptionPicker(

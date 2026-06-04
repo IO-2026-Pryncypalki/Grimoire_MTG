@@ -62,7 +62,7 @@ describe('Deck assignment move between decks', () => {
     });
 
     describe('listCollectionOptionsForDeckCard', () => {
-        test('shows full entry qty as available when assigned only on another deck', async () => {
+        test('shows zero free copies but assignable via transfer when assigned elsewhere', async () => {
             (findDeckCardForUser as jest.Mock).mockResolvedValue({
                 id: DECK_CARD_B,
                 deckId: DECK_B,
@@ -102,12 +102,58 @@ describe('Deck assignment move between decks', () => {
                 DECK_CARD_B,
             );
 
-            expect(options[0].availableToAssign).toBe(4);
+            expect(options[0].availableToAssign).toBe(0);
+            expect(options[0].assignableToSlot).toBe(4);
             expect(options[0].assignedElsewhere).toBe(4);
             expect(options[0].assignedOnSlot).toBe(0);
             expect(options[0].transferSources).toEqual([
                 { deckId: DECK_A, deckName: 'Burn', quantity: 4 },
             ]);
+        });
+
+        test('single copy fully assigned elsewhere has no free copies but can transfer', async () => {
+            (findDeckCardForUser as jest.Mock).mockResolvedValue({
+                id: DECK_CARD_B,
+                deckId: DECK_B,
+                scryfallId: SCRYFALL_A,
+                name: 'Wise Mothman',
+                quantity: 1,
+                board: 'main',
+            });
+            (getAssignmentsForDeckCard as jest.Mock).mockResolvedValue([]);
+            (listCollectionEntriesForCardName as jest.Mock).mockResolvedValue([
+                {
+                    id: ENTRY_ID,
+                    scryfallId: SCRYFALL_A,
+                    name: 'Wise Mothman',
+                    setCode: 'DSK',
+                    quantity: 1,
+                    condition: 'NM',
+                    isFoil: false,
+                },
+            ]);
+            (getAssignedTotalsByCollectionEntry as jest.Mock).mockResolvedValue(
+                new Map([[ENTRY_ID, 1]]),
+            );
+            (listAssignmentsForCollectionEntry as jest.Mock).mockResolvedValue([
+                {
+                    id: 'assign-a',
+                    deckCardId: DECK_CARD_A,
+                    deckId: DECK_A,
+                    deckName: 'Deck A',
+                    quantity: 1,
+                },
+            ]);
+
+            const options = await listCollectionOptionsForDeckCard(
+                USER_ID,
+                DECK_B,
+                DECK_CARD_B,
+            );
+
+            expect(options[0].availableToAssign).toBe(0);
+            expect(options[0].assignableToSlot).toBe(1);
+            expect(options[0].assignedElsewhere).toBe(1);
         });
     });
 

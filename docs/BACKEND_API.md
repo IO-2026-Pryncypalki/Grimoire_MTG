@@ -560,12 +560,20 @@ Lista decków użytkownika.
       "description": null,
       "isValid": null,
       "lastValidatedAt": null,
+      "isFormatValid": true,
+      "isFullyAssigned": false,
       "createdAt": "2024-03-15T10:00:00.000Z",
       "updatedAt": "2024-03-20T14:30:00.000Z"
     }
   ]
 }
 ```
+
+| Pole | Opis |
+|------|------|
+| `isFormatValid` | Obliczane na żywo: min. kart main, limity kopii, ostrzeżenia legalności (jak walidacja w aplikacji) |
+| `isFullyAssigned` | Obliczane na żywo: wszystkie karty obecne w kolekcji mają pełne przypisanie fizycznych kopii |
+| `isValid` | Opcjonalny zapis z ostatniego **Waliduj** w szczegółach talii (nie używany na liście) |
 
 ---
 
@@ -764,7 +772,8 @@ Zwraca wpisy z kolekcji pasujące do karty w decku **po nazwie** (dowolny printi
       "assignedTotal": 4,
       "assignedOnSlot": 0,
       "assignedElsewhere": 4,
-      "availableToAssign": 4,
+      "availableToAssign": 0,
+      "assignableToSlot": 4,
       "scryfallId": "uuid",
       "setCode": "M21",
       "name": "Lightning Bolt",
@@ -782,7 +791,8 @@ Zwraca wpisy z kolekcji pasujące do karty w decku **po nazwie** (dowolny printi
 | `isExactPrinting` | `true` gdy wpis kolekcji ma ten sam `scryfallId` co slot w talii |
 | `assignedOnSlot` | Kopie tego wpisu już przypisane do **tego** slotu w talii |
 | `assignedElsewhere` | Kopie przypisane w **innych** taliach (`assignedTotal - assignedOnSlot`) |
-| `availableToAssign` | Ile można dodać do tego slotu (`entryQuantity - assignedOnSlot`); może wymagać przeniesienia z innej talii |
+| `availableToAssign` | Wolne kopie wpisu (`entryQuantity - assignedTotal`) |
+| `assignableToSlot` | Maks. kopii na ten slot (`entryQuantity - assignedOnSlot`), w tym przez przeniesienie z innej talii |
 | `transferSources` | Talie, z których kopie zostaną zdjęte przy przypisaniu (gdy `assignedElsewhere > 0`) |
 
 **Błędy:** `400` — karta w talii bez nazwy (`Deck card has no name`).

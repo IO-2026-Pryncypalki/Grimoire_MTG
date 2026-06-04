@@ -210,6 +210,8 @@ export const deleteForUser = async (deckId: string, userId: string): Promise<boo
 
 export const touchDeckUpdatedAt = async (deckId: string): Promise<void> => {
     await DeckModel.update({ updatedAt: new Date() }, { where: { id: deckId } });
+    const { publishSyncForDeck } = await import('../services/syncPublish');
+    await publishSyncForDeck(deckId);
 };
 
 export interface AddDeckCardData {

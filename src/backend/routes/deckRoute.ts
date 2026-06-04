@@ -3,6 +3,7 @@ import requireJwt from '../middlewares/requireJwt';
 import * as DeckService from '../services/DeckService';
 import * as AssignmentService from '../services/DeckCardAssignmentService';
 import { type DeckBoard, type DeckFormat } from '../repositories/DeckRepository';
+import { publishSyncForUser } from '../services/syncPublish';
 
 const router = Router();
 
@@ -247,6 +248,8 @@ router.post('/', requireJwt, async (req: Request, res: Response) => {
             description,
         });
 
+        publishSyncForUser(user.id);
+
         return res.status(201).json({
             message: 'Deck created',
             deck,
@@ -456,6 +459,8 @@ router.patch('/:id', requireJwt, async (req: Request, res: Response) => {
             lastValidatedAt,
         });
 
+        publishSyncForUser(user.id);
+
         return res.status(200).json({
             message: 'Deck updated',
             deck,
@@ -470,6 +475,7 @@ router.delete('/:id', requireJwt, async (req: Request, res: Response) => {
     try {
         const user = req.user as any;
         await DeckService.removeDeck(user.id, req.params.id);
+        publishSyncForUser(user.id);
         return res.status(200).json({ message: 'Deck removed' });
     } catch (error) {
         return mapDeckServiceError(error, res, 'Failed to remove deck');

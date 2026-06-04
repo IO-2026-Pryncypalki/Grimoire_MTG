@@ -40,9 +40,7 @@ class _CollectionEntryPanelState extends State<CollectionEntryPanel> {
   }
 
   Future<void> _afterMutation() async {
-    await context.read<CollectionStore>().refresh(silent: true);
-    await context.read<AuthService>().reloadProfile();
-    await syncAfterLocalMutation(context);
+    await syncAfterLocalMutation(context, collection: true, refreshAll: false);
   }
 
   Future<void> _updateDelta(int delta) async {

@@ -64,10 +64,12 @@ class ScanResultScreen extends StatelessWidget {
     try {
       await api.addToCollection(scryfallId: card.scryfallId);
       await api.addCardToDeck(deckId: deckId, scryfallId: card.scryfallId);
-      await context.read<CollectionStore>().refresh(silent: true);
-      await context.read<DeckStore>().refresh(silent: true);
-      await context.read<AuthService>().reloadProfile();
-      await syncAfterLocalMutation(context);
+      await syncAfterLocalMutation(
+        context,
+        collection: true,
+        decks: true,
+        refreshAll: false,
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Dodano do kolekcji i talii')),

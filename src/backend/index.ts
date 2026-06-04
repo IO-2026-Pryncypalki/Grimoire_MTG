@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
+import http from 'http';
 import express, { Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -12,6 +13,8 @@ import collectionRoute from './routes/collectionRoute';
 import deckRoute from './routes/deckRoute';
 import syncRoute from './routes/syncRoute';
 import './models/associations';
+import { attachSyncWebSocket } from './sync/syncWebSocket';
+import { startHeartbeat } from './services/SyncEventHub';
 
 const app = express();
 
@@ -49,6 +52,11 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+attachSyncWebSocket(server);
+startHeartbeat();
+
+server.listen(PORT, () => {
     console.log(`server is running on http://localhost:${PORT}`);
 });

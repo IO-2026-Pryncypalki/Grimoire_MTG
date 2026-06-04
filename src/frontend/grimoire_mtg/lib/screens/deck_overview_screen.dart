@@ -45,9 +45,7 @@ class _DeckOverviewScreenState extends State<DeckOverviewScreen> {
                   MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
                 );
                 if (created == true && mounted) {
-                  await context.read<DeckStore>().refresh();
-                  await context.read<AuthService>().reloadProfile();
-                  await syncAfterLocalMutation(context);
+                  await syncAfterLocalMutation(context, decks: true, refreshAll: false);
                 }
               },
               tooltip: 'Nowa talia',
@@ -106,9 +104,7 @@ class _DeckOverviewScreenState extends State<DeckOverviewScreen> {
                   MaterialPageRoute(builder: (_) => const CreateDeckScreen()),
                 );
                 if (created == true && mounted) {
-                  await context.read<DeckStore>().refresh();
-                  await context.read<AuthService>().reloadProfile();
-                  await syncAfterLocalMutation(context);
+                  await syncAfterLocalMutation(context, decks: true, refreshAll: false);
                 }
               },
               child: const Icon(Icons.add),

@@ -10,20 +10,20 @@ export interface SyncStatus {
 
 const epochIso = () => new Date(0).toISOString();
 
-const maxTimestamp = (a: string, b: string): string => (a >= b ? a : b);
+export const maxTimestamp = (a: string, b: string): string => (a >= b ? a : b);
 
 export const getSyncStatusForUser = async (userId: string): Promise<SyncStatus> => {
-    const collectionResult = await CollectionEntry.findOne({
+    const collectionResult = (await CollectionEntry.findOne({
         where: { userId },
-        attributes: [[fn('MAX', col('updatedAt')), 'maxUpdated']],
+        attributes: [[fn('MAX', col('updated_at')), 'maxUpdated']],
         raw: true,
-    }) as { maxUpdated: Date | null } | null;
+    })) as { maxUpdated: Date | null } | null;
 
-    const deckResult = await Deck.findOne({
+    const deckResult = (await Deck.findOne({
         where: { userId },
-        attributes: [[fn('MAX', col('updatedAt')), 'maxUpdated']],
+        attributes: [[fn('MAX', col('updated_at')), 'maxUpdated']],
         raw: true,
-    }) as { maxUpdated: Date | null } | null;
+    })) as { maxUpdated: Date | null } | null;
 
     const collectionUpdatedAt = collectionResult?.maxUpdated
         ? new Date(collectionResult.maxUpdated).toISOString()

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +14,7 @@ import 'screens/user_profile_screen.dart';
 import 'state/collection_store.dart';
 import 'state/deck_store.dart';
 import 'services/auth_service.dart';
+import 'services/sync_service.dart';
 import 'utils/responsive.dart';
 
 class MTGManagerApp extends StatelessWidget {
@@ -110,13 +113,18 @@ class _MainNavigationHandlerState extends State<MainNavigationHandler> {
   void _onDestinationSelected(int index) {
     setState(() => _currentIndex = index);
     if (index == _collectionTabIndex) {
-      context.read<CollectionStore>().refreshIfStale();
+      final store = context.read<CollectionStore>();
+      if (store.data == null && !store.loading) {
+        store.load();
+      } else {
+        unawaited(context.read<SyncService>().forceSync());
+      }
     } else if (index == _decksTabIndex) {
       final deckStore = context.read<DeckStore>();
       if (deckStore.decks.isEmpty && !deckStore.loading) {
         deckStore.load();
       } else {
-        deckStore.refreshIfStale();
+        unawaited(context.read<SyncService>().forceSync());
       }
     } else if (index == _profileTabIndex) {
       context.read<AuthService>().reloadProfile();

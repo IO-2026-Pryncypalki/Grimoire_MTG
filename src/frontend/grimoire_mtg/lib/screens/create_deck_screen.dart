@@ -41,9 +41,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
                 ? null
                 : _descController.text.trim(),
           );
-      await context.read<DeckStore>().refresh(silent: true);
-      await context.read<AuthService>().reloadProfile();
-      await syncAfterLocalMutation(context);
+      await syncAfterLocalMutation(context, decks: true, refreshAll: false);
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (mounted) {

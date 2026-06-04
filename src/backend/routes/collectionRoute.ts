@@ -6,6 +6,7 @@ import { Card as CardModel } from '../models/Card';
 import ScryfallAdapter from '../adapters/ScryfallAdapter';
 import { ensureCardInDb } from '../services/CardService';
 import type { CardCondition } from '../models/CollectionEntry';
+import { publishSyncForUser } from '../services/syncPublish';
 
 const router = Router();
 
@@ -148,6 +149,8 @@ router.post('/', requireJwt, async (req: Request, res: Response) => {
         const collection = await Collection.load(user.id);
         const entry = await collection.addCardAndSave(card, { quantity, condition, isFoil });
 
+        publishSyncForUser(user.id);
+
         return res.status(201).json({
             message: 'Card added to collection',
             entry,
@@ -169,6 +172,8 @@ router.post('/refresh-prices', requireJwt, async (req: Request, res: Response) =
             : refreshResult.failedCards > 0
                 ? 'Prices refreshed with warnings'
                 : 'Prices refreshed successfully';
+
+        publishSyncForUser(user.id);
 
         return res.status(200).json({
             message,
@@ -193,6 +198,8 @@ router.patch('/:scryfallId/transfer', requireJwt, async (req: Request, res: Resp
 
         const collection = await Collection.load(user.id);
         collection.transferCondition(scryfallId, fromCondition, toCondition, isFoil, quantity);
+
+        publishSyncForUser(user.id);
 
         return res.status(200).json({ message: 'Condition transferred' });
     } catch (error: any) {
@@ -222,6 +229,8 @@ router.patch('/:scryfallId', requireJwt, async (req: Request, res: Response) => 
         }
         if (notes !== undefined) entry.setNotes(notes);
 
+        publishSyncForUser(user.id);
+
         return res.status(200).json({ message: 'Entry updated' });
     } catch (error: any) {
         return res.status(400).json({ message: error.message });
@@ -240,6 +249,7 @@ router.delete('/:scryfallId', requireJwt, async (req: Request, res: Response) =>
 
         const collection = await Collection.load(user.id);
         collection.removeCard(scryfallId, condition, isFoil);
+        publishSyncForUser(user.id);
         return res.status(200).json({ message: 'Entry removed' });
     } catch (error) {
         return res.status(500).json({ message: 'Failed to remove entry', error });

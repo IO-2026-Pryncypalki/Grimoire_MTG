@@ -12,6 +12,7 @@ import {
     updateAssignmentQuantity,
     type AssignmentRecord,
 } from '../repositories/DeckCardAssignmentRepository';
+import { touchCollectionEntryUpdatedAt } from '../repositories/CollectionEntryRepository';
 import { touchDeckUpdatedAt } from '../repositories/DeckRepository';
 
 export interface DeckCardAssignmentItem {
@@ -181,6 +182,7 @@ export const assignCollectionEntry = async (
     }
 
     const assignments = await getAssignmentsForDeckCard(deckCardId);
+    await touchCollectionEntryUpdatedAt(input.collectionEntryId);
     await touchDeckUpdatedAt(deckId);
     return buildDeckCardFillStatus(deckCard.quantity, assignments);
 };
@@ -223,6 +225,7 @@ export const updateAssignment = async (
     await updateAssignmentQuantity(assignmentId, quantity);
 
     const assignments = await getAssignmentsForDeckCard(deckCardId);
+    await touchCollectionEntryUpdatedAt(assignment.collectionEntryId);
     await touchDeckUpdatedAt(deckId);
     return buildDeckCardFillStatus(deckCard.quantity, assignments);
 };
@@ -246,6 +249,7 @@ export const removeAssignment = async (
     await deleteAssignment(assignmentId);
 
     const assignments = await getAssignmentsForDeckCard(deckCardId);
+    await touchCollectionEntryUpdatedAt(assignment.collectionEntryId);
     await touchDeckUpdatedAt(deckId);
     return buildDeckCardFillStatus(deckCard.quantity, assignments);
 };

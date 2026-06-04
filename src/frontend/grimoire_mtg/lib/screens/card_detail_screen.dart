@@ -97,9 +97,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
 
     try {
       await api.addCardToDeck(deckId: deckId, scryfallId: widget.scryfallId);
-      await context.read<DeckStore>().refresh(silent: true);
-      await context.read<AuthService>().reloadProfile();
-      await syncAfterLocalMutation(context);
+      await syncAfterLocalMutation(context, collection: true, decks: true, refreshAll: false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Dodano do talii')),

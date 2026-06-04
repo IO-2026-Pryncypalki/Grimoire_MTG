@@ -42,6 +42,8 @@ class AuthService extends ChangeNotifier {
       !isAuthenticated && _hasStoredSession && !_loading;
   GrimoireApi get api => _api;
 
+  Future<String?> getAccessToken() => _getAccessToken();
+
   Future<void> init() async {
     if (_initComplete) return;
 

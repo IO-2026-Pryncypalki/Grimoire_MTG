@@ -21,4 +21,14 @@ class Env {
     if (kIsWeb) return apiBaseUrl;
     return apiBaseUrl;
   }
+
+  static Uri syncStreamUri(String accessToken) {
+    final base = Uri.parse(apiBaseUrl);
+    final wsScheme = base.scheme == 'https' ? 'wss' : 'ws';
+    return base.replace(
+      scheme: wsScheme,
+      path: '/api/sync/stream',
+      queryParameters: {'token': accessToken},
+    );
+  }
 }

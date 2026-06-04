@@ -832,12 +832,31 @@ Zwraca znaczniki czasu ostatniej modyfikacji kolekcji i talii zalogowanego użyt
 | `decksUpdatedAt` | `MAX(decks.updated_at)` dla użytkownika (epoch ISO jeśli brak talii) |
 | `syncToken` | Późniejszy z dwóch powyższych timestampów (porównanie leksykograficzne ISO) |
 
-**Użycie w kliencie:** poll co ~5 s w tle aplikacji. Gdy `syncToken` się zmieni:
+**Użycie w kliencie:** preferowany kanał WebSocket (poniżej); zapasowo poll co ~5–10 s w tle. Gdy `syncToken` lub którykolwiek timestamp się zmieni:
 
 - jeśli zmieniło się `collectionUpdatedAt` → odśwież `GET /api/collection`
 - jeśli zmieniło się `decksUpdatedAt` → odśwież `GET /api/decks` (oraz otwarty `GET /api/decks/:id` jeśli dotyczy)
 
-Mutacje decków (karty, assignments) aktualizują `decks.updated_at` rodzica. Mutacje kolekcji aktualizują `collection_entries.updated_at`.
+Mutacje decków (karty, assignments) aktualizują `decks.updated_at` rodzica. Mutacje kolekcji aktualizują `collection_entries.updated_at`. Przypisania kopii z kolekcji do talii aktualizują też `updated_at` wpisu kolekcji.
+
+### `WebSocket /api/sync/stream`
+
+Push zmian sync dla zalogowanego użytkownika (mobile + web).
+
+**Auth:** `?token=<access JWT>` w URL (mobile) lub nagłówek `Authorization: Bearer` / cookie `accessToken` (web).
+
+**Wiadomość serwera (JSON):**
+
+```json
+{
+  "type": "sync",
+  "collectionUpdatedAt": "2026-06-03T12:00:00.000Z",
+  "decksUpdatedAt": "2026-06-03T12:05:00.000Z",
+  "syncToken": "2026-06-03T12:05:00.000Z"
+}
+```
+
+**Klient:** po połączeniu odświeża te same zasoby co przy poll; przy rozłączeniu używa `GET /api/sync/status` co kilka sekund. Serwer wysyła ping co 30 s.
 
 ---
 

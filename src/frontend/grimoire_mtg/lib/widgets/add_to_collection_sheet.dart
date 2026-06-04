@@ -67,9 +67,7 @@ class _AddToCollectionSheetState extends State<AddToCollectionSheet> {
             condition: _condition,
             isFoil: _isFoil,
           );
-      await context.read<CollectionStore>().refresh(silent: true);
-      await context.read<AuthService>().reloadProfile();
-      await syncAfterLocalMutation(context);
+      await syncAfterLocalMutation(context, collection: true, refreshAll: false);
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (mounted) {

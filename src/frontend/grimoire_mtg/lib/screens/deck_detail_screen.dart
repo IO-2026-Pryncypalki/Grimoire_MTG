@@ -72,10 +72,12 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   }
 
   Future<void> _refreshStores() async {
-    await context.read<DeckDetailStore>().refresh(widget.deckId);
-    await context.read<DeckStore>().refresh(silent: true);
-    await context.read<AuthService>().reloadProfile();
-    await syncAfterLocalMutation(context);
+    await syncAfterLocalMutation(
+      context,
+      decks: true,
+      deckId: widget.deckId,
+      refreshAll: false,
+    );
   }
 
   DeckCardActions _cardActions() {
@@ -140,8 +142,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
 
     try {
       await context.read<AuthService>().api.deleteDeck(widget.deckId);
-      await context.read<DeckStore>().refresh(silent: true);
-      await context.read<AuthService>().reloadProfile();
+      await syncAfterLocalMutation(context, decks: true, refreshAll: false);
       if (mounted) Navigator.pop(context, true);
     } on ApiException catch (e) {
       if (mounted) {

@@ -198,6 +198,10 @@ class CollectionOptionDto {
     required this.entryQuantity,
     required this.assignedTotal,
     required this.availableToAssign,
+    required this.scryfallId,
+    this.setCode,
+    this.name,
+    this.isExactPrinting = true,
   });
 
   final String collectionEntryId;
@@ -206,6 +210,10 @@ class CollectionOptionDto {
   final int entryQuantity;
   final int assignedTotal;
   final int availableToAssign;
+  final String scryfallId;
+  final String? setCode;
+  final String? name;
+  final bool isExactPrinting;
 
   factory CollectionOptionDto.fromJson(Map<String, dynamic> json) =>
       CollectionOptionDto(
@@ -215,5 +223,31 @@ class CollectionOptionDto {
         entryQuantity: json['entryQuantity'] as int,
         assignedTotal: json['assignedTotal'] as int,
         availableToAssign: json['availableToAssign'] as int,
+        scryfallId: json['scryfallId'] as String,
+        setCode: json['setCode'] as String?,
+        name: json['name'] as String?,
+        isExactPrinting: json['isExactPrinting'] as bool? ?? true,
+      );
+}
+
+class AssignDeckByNameSummary {
+  AssignDeckByNameSummary({
+    required this.assignedSlots,
+    required this.assignedCopies,
+    required this.skippedNoCollection,
+    required this.skippedNoName,
+  });
+
+  final int assignedSlots;
+  final int assignedCopies;
+  final int skippedNoCollection;
+  final int skippedNoName;
+
+  factory AssignDeckByNameSummary.fromJson(Map<String, dynamic> json) =>
+      AssignDeckByNameSummary(
+        assignedSlots: json['assignedSlots'] as int? ?? 0,
+        assignedCopies: json['assignedCopies'] as int? ?? 0,
+        skippedNoCollection: json['skippedNoCollection'] as int? ?? 0,
+        skippedNoName: json['skippedNoName'] as int? ?? 0,
       );
 }

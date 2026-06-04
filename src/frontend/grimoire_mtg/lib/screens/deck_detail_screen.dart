@@ -203,7 +203,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     if (!mounted) return;
     if (options.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Brak kopii w kolekcji')),
+        const SnackBar(content: Text('Brak kopii o tej nazwie w kolekcji')),
       );
       return;
     }
@@ -238,11 +238,16 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
           children: [
             const ListTile(title: Text('Przypisz kopie z kolekcji')),
             ...options.map(
-              (o) => ListTile(
-                title: Text('${o.condition}${o.isFoil ? ' Foil' : ''}'),
-                subtitle: Text('Dostępne: ${o.availableToAssign}'),
-                onTap: () => onSelect(o),
-              ),
+              (o) {
+                final version = o.isExactPrinting
+                    ? (o.setCode ?? '')
+                    : '${o.setCode ?? '?'} • inna wersja';
+                return ListTile(
+                  title: Text('${o.condition}${o.isFoil ? ' Foil' : ''}'),
+                  subtitle: Text('Dostępne: ${o.availableToAssign} • $version'),
+                  onTap: () => onSelect(o),
+                );
+              },
             ),
           ],
         ),
@@ -265,6 +270,57 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
       context: context,
       builder: (ctx) => buildPicker((o) => Navigator.pop(ctx, o)),
     );
+  }
+
+  bool _deckHasUnfilledSlots(DeckDetails deck) =>
+      deck.cards.any((c) => c.fillStatus.unfilledQty > 0);
+
+  Future<void> _assignDeckFromCollectionByName(DeckDetails deck) async {
+    final unfilled = deck.cards.fold<int>(
+      0,
+      (sum, c) => sum + c.fillStatus.unfilledQty,
+    );
+    if (unfilled <= 0) return;
+
+    final confirm = unfilled > 10
+        ? await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('Uzupełnij z kolekcji?'),
+              content: Text(
+                'Przypisać kopie z kolekcji do $unfilled brakujących slotów (dopasowanie po nazwie karty)?',
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
+                FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Uzupełnij')),
+              ],
+            ),
+          )
+        : true;
+
+    if (confirm != true) return;
+
+    try {
+      final summary = await context
+          .read<AuthService>()
+          .api
+          .assignDeckFromCollectionByName(widget.deckId);
+      await _refreshStores();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Przypisano ${summary.assignedCopies} kopii do ${summary.assignedSlots} pozycji'
+              '${summary.skippedNoCollection > 0 ? ' • ${summary.skippedNoCollection} bez kopii' : ''}',
+            ),
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
   }
 
   Widget _cardsView(DeckDetails deck) {
@@ -308,6 +364,12 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
               mode: _viewMode,
               onChanged: _setViewMode,
               inAppBar: true,
+            ),
+          if (_deckHasUnfilledSlots(deck))
+            IconButton(
+              icon: const Icon(Icons.playlist_add_check),
+              onPressed: () => _assignDeckFromCollectionByName(deck),
+              tooltip: 'Uzupełnij z kolekcji',
             ),
           if (context.isMediumUp)
             IconButton(

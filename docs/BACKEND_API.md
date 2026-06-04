@@ -745,7 +745,7 @@ lub (gdy ilość > 1):
 
 ### `GET /api/decks/:id/cards/:deckCardId/collection-options`
 
-Zwraca wpisy z kolekcji pasujące do karty w decku — do przypisywania fizycznych kopii.
+Zwraca wpisy z kolekcji pasujące do karty w decku **po nazwie** (dowolny printing) — do przypisywania fizycznych kopii.
 
 **Response 200:**
 ```json
@@ -757,11 +757,46 @@ Zwraca wpisy z kolekcji pasujące do karty w decku — do przypisywania fizyczny
       "isFoil": false,
       "entryQuantity": 4,
       "assignedTotal": 2,
-      "availableToAssign": 2
+      "availableToAssign": 2,
+      "scryfallId": "uuid",
+      "setCode": "M21",
+      "name": "Lightning Bolt",
+      "isExactPrinting": true
     }
   ]
 }
 ```
+
+| Pole | Opis |
+|------|------|
+| `isExactPrinting` | `true` gdy wpis kolekcji ma ten sam `scryfallId` co slot w talii |
+
+**Błędy:** `400` — karta w talii bez nazwy (`Deck card has no name`).
+
+---
+
+### `POST /api/decks/:id/assign-from-collection-by-name`
+
+Automatycznie przypisuje brakujące kopie do slotów talii, używając wpisów kolekcji o **tej samej nazwie** karty (nie tylko tego samego printingu).
+
+**Response 200:**
+```json
+{
+  "assignedSlots": 3,
+  "assignedCopies": 8,
+  "skippedNoCollection": 1,
+  "skippedNoName": 0
+}
+```
+
+| Pole | Opis |
+|------|------|
+| `assignedSlots` | Liczba pozycji w talii, do których przypisano co najmniej jedną kopię |
+| `assignedCopies` | Łączna liczba przypisanych kopii |
+| `skippedNoCollection` | Pozycje z brakiem dostępnych kopii o pasującej nazwie |
+| `skippedNoName` | Pozycje bez nazwy karty w bazie |
+
+Preferuje dokładny printing, potem inne wersje (kolejność: `setCode`, `condition`).
 
 ---
 
@@ -786,6 +821,10 @@ Przypisuje fizyczne kopie z kolekcji do slotu w decku.
 ```
 
 Jeśli przypisanie dla tego `collectionEntryId` już istnieje, ilości są sumowane.
+
+Dopuszcza wpisy kolekcji o **innej wersji** (inny `scryfallId`), jeśli `cards.name` jest takie samo (bez rozróżniania wielkości liter).
+
+**Błędy:** `400` — `Card name mismatch` gdy nazwy się różnią.
 
 ---
 

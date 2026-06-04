@@ -215,6 +215,11 @@ class GrimoireApi {
         .toList();
   }
 
+  Future<AssignDeckByNameSummary> assignDeckFromCollectionByName(String deckId) async {
+    final json = await _client.post('/api/decks/$deckId/assign-from-collection-by-name');
+    return AssignDeckByNameSummary.fromJson(json);
+  }
+
   Future<FillStatusDto> assignToDeck({
     required String deckId,
     required String deckCardId,

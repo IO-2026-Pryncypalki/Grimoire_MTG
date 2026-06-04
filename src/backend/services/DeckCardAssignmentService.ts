@@ -8,12 +8,15 @@ import {
     getAssignmentForUser,
     getAssignmentsForDeckCard,
     getFilledQuantityOnDeckCard,
-    listCollectionEntriesForScryfall,
+    listCollectionEntriesForCardName,
     updateAssignmentQuantity,
     type AssignmentRecord,
+    type CollectionEntryByNameRecord,
 } from '../repositories/DeckCardAssignmentRepository';
+import { getByIdForUserWithCards } from '../repositories/DeckRepository';
 import { touchCollectionEntryUpdatedAt } from '../repositories/CollectionEntryRepository';
 import { touchDeckUpdatedAt } from '../repositories/DeckRepository';
+import { cardNamesMatch } from '../utils/cardNameMatch';
 
 export interface DeckCardAssignmentItem {
     id: string;
@@ -37,11 +40,22 @@ export interface CollectionEntryOption {
     entryQuantity: number;
     assignedTotal: number;
     availableToAssign: number;
+    scryfallId: string;
+    setCode: string | null;
+    name: string | null;
+    isExactPrinting: boolean;
 }
 
 export interface AssignCollectionEntryInput {
     collectionEntryId: string;
     quantity: number;
+}
+
+export interface AssignDeckByNameSummary {
+    assignedSlots: number;
+    assignedCopies: number;
+    skippedNoCollection: number;
+    skippedNoName: number;
 }
 
 export const buildDeckCardFillStatus = (
@@ -107,9 +121,54 @@ export const validateAssignmentsForNewSlot = (
     }
 };
 
+const assertEntryMatchesDeckCardName = (
+    deckCardName: string | null,
+    entryName: string | null,
+): void => {
+    if (!deckCardName || !cardNamesMatch(deckCardName, entryName)) {
+        throw new Error('Card name mismatch');
+    }
+};
+
+const buildOptionsFromEntries = (
+    entries: CollectionEntryByNameRecord[],
+    deckScryfallId: string,
+    assignedTotals: Map<string, number>,
+): CollectionEntryOption[] => {
+    const options = entries.map((entry) => {
+        const assignedTotal = assignedTotals.get(entry.id) ?? 0;
+        return {
+            collectionEntryId: entry.id,
+            condition: entry.condition,
+            isFoil: entry.isFoil,
+            entryQuantity: entry.quantity,
+            assignedTotal,
+            availableToAssign: Math.max(0, entry.quantity - assignedTotal),
+            scryfallId: entry.scryfallId,
+            setCode: entry.setCode,
+            name: entry.name,
+            isExactPrinting: entry.scryfallId === deckScryfallId,
+        };
+    });
+
+    options.sort((a, b) => {
+        if (a.isExactPrinting !== b.isExactPrinting) {
+            return a.isExactPrinting ? -1 : 1;
+        }
+        const setA = a.setCode ?? '';
+        const setB = b.setCode ?? '';
+        if (setA !== setB) return setA.localeCompare(setB);
+        if (a.condition !== b.condition) return a.condition.localeCompare(b.condition);
+        if (a.isFoil !== b.isFoil) return a.isFoil ? 1 : -1;
+        return 0;
+    });
+
+    return options;
+};
+
 const loadAssignmentContext = async (
     userId: string,
-    deckCard: { id: string; scryfallId: string; quantity: number },
+    deckCard: { id: string; name: string | null; quantity: number },
     collectionEntryId: string,
     excludeAssignmentId?: string,
 ) => {
@@ -117,9 +176,7 @@ const loadAssignmentContext = async (
     if (!entry) {
         throw new Error('Collection entry not found');
     }
-    if (entry.scryfallId !== deckCard.scryfallId) {
-        throw new Error('Scryfall ID mismatch');
-    }
+    assertEntryMatchesDeckCardName(deckCard.name, entry.name);
 
     const slotAssignments = await getAssignmentsForDeckCard(deckCard.id);
     const assignedTotals = await getAssignedTotalsByCollectionEntry(userId);
@@ -162,7 +219,7 @@ export const assignCollectionEntry = async (
         const newQty = ctx.existingOnSlot.quantity + input.quantity;
         validateAssignmentQuantity({
             deckCardQuantity: deckCard.quantity,
-            currentFilledOnSlot: ctx.currentFilled + ctx.existingOnSlot.quantity,
+            currentFilledOnSlot: ctx.currentFilled,
             existingOnSlotForEntry: ctx.existingOnSlot.quantity,
             newQuantity: newQty,
             collectionEntryQuantity: ctx.entry.quantity,
@@ -263,28 +320,80 @@ export const listCollectionOptionsForDeckCard = async (
     if (!deckCard) {
         throw new Error('Deck card not found');
     }
+    if (!deckCard.name) {
+        throw new Error('Deck card has no name');
+    }
 
-    const entries = await listCollectionEntriesForScryfall(userId, deckCard.scryfallId);
+    const entries = await listCollectionEntriesForCardName(userId, deckCard.name);
     const assignedTotals = await getAssignedTotalsByCollectionEntry(userId);
 
-    return entries.map((entry) => {
-        const assignedTotal = assignedTotals.get(entry.id) ?? 0;
-        return {
-            collectionEntryId: entry.id,
-            condition: entry.condition,
-            isFoil: entry.isFoil,
-            entryQuantity: entry.quantity,
-            assignedTotal,
-            availableToAssign: Math.max(0, entry.quantity - assignedTotal),
-        };
-    });
+    return buildOptionsFromEntries(entries, deckCard.scryfallId, assignedTotals);
+};
+
+export const assignDeckFromCollectionByName = async (
+    userId: string,
+    deckId: string,
+): Promise<AssignDeckByNameSummary> => {
+    const deck = await getByIdForUserWithCards(deckId, userId);
+    if (!deck) {
+        throw new Error('Deck not found');
+    }
+
+    let assignedSlots = 0;
+    let assignedCopies = 0;
+    let skippedNoCollection = 0;
+    let skippedNoName = 0;
+
+    for (const card of deck.cards) {
+        const filledQty = card.assignments.reduce((sum, a) => sum + a.quantity, 0);
+        let remaining = Math.max(0, card.quantity - filledQty);
+
+        if (remaining <= 0) continue;
+
+        if (!card.name) {
+            skippedNoName += 1;
+            continue;
+        }
+
+        let slotAssigned = 0;
+
+        while (remaining > 0) {
+            const options = await listCollectionOptionsForDeckCard(userId, deckId, card.id);
+            const next = options.find((o) => o.availableToAssign > 0);
+            if (!next) break;
+
+            const qty = Math.min(remaining, next.availableToAssign);
+            await assignCollectionEntry(userId, deckId, card.id, {
+                collectionEntryId: next.collectionEntryId,
+                quantity: qty,
+            });
+            slotAssigned += qty;
+            remaining -= qty;
+        }
+
+        if (slotAssigned > 0) {
+            assignedSlots += 1;
+            assignedCopies += slotAssigned;
+        } else {
+            skippedNoCollection += 1;
+        }
+    }
+
+    await touchDeckUpdatedAt(deckId);
+
+    return {
+        assignedSlots,
+        assignedCopies,
+        skippedNoCollection,
+        skippedNoName,
+    };
 };
 
 export const applyAssignmentsToNewSlot = async (
     userId: string,
     deckCardId: string,
     deckCardQuantity: number,
-    scryfallId: string,
+    deckCardName: string | null,
     assignments: AssignCollectionEntryInput[],
 ): Promise<void> => {
     if (assignments.length === 0) {
@@ -303,9 +412,7 @@ export const applyAssignmentsToNewSlot = async (
         if (!entry) {
             throw new Error('Collection entry not found');
         }
-        if (entry.scryfallId !== scryfallId) {
-            throw new Error('Scryfall ID mismatch');
-        }
+        assertEntryMatchesDeckCardName(deckCardName, entry.name);
 
         const assignedOnEntry = assignedTotals.get(input.collectionEntryId) ?? 0;
         validateAssignmentQuantity({

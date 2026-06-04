@@ -1,8 +1,11 @@
+import sequelize from '../config/database';
 import { Deck as DeckModel } from '../models/Deck';
 import { DeckCard as DeckCardModel } from '../models/DeckCard';
 import { DeckCardAssignment as DeckCardAssignmentModel } from '../models/DeckCardAssignment';
 import { CollectionEntry as CollectionEntryModel } from '../models/CollectionEntry';
+import { Card as CardModel } from '../models/Card';
 import type { CardCondition } from '../models/CollectionEntry';
+import { normalizeCardName } from '../utils/cardNameMatch';
 
 export interface AssignmentRecord {
     id: string;
@@ -17,8 +20,19 @@ export interface DeckCardWithDeckRecord {
     id: string;
     deckId: string;
     scryfallId: string;
+    name: string | null;
     quantity: number;
     board: string;
+}
+
+export interface CollectionEntryByNameRecord {
+    id: string;
+    scryfallId: string;
+    name: string | null;
+    setCode: string | null;
+    quantity: number;
+    condition: CardCondition;
+    isFoil: boolean;
 }
 
 export const getAssignedTotalsByCollectionEntry = async (
@@ -65,6 +79,7 @@ export const findDeckCardForUser = async (
                 required: true,
                 where: { userId },
             },
+            { model: CardModel, required: false },
         ],
     });
 
@@ -73,10 +88,16 @@ export const findDeckCardForUser = async (
     }
 
     const raw = row.get() as Record<string, unknown>;
+    const cardRow = (row as InstanceType<typeof DeckCardModel> & {
+        Card?: InstanceType<typeof CardModel>;
+    }).Card;
+    const cardRaw = cardRow?.get() as Record<string, unknown> | undefined;
+
     return {
         id: raw.id as string,
         deckId: raw.deckId as string,
         scryfallId: raw.scryfallId as string,
+        name: (cardRaw?.name as string | null) ?? null,
         quantity: raw.quantity as number,
         board: raw.board as string,
     };
@@ -154,9 +175,17 @@ export const getAssignmentForUser = async (
 export const findCollectionEntryForUser = async (
     collectionEntryId: string,
     userId: string,
-): Promise<{ id: string; scryfallId: string; quantity: number; condition: CardCondition; isFoil: boolean } | null> => {
+): Promise<{
+    id: string;
+    scryfallId: string;
+    name: string | null;
+    quantity: number;
+    condition: CardCondition;
+    isFoil: boolean;
+} | null> => {
     const row = await CollectionEntryModel.findOne({
         where: { id: collectionEntryId, userId },
+        include: [{ model: CardModel, required: false }],
     });
 
     if (!row) {
@@ -164,9 +193,15 @@ export const findCollectionEntryForUser = async (
     }
 
     const raw = row.get() as Record<string, unknown>;
+    const cardRow = (row as InstanceType<typeof CollectionEntryModel> & {
+        Card?: InstanceType<typeof CardModel>;
+    }).Card;
+    const cardRaw = cardRow?.get() as Record<string, unknown> | undefined;
+
     return {
         id: raw.id as string,
         scryfallId: raw.scryfallId as string,
+        name: (cardRaw?.name as string | null) ?? null,
         quantity: raw.quantity as number,
         condition: raw.condition as CardCondition,
         isFoil: raw.isFoil as boolean,
@@ -186,6 +221,53 @@ export const listCollectionEntriesForScryfall = async (
         const raw = row.get() as Record<string, unknown>;
         return {
             id: raw.id as string,
+            quantity: raw.quantity as number,
+            condition: raw.condition as CardCondition,
+            isFoil: raw.isFoil as boolean,
+        };
+    });
+};
+
+export const listCollectionEntriesForCardName = async (
+    userId: string,
+    cardName: string,
+): Promise<CollectionEntryByNameRecord[]> => {
+    const normalized = normalizeCardName(cardName);
+    if (!normalized) {
+        return [];
+    }
+
+    const rows = await CollectionEntryModel.findAll({
+        where: { userId },
+        include: [
+            {
+                model: CardModel,
+                required: true,
+                where: sequelize.where(
+                    sequelize.fn('lower', sequelize.fn('trim', sequelize.col('Card.name'))),
+                    normalized,
+                ),
+            },
+        ],
+        order: [
+            [{ model: CardModel, as: 'Card' }, 'set_code', 'ASC'],
+            ['condition', 'ASC'],
+            ['isFoil', 'ASC'],
+        ],
+    });
+
+    return rows.map((row) => {
+        const raw = row.get() as Record<string, unknown>;
+        const cardRow = (row as InstanceType<typeof CollectionEntryModel> & {
+            Card?: InstanceType<typeof CardModel>;
+        }).Card;
+        const cardRaw = cardRow?.get() as Record<string, unknown> | undefined;
+
+        return {
+            id: raw.id as string,
+            scryfallId: raw.scryfallId as string,
+            name: (cardRaw?.name as string | null) ?? null,
+            setCode: (cardRaw?.setCode as string | null) ?? null,
             quantity: raw.quantity as number,
             condition: raw.condition as CardCondition,
             isFoil: raw.isFoil as boolean,

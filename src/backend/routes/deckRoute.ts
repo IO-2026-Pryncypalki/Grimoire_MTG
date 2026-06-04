@@ -36,6 +36,8 @@ type ValidationResult =
 const ASSIGNMENT_ERROR_MESSAGES = new Set([
     'Collection entry not found',
     'Scryfall ID mismatch',
+    'Card name mismatch',
+    'Deck card has no name',
     'Exceeds deck slot quantity',
     'Exceeds collection entry quantity',
     'Cannot reduce deck card below assigned quantity',
@@ -287,6 +289,24 @@ router.post('/:id/cards', requireJwt, async (req: Request, res: Response) => {
         return mapDeckServiceError(error, res, 'Failed to add card to deck');
     }
 });
+
+// POST /api/decks/:id/assign-from-collection-by-name
+router.post(
+    '/:id/assign-from-collection-by-name',
+    requireJwt,
+    async (req: Request, res: Response) => {
+        try {
+            const user = req.user as any;
+            const summary = await AssignmentService.assignDeckFromCollectionByName(
+                user.id,
+                req.params.id,
+            );
+            return res.status(200).json(summary);
+        } catch (error) {
+            return mapDeckServiceError(error, res, 'Failed to assign from collection by name');
+        }
+    },
+);
 
 // GET /api/decks/:id/cards/:deckCardId/collection-options
 router.get(

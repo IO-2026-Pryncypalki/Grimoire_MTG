@@ -116,6 +116,7 @@ class DeckCardItem {
     required this.board,
     this.name,
     this.setCode,
+    this.typeLine,
     this.imageUrl,
     this.imageUrlHiRes,
     required this.fillStatus,
@@ -128,6 +129,7 @@ class DeckCardItem {
   final String board;
   final String? name;
   final String? setCode;
+  final String? typeLine;
   final String? imageUrl;
   final String? imageUrlHiRes;
   final FillStatusDto fillStatus;
@@ -140,6 +142,7 @@ class DeckCardItem {
         board: json['board'] as String? ?? 'main',
         name: json['name'] as String?,
         setCode: json['setCode'] as String?,
+        typeLine: json['typeLine'] as String?,
         imageUrl: json['imageUrl'] as String?,
         imageUrlHiRes: json['imageUrlHiRes'] as String?,
         fillStatus: FillStatusDto.fromJson(

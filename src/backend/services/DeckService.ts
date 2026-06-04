@@ -61,6 +61,7 @@ export interface DeckCardItem {
     board: DeckBoard;
     name: string | null;
     setCode: string | null;
+    typeLine: string | null;
     imageUrl: string | null;
     imageUrlHiRes: string | null;
     fillStatus: DeckCardFillStatus;
@@ -103,6 +104,7 @@ const toDeckCardItem = (
     board: card.board,
     name: card.name,
     setCode: card.setCode,
+    typeLine: card.typeLine,
     imageUrl: card.imageUrl,
     imageUrlHiRes: card.imageUrlHiRes,
     fillStatus: buildDeckCardFillStatus(card.quantity, card.assignments.map((a) => ({

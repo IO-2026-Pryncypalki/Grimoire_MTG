@@ -622,6 +622,7 @@ Szczegóły decku z listą kart, statusem wypełnienia i ostrzeżeniami formatu.
         "board": "main",
         "name": "Lightning Bolt",
         "setCode": "M21",
+        "typeLine": "Instant",
         "imageUrl": "https://...",
         "imageUrlHiRes": "https://...",
         "fillStatus": {

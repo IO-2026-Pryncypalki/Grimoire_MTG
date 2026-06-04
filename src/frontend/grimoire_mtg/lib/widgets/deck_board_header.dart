@@ -15,20 +15,31 @@ class DeckBoardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            deckBoardLabel(board),
-            style: Theme.of(context).textTheme.titleMedium,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: theme.dividerColor),
           ),
-          Text(
-            deckBoardSummary(cards),
-            style: Theme.of(context).textTheme.bodySmall,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                deckBoardLabel(board),
+                style: theme.textTheme.titleMedium,
+              ),
+              Text(
+                deckBoardSummary(cards),
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

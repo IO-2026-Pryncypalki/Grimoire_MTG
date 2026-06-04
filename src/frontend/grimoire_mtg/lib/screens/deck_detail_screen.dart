@@ -329,7 +329,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         ],
       ),
       body: ContentWidth(
-        maxWidth: 960,
+        maxWidth: context.isExpanded ? 1400 : (context.isMediumUp ? 1200 : 960),
         child: RefreshIndicator(
           onRefresh: () => detailStore.refresh(widget.deckId),
           child: _cardsView(deck),

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../models/deck.dart';
-import '../utils/deck_board_layout.dart';
 import '../utils/responsive.dart';
 import '../utils/scryfall_image_url.dart';
-import 'mtg_card_tile.dart';
-import 'mtg_network_card_image.dart';
+import '../utils/deck_card_type_grouping.dart';
 import 'deck_board_header.dart';
+import 'deck_boards_layout.dart';
 import 'deck_card_actions.dart';
+import 'deck_detail_meta_header.dart';
+import 'deck_type_section_header.dart';
+import 'mtg_network_card_image.dart';
 
 class DeckCardsStackView extends StatelessWidget {
   const DeckCardsStackView({
@@ -19,58 +21,81 @@ class DeckCardsStackView extends StatelessWidget {
   final DeckDetails deck;
   final DeckCardActions actions;
 
+  List<Widget> _typeGroupedStacks(List<DeckCardItem> cards) {
+    return [
+      for (final group in groupDeckCardsByType(cards)) ...[
+        DeckTypeSectionHeader(typeLabel: group.label, cards: group.cards),
+        _StackRow(cards: group.cards, actions: actions),
+        const SizedBox(height: 12),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        Text('${deck.format} • ${deck.cards.length} pozycji'),
-        if (deck.description != null) Text(deck.description!),
-        for (final board in deckBoards) ..._boardSection(context, board),
+        DeckDetailMetaHeader(deck: deck),
+        DeckBoardsLayout(
+          deck: deck,
+          buildBoardSection: (context, board, cards) => [
+            DeckBoardHeader(board: board, cards: cards),
+            ..._typeGroupedStacks(cards),
+            const SizedBox(height: 16),
+          ],
+        ),
       ],
     );
   }
+}
 
-  List<Widget> _boardSection(BuildContext context, String board) {
-    final cards = sortedCardsForBoard(deck, board);
-    if (cards.isEmpty) return [];
+class _StackRow extends StatelessWidget {
+  const _StackRow({required this.cards, required this.actions});
 
-    final slotWidth = context.isCompact ? 80.0 : 100.0;
+  final List<DeckCardItem> cards;
+  final DeckCardActions actions;
+
+  double _slotWidth(BuildContext context) {
+    if (context.isExpanded) return 120;
+    if (context.isMediumUp) return 100;
+    return 80;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final slotWidth = _slotWidth(context);
     final overlap = slotWidth * 0.55;
     final cardHeight = slotWidth / kMtgCardAspectRatio;
     final rowWidth = cards.isEmpty
         ? 0.0
         : slotWidth + (cards.length - 1) * overlap;
 
-    return [
-      DeckBoardHeader(board: board, cards: cards),
-      SizedBox(
-        height: cardHeight + 8,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: rowWidth,
-            height: cardHeight,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                for (var i = 0; i < cards.length; i++)
-                  Positioned(
-                    left: i * overlap,
-                    child: _StackCardSlot(
-                      card: cards[i],
-                      width: slotWidth,
-                      height: cardHeight,
-                      actions: actions,
-                    ),
+    return SizedBox(
+      height: cardHeight + 8,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: rowWidth,
+          height: cardHeight,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              for (var i = 0; i < cards.length; i++)
+                Positioned(
+                  left: i * overlap,
+                  child: _StackCardSlot(
+                    card: cards[i],
+                    width: slotWidth,
+                    height: cardHeight,
+                    actions: actions,
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
-      const SizedBox(height: 16),
-    ];
+    );
   }
 }
 

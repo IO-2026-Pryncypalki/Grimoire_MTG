@@ -12,4 +12,6 @@ extension ResponsiveContext on BuildContext {
   bool get isCompact => screenWidth < AppBreakpoints.compact;
 
   bool get isMediumUp => screenWidth >= AppBreakpoints.medium;
+
+  bool get isExpanded => screenWidth >= AppBreakpoints.expanded;
 }

@@ -62,6 +62,7 @@ export interface DeckCardRecord {
     board: DeckBoard;
     name: string | null;
     setCode: string | null;
+    typeLine: string | null;
     imageUrl: string | null;
     imageUrlHiRes: string | null;
     assignments: DeckCardAssignmentRecord[];
@@ -133,6 +134,7 @@ const toDeckCardRecord = (deckCardRow: InstanceType<typeof DeckCardModel>): Deck
         board: raw.board as DeckBoard,
         name: (cardRaw?.name as string | null) ?? null,
         setCode: (cardRaw?.setCode as string | null) ?? null,
+        typeLine: (cardRaw?.typeLine as string | null) ?? null,
         imageUrl: (cardRaw?.imageUri as string | null) ?? null,
         imageUrlHiRes: (cardRaw?.imageUriLarge as string | null)
             ?? scryfallHiResFromStoredNormal(

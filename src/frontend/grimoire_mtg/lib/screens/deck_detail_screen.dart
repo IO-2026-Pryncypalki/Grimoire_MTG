@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
 import '../models/deck.dart';
+import '../models/deck_view_mode.dart';
 import '../services/auth_service.dart';
+import '../services/deck_view_mode_prefs.dart';
 import '../services/sync_service.dart';
 import '../state/deck_detail_store.dart';
 import '../state/deck_store.dart';
@@ -12,8 +14,13 @@ import '../utils/responsive.dart';
 import '../utils/sync_after_mutation.dart';
 import '../widgets/api_error_view.dart';
 import '../widgets/content_width.dart';
-import '../widgets/fill_status_indicator.dart';
+import '../widgets/deck_card_actions.dart';
+import '../widgets/deck_cards_grid_view.dart';
+import '../widgets/deck_cards_list_view.dart';
+import '../widgets/deck_cards_stack_view.dart';
+import '../widgets/deck_view_mode_switcher.dart';
 import 'add_card_to_deck_screen.dart';
+import 'card_detail_screen.dart';
 
 class DeckDetailScreen extends StatefulWidget {
   const DeckDetailScreen({super.key, required this.deckId});
@@ -26,18 +33,36 @@ class DeckDetailScreen extends StatefulWidget {
 
 class _DeckDetailScreenState extends State<DeckDetailScreen> {
   late final SyncService _sync;
+  DeckViewMode _viewMode = DeckViewMode.list;
+  bool _viewModeLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _sync = context.read<SyncService>();
     _sync.setActiveDeckId(widget.deckId);
+    _loadViewMode();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final store = context.read<DeckDetailStore>();
       if (store.deckFor(widget.deckId) == null && !store.isLoading(widget.deckId)) {
         store.load(widget.deckId);
       }
     });
+  }
+
+  Future<void> _loadViewMode() async {
+    final mode = await DeckViewModePrefs.load();
+    if (mounted) {
+      setState(() {
+        _viewMode = mode;
+        _viewModeLoaded = true;
+      });
+    }
+  }
+
+  Future<void> _setViewMode(DeckViewMode mode) async {
+    setState(() => _viewMode = mode);
+    await DeckViewModePrefs.save(mode);
   }
 
   @override
@@ -51,6 +76,23 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     await context.read<DeckStore>().refresh(silent: true);
     await context.read<AuthService>().reloadProfile();
     await syncAfterLocalMutation(context);
+  }
+
+  DeckCardActions _cardActions() {
+    return DeckCardActions(
+      onAssign: _assignCopies,
+      onRemove: _removeCard,
+      onOpenDetail: _openCardDetail,
+    );
+  }
+
+  void _openCardDetail(DeckCardItem card) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CardDetailScreen(scryfallId: card.scryfallId),
+      ),
+    );
   }
 
   Future<void> _validateAndSave(DeckDetails deck) async {
@@ -109,11 +151,30 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   }
 
   Future<void> _removeCard(DeckCardItem card) async {
+    final name = card.name ?? card.scryfallId;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usunąć z talii?'),
+        content: Text(
+          card.quantity > 1
+              ? 'Usunąć wszystkie ${card.quantity} kopie: $name?'
+              : 'Usunąć kartę: $name?',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Usuń')),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
     try {
       await context.read<AuthService>().api.removeCardFromDeck(
             deckId: widget.deckId,
             scryfallId: card.scryfallId,
             board: card.board,
+            quantity: card.quantity,
           );
       await _refreshStores();
     } on ApiException catch (e) {
@@ -205,8 +266,13 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     );
   }
 
-  List<DeckCardItem> _cardsForBoard(DeckDetails deck, String board) {
-    return deck.cards.where((c) => c.board == board).toList();
+  Widget _cardsView(DeckDetails deck) {
+    final actions = _cardActions();
+    return switch (_viewMode) {
+      DeckViewMode.list => DeckCardsListView(deck: deck, actions: actions),
+      DeckViewMode.grid => DeckCardsGridView(deck: deck, actions: actions),
+      DeckViewMode.stack => DeckCardsStackView(deck: deck, actions: actions),
+    };
   }
 
   @override
@@ -236,6 +302,12 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
       appBar: AppBar(
         title: Text(deck.name),
         actions: [
+          if (_viewModeLoaded)
+            DeckViewModeSwitcher(
+              mode: _viewMode,
+              onChanged: _setViewMode,
+              inAppBar: true,
+            ),
           if (context.isMediumUp)
             IconButton(
               icon: const Icon(Icons.add),
@@ -259,63 +331,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         maxWidth: 960,
         child: RefreshIndicator(
           onRefresh: () => detailStore.refresh(widget.deckId),
-          child: ListView(
-            padding: const EdgeInsets.all(12),
-            children: [
-              Text('${deck.format} • ${deck.cards.length} pozycji'),
-              if (deck.description != null) Text(deck.description!),
-              const SizedBox(height: 8),
-              for (final board in deckBoards) ...[
-                if (_cardsForBoard(deck, board).isNotEmpty) ...[
-                  Text(
-                    board.toUpperCase(),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  ..._cardsForBoard(deck, board).map(
-                    (card) => ListTile(
-                      leading: card.imageUrl != null
-                          ? Image.network(card.imageUrl!, width: 40, fit: BoxFit.cover)
-                          : const Icon(Icons.style),
-                      title: Text('${card.quantity}x ${card.name ?? card.scryfallId}'),
-                      subtitle: card.formatWarning != null
-                          ? Text(
-                              card.formatWarning!.message,
-                              style: const TextStyle(color: Colors.orange),
-                            )
-                          : Text(card.setCode ?? ''),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          FillStatusIndicator(fillStatus: card.fillStatus),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.more_vert),
-                            onSelected: (value) {
-                              if (value == 'assign') {
-                                _assignCopies(card);
-                              } else if (value == 'remove') {
-                                _removeCard(card);
-                              }
-                            },
-                            itemBuilder: (ctx) => [
-                              if (card.fillStatus.unfilledQty > 0)
-                                const PopupMenuItem(
-                                  value: 'assign',
-                                  child: Text('Przypisz kopie'),
-                                ),
-                              const PopupMenuItem(
-                                value: 'remove',
-                                child: Text('Usuń z talii'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ],
-          ),
+          child: _cardsView(deck),
         ),
       ),
       floatingActionButton: context.isMediumUp

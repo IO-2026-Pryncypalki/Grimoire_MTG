@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/l10n_ext.dart';
+import '../l10n/app_localizations.dart';
 import '../models/card.dart';
 import '../models/collection.dart';
 import '../models/deck.dart';
 import '../services/auth_service.dart';
-import '../state/deck_detail_store.dart';
-import '../state/deck_store.dart';
+import '../utils/deck_board_layout.dart';
 import '../utils/responsive.dart';
 import '../utils/sync_after_mutation.dart';
 import 'content_width.dart';
@@ -64,6 +65,8 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
   String _board = 'main';
   bool _assignFromCollection = true;
   bool _saving = false;
+  bool _loadingAvailability = true;
+  CardAvailabilityDto? _availability;
 
   late final Map<String, int> _assignQtyByEntryId;
 
@@ -71,8 +74,9 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
       .where((e) => e.collectionEntryId != null && e.collectionEntryId!.isNotEmpty)
       .toList();
 
-  int get _maxCollectionCopies =>
-      _validEntries.fold(0, (sum, e) => sum + e.quantity);
+  bool get _enforceCollectionLimit => _availability?.enforceCollectionLimit ?? false;
+
+  int get _availableToAssign => _availability?.availableToAdd ?? 0;
 
   @override
   void initState() {
@@ -83,13 +87,38 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
     if (_validEntries.length == 1) {
       _assignQtyByEntryId[_validEntries.first.collectionEntryId!] = 1;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAvailability());
+  }
+
+  Future<void> _loadAvailability() async {
+    try {
+      final availability = await context
+          .read<AuthService>()
+          .api
+          .getCardAvailability(widget.card.scryfallId);
+      if (!mounted) return;
+      setState(() {
+        _availability = availability;
+        _loadingAvailability = false;
+        _syncSingleEntryAssignment();
+      });
+    } on ApiException {
+      if (mounted) {
+        setState(() => _loadingAvailability = false);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _loadingAvailability = false);
+      }
+    }
   }
 
   void _syncSingleEntryAssignment() {
     if (_validEntries.length != 1) return;
     final id = _validEntries.first.collectionEntryId!;
     final max = _validEntries.first.quantity;
-    _assignQtyByEntryId[id] = _assignFromCollection ? _quantity.clamp(1, max) : 0;
+    _assignQtyByEntryId[id] =
+        _assignFromCollection ? _quantity.clamp(1, max) : 0;
   }
 
   int get _assignedTotal =>
@@ -113,9 +142,10 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
   }
 
   Future<void> _save() async {
+    final l10n = context.l10n;
     if (_assignFromCollection && _assignedTotal > _quantity) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Przypisane kopie przekraczają ilość w talii')),
+        SnackBar(content: Text(l10n.addToDeckExceedsQuantity)),
       );
       return;
     }
@@ -179,9 +209,44 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
     );
   }
 
+  String? _collectionSubtitle(AppLocalizations l10n) {
+    if (_loadingAvailability) return null;
+    if (!_enforceCollectionLimit) {
+      if (_validEntries.isEmpty) return null;
+      final total = _validEntries.fold(0, (sum, e) => sum + e.quantity);
+      return l10n.addToDeckAvailableCopies(total);
+    }
+    if (_availableToAssign <= 0) {
+      return l10n.addToDeckAllCopiesInDecks(_availability!.ownedQty);
+    }
+    return l10n.addToDeckAvailableToAdd(_availableToAssign);
+  }
+
+  Widget _buildDecksUsingList(AppLocalizations l10n) {
+    final decksUsing = _availability?.decksUsing ?? [];
+    if (decksUsing.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 8),
+        ...decksUsing.map(
+          (d) => Text(
+            l10n.addToDeckUsedInDeck(d.quantity, d.deckName),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final hasCollection = _validEntries.isNotEmpty;
+    final collectionSubtitle = _collectionSubtitle(l10n);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -196,15 +261,19 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Dodaj do talii',
+              l10n.addToDeckTitle,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             if (widget.card.name != null)
               Text(widget.card.name!, style: Theme.of(context).textTheme.bodyMedium),
+            if (_loadingAvailability) ...[
+              const SizedBox(height: 16),
+              const LinearProgressIndicator(),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
-                const Text('Ilość w talii:'),
+                Text(l10n.addToDeckQuantity),
                 IconButton(
                   onPressed: _quantity > 1
                       ? () => setState(() {
@@ -226,15 +295,15 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
             ),
             DropdownButtonFormField<String>(
               value: _board,
-              decoration: const InputDecoration(
-                labelText: 'Strefa',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.deckBoardZone,
+                border: const OutlineInputBorder(),
               ),
               items: deckBoards
                   .map(
                     (b) => DropdownMenuItem(
                       value: b,
-                      child: Text(b),
+                      child: Text(deckBoardLabel(b, l10n)),
                     ),
                   )
                   .toList(),
@@ -244,8 +313,8 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
               const SizedBox(height: 12),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Przypisz z kolekcji'),
-                subtitle: Text('Dostępne kopie: $_maxCollectionCopies'),
+                title: Text(l10n.addToDeckAssignFromCollection),
+                subtitle: collectionSubtitle != null ? Text(collectionSubtitle) : null,
                 value: _assignFromCollection,
                 onChanged: _saving
                     ? null
@@ -260,10 +329,12 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
                           }
                         }),
               ),
+              if (_enforceCollectionLimit && (_availability?.decksUsing.isNotEmpty ?? false))
+                _buildDecksUsingList(l10n),
               if (_assignFromCollection && _validEntries.length > 1) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Przypisane: $_assignedTotal / $_quantity',
+                  l10n.deckAssignedCount(_assignedTotal, _quantity),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 ..._validEntries.map(_buildEntryAssignmentRow),
@@ -271,14 +342,14 @@ class _AddCardToDeckSheetState extends State<AddCardToDeckSheet> {
             ],
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _saving ? null : _save,
+              onPressed: _saving || _loadingAvailability ? null : _save,
               child: _saving
                   ? const SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Dodaj do talii'),
+                  : Text(l10n.addToDeckTitle),
             ),
           ],
         ),

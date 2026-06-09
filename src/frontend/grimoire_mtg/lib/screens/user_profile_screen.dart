@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/l10n_ext.dart';
 import '../services/auth_service.dart';
+import '../services/locale_service.dart';
 import '../widgets/content_width.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -29,7 +31,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       setState(() => _editing = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil zaktualizowany')),
+          SnackBar(content: Text(context.l10n.profileUpdated)),
         );
       }
     } on ApiException catch (e) {
@@ -40,14 +42,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Future<void> _deleteAccount() async {
+    final l10n = context.l10n;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Usunąć konto?'),
-        content: const Text('Tej operacji nie można cofnąć.'),
+        title: Text(l10n.profileDeleteConfirm),
+        content: Text(l10n.profileDeleteConfirmBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Usuń')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.commonCancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.commonDelete)),
         ],
       ),
     );
@@ -66,14 +69,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
+    final localeService = context.watch<LocaleService>();
     final user = auth.user;
+    final l10n = context.l10n;
 
     if (user != null && !_editing && _usernameController.text.isEmpty) {
       _usernameController.text = user.username;
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil Użytkownika')),
+      appBar: AppBar(title: Text(l10n.profileTitle)),
       body: user == null
           ? const Center(child: CircularProgressIndicator())
           : ContentWidth(
@@ -87,9 +92,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   if (_editing)
                     TextField(
                       controller: _usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nazwa użytkownika',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.profileUsername,
+                        border: const OutlineInputBorder(),
                       ),
                     )
                   else
@@ -100,29 +105,44 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   Text(user.email),
                   const SizedBox(height: 8),
                   Text(
-                    'Dołączono: ${user.stats.joinedAt}',
+                    l10n.profileJoined(user.stats.joinedAt),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const Divider(height: 32),
                   ListTile(
+                    leading: const Icon(Icons.language),
+                    title: Text(l10n.profileLanguage),
+                    trailing: SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'pl', label: Text('Polski')),
+                        ButtonSegment(value: 'en', label: Text('English')),
+                      ],
+                      selected: {localeService.locale.languageCode},
+                      onSelectionChanged: (selection) {
+                        final code = selection.first;
+                        localeService.setLocale(Locale(code));
+                      },
+                    ),
+                  ),
+                  ListTile(
                     leading: const Icon(Icons.layers),
-                    title: const Text('Talie'),
+                    title: Text(l10n.profileDecks),
                     trailing: Text('${user.stats.deckCount}'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.style),
-                    title: const Text('Unikalne karty'),
+                    title: Text(l10n.profileUniqueCards),
                     trailing: Text('${user.stats.uniqueCardsCount}'),
                   ),
                   ListTile(
                     leading: const Icon(Icons.copy),
-                    title: const Text('Fizyczne karty'),
+                    title: Text(l10n.profilePhysicalCards),
                     trailing: Text('${user.stats.totalPhysicalCards}'),
                   ),
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.edit),
-                    title: Text(_editing ? 'Zapisz nazwę' : 'Edytuj nazwę'),
+                    title: Text(_editing ? l10n.profileSaveName : l10n.profileEditName),
                     onTap: () {
                       if (_editing) {
                         _saveUsername();
@@ -133,12 +153,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   ListTile(
                     leading: const Icon(Icons.logout),
-                    title: const Text('Wyloguj'),
+                    title: Text(l10n.profileLogout),
                     onTap: () => auth.logout(),
                   ),
                   ListTile(
                     leading: const Icon(Icons.delete_forever, color: Colors.red),
-                    title: const Text('Usuń konto'),
+                    title: Text(l10n.profileDeleteAccount),
                     onTap: _deleteAccount,
                   ),
                   ],

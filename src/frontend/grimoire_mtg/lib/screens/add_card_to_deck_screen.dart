@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/l10n_ext.dart';
 import '../models/card.dart';
 import '../models/collection.dart';
 import '../services/auth_service.dart';
@@ -71,7 +72,7 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
     } catch (_) {
       if (mounted) {
         setState(() {
-          _collectionError = 'Nie udało się wczytać kolekcji';
+          _collectionError = context.l10n.errorLoadCollection;
           _loadingCollection = false;
         });
       }
@@ -104,6 +105,7 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
   }
 
   Widget _buildCollectionTab() {
+    final l10n = context.l10n;
     if (_loadingCollection && _entries.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -112,11 +114,11 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
     }
 
     if (_entries.isEmpty && !_apiFilters.hasActiveFilters) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            'Kolekcja jest pusta.\nUżyj zakładki Szukaj, aby dodać karty spoza kolekcji.',
+            l10n.addCardToDeckEmptyCollection,
             textAlign: TextAlign.center,
           ),
         ),
@@ -140,10 +142,10 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
               Expanded(
                 child: TextField(
                   controller: _nameFilterController,
-                  decoration: const InputDecoration(
-                    hintText: 'Szukaj po nazwie...',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    hintText: l10n.addCardToDeckSearchHint,
+                    prefixIcon: const Icon(Icons.search),
+                    border: const OutlineInputBorder(),
                     isDense: true,
                   ),
                 ),
@@ -151,7 +153,7 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
               const SizedBox(width: 8),
               IconButton.filledTonal(
                 onPressed: _showFilters,
-                tooltip: 'Filtry kolekcji',
+                tooltip: l10n.addCardToDeckFilters,
                 icon: Badge(
                   isLabelVisible: _apiFilters.hasActiveFilters,
                   child: const Icon(Icons.tune),
@@ -166,7 +168,7 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
             child: Align(
               alignment: Alignment.centerLeft,
               child: InputChip(
-                label: Text(_apiFilters.summary, overflow: TextOverflow.ellipsis),
+                label: Text(_apiFilters.summary(l10n), overflow: TextOverflow.ellipsis),
                 onDeleted: () {
                   setState(() => _apiFilters = CollectionFilters());
                   _loadCollection();
@@ -180,8 +182,8 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
               ? Center(
                   child: Text(
                     _apiFilters.hasActiveFilters || nameFilter.isNotEmpty
-                        ? 'Brak kart pasujących do filtrów'
-                        : 'Kolekcja jest pusta',
+                        ? l10n.addCardToDeckNoFilterMatch
+                        : l10n.collectionEmpty,
                   ),
                 )
               : ContentWidth(
@@ -210,14 +212,15 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dodaj kartę do talii'),
+        title: Text(l10n.addCardToDeckTitle),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Kolekcja', icon: Icon(Icons.grid_view)),
-            Tab(text: 'Szukaj', icon: Icon(Icons.search)),
+          tabs: [
+            Tab(text: l10n.addCardToDeckTabCollection, icon: const Icon(Icons.grid_view)),
+            Tab(text: l10n.addCardToDeckTabSearch, icon: const Icon(Icons.search)),
           ],
         ),
       ),
@@ -227,7 +230,7 @@ class _AddCardToDeckScreenState extends State<AddCardToDeckScreen>
           _buildCollectionTab(),
           CardSearchBody(
             onCardTap: (card) => _onCardSelected(card),
-            emptyHint: 'Wpisz co najmniej 2 znaki, aby szukać w Scryfall',
+            emptyHint: l10n.cardSearchMinChars,
           ),
         ],
       ),

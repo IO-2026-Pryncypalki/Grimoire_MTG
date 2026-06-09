@@ -12,10 +12,16 @@ import '../api/api_exception.dart';
 import '../api/grimoire_api.dart';
 import '../api/http_client_factory.dart';
 import '../config/env.dart';
+import '../l10n/app_localizations.dart';
 import '../models/user.dart';
 import '../storage/session_token_storage.dart';
+import 'locale_service.dart';
 
 class AuthService extends ChangeNotifier {
+  AuthService({required LocaleService localeService})
+      : _localeService = localeService;
+
+  final LocaleService _localeService;
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
 
@@ -57,6 +63,7 @@ class AuthService extends ChangeNotifier {
       saveTokens: _saveTokens,
       clearTokens: clearTokens,
       refreshSession: _refreshSession,
+      getLocale: () => _localeService.locale,
       useBearerAuth: true,
     );
     _api = GrimoireApi(_client);
@@ -160,7 +167,7 @@ class AuthService extends ChangeNotifier {
     if (error is ApiException) {
       _error = error.message;
     } else {
-      _error = 'Brak połączenia z serwerem. Sprawdź sieć i spróbuj ponownie.';
+      _error = lookupAppLocalizations(_localeService.locale).errorNoConnection;
     }
   }
 
@@ -235,7 +242,10 @@ class AuthService extends ChangeNotifier {
       final refresh = callbackUri.queryParameters['refreshToken'];
 
       if (access == null || refresh == null) {
-        throw ApiException(401, 'Brak tokenów po logowaniu.');
+        throw ApiException(
+          401,
+          lookupAppLocalizations(_localeService.locale).errorNoLoginTokens,
+        );
       }
 
       await _saveTokens(access, refresh);

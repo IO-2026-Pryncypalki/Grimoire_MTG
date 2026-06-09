@@ -1,7 +1,6 @@
 import Card from '../collection/Card';
 import { mapScryfallJsonToCard } from './scryfallCardMapper';
-
-const SCRYFALL_BASE = 'https://api.scryfall.com';
+import { scryfallFetch, SCRYFALL_BASE } from './scryfallHttp';
 const RATE_LIMIT_MS = 100;
 let lastRequestTime = 0;
 
@@ -33,7 +32,9 @@ function escapeScryfallQuotedName(name: string): string {
 
 /** True when the user likely types a plain card name (not Scryfall syntax). */
 export function hasScryfallSearchSyntax(query: string): boolean {
-    return /[:!"']/.test(query);
+    // Detect colon-based filters (c:R, t:creature), quoted strings, and
+    // equals-based filters (c=WU, cmc=3) used by structured search UI.
+    return /[:!"'=]/.test(query);
 }
 
 export function buildScryfallSearchQuery(query: string): string {
@@ -57,7 +58,7 @@ export async function fetchAutocompleteNames(query: string): Promise<string[]> {
 
     const url = `${SCRYFALL_BASE}/cards/autocomplete?q=${encodeURIComponent(query)}`;
     await waitForRateLimit();
-    const response = await fetch(url);
+    const response = await scryfallFetch(url);
 
     if (response.status === 429) {
         throw new Error('Scryfall Rate Limit Exceeded');
@@ -78,7 +79,7 @@ export async function searchScryfallCards(
         `${SCRYFALL_BASE}/cards/search?q=${encodeURIComponent(q)}&unique=prints&order=name`;
 
     await waitForRateLimit();
-    const response = await fetch(searchUrl);
+    const response = await scryfallFetch(searchUrl);
 
     if (response.status === 429) {
         throw new Error('Scryfall Rate Limit Exceeded');

@@ -102,20 +102,32 @@ async function rotateRefreshToken(
     }
 }
 
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', (req: Request, res: Response, next) => {
+    console.log('[auth] /google -> initiating web OAuth flow');
+    passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 
-router.get(
-    '/google/mobile',
-    passport.authenticate('google', { scope: ['profile', 'email'], state: MOBILE_OAUTH_STATE }),
-);
+router.get('/google/mobile', (req: Request, res: Response, next) => {
+    console.log('[auth] /google/mobile -> initiating mobile OAuth flow');
+    passport.authenticate('google', { scope: ['profile', 'email'], state: MOBILE_OAUTH_STATE })(req, res, next);
+});
 
 router.get(
     '/google/callback',
-    passport.authenticate('google', { session: false }),
+    (req: Request, res: Response, next) => {
+        console.log('[auth] /google/callback hit');
+        console.log('[auth]   query.state  :', req.query.state);
+        console.log('[auth]   query.code   :', req.query.code ? '<present>' : '<missing>');
+        console.log('[auth]   query.error  :', req.query.error ?? 'none');
+        console.log('[auth]   user-agent   :', req.headers['user-agent']);
+        passport.authenticate('google', { session: false })(req, res, next);
+    },
     async (req: Request, res: Response) => {
         try {
             const user = req.user as { id?: string } | undefined;
+            console.log('[auth]   passport user id:', user?.id ?? 'MISSING');
             if (!user?.id) {
+                console.warn('[auth]   Authentication failed - no user id after passport');
                 return res.status(401).json({ message: 'Authentication failed' });
             }
 
@@ -123,15 +135,37 @@ router.get(
             const { accessToken, refreshToken } = await createSessionAndTokens(user.id, userAgent);
 
             const isMobileFlow = req.query.state === MOBILE_OAUTH_STATE;
+            console.log(`[auth]   isMobileFlow: ${isMobileFlow} (state="${req.query.state}", expected="${MOBILE_OAUTH_STATE}")`);
 
             if (isMobileFlow) {
                 const redirectUrl = `${MOBILE_SCHEME}://auth?accessToken=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}`;
-                return res.status(302).redirect(redirectUrl);
+                console.log('[auth]   -> serving mobile redirect page for scheme:', redirectUrl.replace(/accessToken=[^&]+/, 'accessToken=<token>').replace(/refreshToken=[^&]+/, 'refreshToken=<token>'));
+                return res.status(200).send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+  <title>Returning to app…</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; min-height: 100vh;
+           margin: 0; background: #1a1a2e; color: #e0e0e0; }
+    a { color: #a78bfa; font-size: 1.1rem; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <p>Returning to Grimoire…</p>
+  <a href="${redirectUrl}">Tap here if not redirected automatically</a>
+  <script>window.location.replace(${JSON.stringify(redirectUrl)});</script>
+</body>
+</html>`);
             }
 
+            console.log('[auth]   -> redirecting to web frontend');
             setAuthCookies(res, accessToken, refreshToken);
             return res.status(302).redirect(webFrontendRedirectWithTokens(accessToken, refreshToken));
         } catch (error) {
+            console.error('[auth]   ERROR during callback:', error);
             return res.status(500).json({ message: 'An error occurred during authentication', error });
         }
     },

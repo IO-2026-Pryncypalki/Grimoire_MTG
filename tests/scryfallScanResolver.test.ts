@@ -1,4 +1,5 @@
 import ScryfallScanResolver from '../src/backend/scanner/ScryfallScanResolver';
+import { CardSymSpell } from '../src/backend/scanner/symspell';
 
 const scryfallCard = (overrides: Record<string, unknown> = {}) => ({
   id: 'abc-123',
@@ -87,6 +88,57 @@ describe('ScryfallScanResolver', () => {
     expect(result.cards).toHaveLength(2);
   });
 
+  test('krok 2a: symspell name+set used directly (no prior OCR-name search)', async () => {
+    const symspell = await CardSymSpell.fromNames(['Lightning Bolt']);
+    resolver = new ScryfallScanResolver(0, symspell);
+
+    fetchMock
+      .mockResolvedValueOnce(mockJsonResponse(404, {}))
+      .mockResolvedValueOnce(
+        mockJsonResponse(200, {
+          total_cards: 1,
+          data: [scryfallCard()],
+        }),
+      );
+
+    const result = await resolver.resolve({
+      name: 'Lightnng Bolt',
+      set: 'TSR',
+      collectorNumber: '999',
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toContain('lightning%20bolt');
+    expect(fetchMock.mock.calls[1][0]).toContain('e%3Atsr');
+    expect(result.total).toBe(1);
+  });
+
+  test('krok 1: set+collector skipped when result name differs from symspelled name', async () => {
+    const symspell = await CardSymSpell.fromNames(['Lightning Bolt']);
+    resolver = new ScryfallScanResolver(0, symspell);
+
+    fetchMock
+      .mockResolvedValueOnce(mockJsonResponse(200, scryfallCard({ name: 'Lava Spike' })))
+      .mockResolvedValueOnce(
+        mockJsonResponse(200, {
+          total_cards: 1,
+          data: [scryfallCard()],
+        }),
+      );
+
+    const result = await resolver.resolve({
+      name: 'Lightnng Bolt',
+      set: 'TSR',
+      collectorNumber: '333',
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toContain('lightning%20bolt');
+    expect(fetchMock.mock.calls[1][0]).toContain('e%3Atsr');
+    expect(result.total).toBe(1);
+    expect(result.cards[0].getName()).toBe('Lightning Bolt');
+  });
+
   test('krok 2 fallback: fuzzy name+set gdy exact search zwraca 404', async () => {
     fetchMock
       .mockResolvedValueOnce(mockJsonResponse(404, {}))
@@ -122,6 +174,24 @@ describe('ScryfallScanResolver', () => {
     expect(fetchMock.mock.calls[0][0]).toContain('/cards/search?q=');
     expect(result.total).toBe(3);
     expect(result.cards).toHaveLength(3);
+  });
+
+  test('krok 3a: symspell name used directly (no prior OCR-name search)', async () => {
+    const symspell = await CardSymSpell.fromNames(['Lightning Bolt']);
+    resolver = new ScryfallScanResolver(0, symspell);
+
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse(200, {
+        total_cards: 1,
+        data: [scryfallCard()],
+      }),
+    );
+
+    const result = await resolver.resolve({ name: 'Lightnng Bolt' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toContain('lightning%20bolt');
+    expect(result.total).toBe(1);
   });
 
   test('krok 3 fallback: fuzzy name gdy exact search pusty', async () => {

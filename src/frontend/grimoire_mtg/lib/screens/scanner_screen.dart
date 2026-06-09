@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/l10n_ext.dart';
 import '../navigation/route_observer.dart';
 import '../scanner/text_scanner.dart';
 import '../services/auth_service.dart';
@@ -74,10 +75,15 @@ class _ScannerScreenState extends State<ScannerScreen>
   Future<void> _startCamera() async {
     if (_controller != null || _startingCamera || !mounted) return;
 
+    debugPrint('[scanner] _startCamera: starting');
     _startingCamera = true;
     try {
       final cameras = await availableCameras();
-      if (!mounted || cameras.isEmpty) return;
+      debugPrint('[scanner] _startCamera: found ${cameras.length} camera(s)');
+      if (!mounted || cameras.isEmpty) {
+        debugPrint('[scanner] _startCamera: no cameras or unmounted, aborting');
+        return;
+      }
 
       final controller = CameraController(
         cameras.first,
@@ -89,13 +95,16 @@ class _ScannerScreenState extends State<ScannerScreen>
       await _initializeControllerFuture;
 
       if (!mounted) {
+        debugPrint('[scanner] _startCamera: unmounted after init, disposing controller');
         await controller.dispose();
         return;
       }
 
       _controller = controller;
+      debugPrint('[scanner] _startCamera: camera ready');
       setState(() {});
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('[scanner] _startCamera ERROR: $e\n$st');
       if (mounted) setState(() {});
     } finally {
       _startingCamera = false;
@@ -103,6 +112,7 @@ class _ScannerScreenState extends State<ScannerScreen>
   }
 
   Future<void> _stopCamera() async {
+    debugPrint('[scanner] _stopCamera');
     _startingCamera = false;
     final controller = _controller;
     _controller = null;
@@ -114,29 +124,47 @@ class _ScannerScreenState extends State<ScannerScreen>
   }
 
   Future<void> _takePicture() async {
-    if (_processing || _controller == null) return;
+    if (_processing || _controller == null) {
+      debugPrint('[scanner] _takePicture: skipped (processing=$_processing, controller=${_controller == null ? "null" : "ok"})');
+      return;
+    }
 
+    debugPrint('[scanner] _takePicture: start');
     setState(() => _processing = true);
 
     try {
       await _initializeControllerFuture;
+      debugPrint('[scanner] _takePicture: taking picture');
       final image = await _controller!.takePicture();
+      debugPrint('[scanner] _takePicture: picture saved to ${image.path}');
       await _stopCamera();
 
+      debugPrint('[scanner] _takePicture: running OCR');
       final plaintext = await _scanner.scanText(image.path);
+      debugPrint('[scanner] --- OCR plaintext ---\n$plaintext');
 
       if (!mounted) return;
 
       if (plaintext.trim().isEmpty) {
+        debugPrint('[scanner] _takePicture: OCR returned empty text');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nie wykryto tekstu na karcie')),
+          SnackBar(content: Text(context.l10n.scanNoText)),
         );
         await _startCamera();
         return;
       }
 
+      debugPrint('[scanner] _takePicture: calling API scanCard');
       final scanResult =
           await context.read<AuthService>().api.scanCard(plaintext);
+      final parsed = scanResult.parsed;
+      debugPrint(
+        '[scanner] --- Parsed card ---\n'
+        'resolution: ${scanResult.resolution}\n'
+        'name: ${parsed?['name']}\n'
+        'set: ${parsed?['set']}\n'
+        'collectorNumber: ${parsed?['collectorNumber']}',
+      );
 
       if (!mounted) return;
 
@@ -151,16 +179,18 @@ class _ScannerScreenState extends State<ScannerScreen>
         await _startCamera();
       }
     } on ApiException catch (e) {
+      debugPrint('[scanner] _takePicture ApiException: ${e.statusCode} ${e.message}');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(e.message)),
         );
         await _startCamera();
       }
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[scanner] _takePicture ERROR: $e\n$st');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Błąd skanowania: $e')),
+          SnackBar(content: Text(context.l10n.scanError(e.toString()))),
         );
         await _startCamera();
       }

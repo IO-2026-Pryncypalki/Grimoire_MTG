@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/l10n_ext.dart';
 import '../services/auth_service.dart';
-import '../state/deck_store.dart';
 import '../utils/sync_after_mutation.dart';
 import '../widgets/content_width.dart';
 import '../widgets/deck_format_dropdown.dart';
@@ -54,9 +54,11 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nowa Talia'),
+        title: Text(l10n.deckNew),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
@@ -66,7 +68,7 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('ZAPISZ'),
+                : Text(l10n.deckSave),
           ),
         ],
       ),
@@ -78,9 +80,9 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
             children: [
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nazwa talii',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.deckName,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -91,9 +93,9 @@ class _CreateDeckScreenState extends State<CreateDeckScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _descController,
-              decoration: const InputDecoration(
-                labelText: 'Opis (opcjonalnie)',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.deckDescription,
+                border: const OutlineInputBorder(),
               ),
               maxLines: 2,
             ),

@@ -63,6 +63,7 @@ export interface CollectionEntryOption {
 export interface AssignCollectionEntryInput {
     collectionEntryId: string;
     quantity: number;
+    preferredSourceDeckId?: string;
 }
 
 export interface AssignDeckByNameSummary {
@@ -152,6 +153,7 @@ const ensureEntryCapacity = async (
     assignedOnEntry: number,
     assignedOnThisSlot: number,
     newQtyOnSlot: number,
+    preferDeckId?: string,
 ): Promise<void> => {
     const totalAfter = assignedOnEntry - assignedOnThisSlot + newQtyOnSlot;
     const overflow = totalAfter - entryQuantity;
@@ -164,6 +166,7 @@ const ensureEntryCapacity = async (
         collectionEntryId,
         overflow,
         deckCardId,
+        preferDeckId,
     );
 
     if (reclaimed < overflow) {
@@ -305,6 +308,7 @@ export const assignCollectionEntry = async (
             ctx.assignedOnEntry,
             ctx.existingOnSlotQty,
             newQty,
+            input.preferredSourceDeckId,
         );
         const assignedTotals = await getAssignedTotalsByCollectionEntry(userId);
         const assignedOnEntry = assignedTotals.get(input.collectionEntryId) ?? 0;
@@ -327,6 +331,7 @@ export const assignCollectionEntry = async (
             ctx.assignedOnEntry,
             0,
             input.quantity,
+            input.preferredSourceDeckId,
         );
         const assignedTotals = await getAssignedTotalsByCollectionEntry(userId);
         const assignedOnEntry = assignedTotals.get(input.collectionEntryId) ?? 0;

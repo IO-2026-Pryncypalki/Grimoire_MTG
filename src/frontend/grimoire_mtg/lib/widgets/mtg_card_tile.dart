@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../models/card.dart';
+import '../utils/card_printing_line.dart';
 import '../utils/scryfall_image_url.dart';
 import 'mtg_network_card_image.dart';
 
@@ -23,9 +25,12 @@ class MtgCardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context).toLanguageTag();
     final price = card.price;
     final priceText =
-        price != null ? NumberFormat.simpleCurrency().format(price) : null;
+        price != null ? NumberFormat.simpleCurrency(locale: locale).format(price) : null;
+    final printingLine = subtitle ?? formatCardPrintingLine(card);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -55,21 +60,14 @@ class MtgCardTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    card.name ?? 'Unknown',
+                    card.name ?? l10n.cardDefaultName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
-                  if (subtitle != null)
+                  if (printingLine != null)
                     Text(
-                      subtitle!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    )
-                  else if (card.setCode != null)
-                    Text(
-                      card.setCode!,
+                      printingLine,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_ext.dart';
+
 class ApiErrorView extends StatelessWidget {
   const ApiErrorView({
     super.key,
@@ -26,7 +28,7 @@ class ApiErrorView extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Spróbuj ponownie'),
+                label: Text(context.l10n.commonRetry),
               ),
             ],
           ],

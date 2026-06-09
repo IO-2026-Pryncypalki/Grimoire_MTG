@@ -2,10 +2,12 @@ import { Request, Response, Router } from 'express';
 import requireJwt from '../middlewares/requireJwt';
 import * as DeckService from '../services/DeckService';
 import * as AssignmentService from '../services/DeckCardAssignmentService';
+import { importDeckFromList, type ImportDeckListMode } from '../services/DeckListImportService';
+import { exportDeckToList } from '../services/DeckListExportService';
+import { getCardAvailabilityByScryfallId } from '../services/deckCardAvailability';
+import ScryfallScanResolver from '../scanner/ScryfallScanResolver';
 import { type DeckBoard, type DeckFormat } from '../repositories/DeckRepository';
 import { publishSyncForUser } from '../services/syncPublish';
-
-const router = Router();
 
 const ALLOWED_FORMATS: DeckFormat[] = [
     'Standard',
@@ -40,6 +42,7 @@ const ASSIGNMENT_ERROR_MESSAGES = new Set([
     'Deck card has no name',
     'Exceeds deck slot quantity',
     'Exceeds collection entry quantity',
+    'Exceeds owned collection quantity',
     'Cannot reduce deck card below assigned quantity',
     'Assignment not found',
     'Deck card not found',
@@ -210,8 +213,8 @@ const validateAddCardBody = (body: Record<string, unknown>): AddCardBodyValidati
 
 const validateAssignmentBody = (
     body: Record<string, unknown>,
-): { collectionEntryId: string; quantity: number } | { ok: false; message: string } => {
-    const { collectionEntryId, quantity } = body;
+): { collectionEntryId: string; quantity: number; preferredSourceDeckId?: string } | { ok: false; message: string } => {
+    const { collectionEntryId, quantity, preferredSourceDeckId } = body;
     if (typeof collectionEntryId !== 'string' || collectionEntryId.trim().length === 0) {
         return { ok: false, message: 'collectionEntryId is required' };
     }
@@ -219,8 +222,33 @@ const validateAssignmentBody = (
     if (typeof parsedQuantity !== 'number') {
         return parsedQuantity;
     }
-    return { collectionEntryId: collectionEntryId.trim(), quantity: parsedQuantity };
+    const preferred =
+        typeof preferredSourceDeckId === 'string' && preferredSourceDeckId.trim().length > 0
+            ? preferredSourceDeckId.trim()
+            : undefined;
+    return { collectionEntryId: collectionEntryId.trim(), quantity: parsedQuantity, preferredSourceDeckId: preferred };
 };
+
+type ImportListBodyValidation =
+    | { ok: false; message: string }
+    | { text: string; mode: ImportDeckListMode };
+
+const validateImportListBody = (body: Record<string, unknown>): ImportListBodyValidation => {
+    const { text, mode } = body;
+
+    if (typeof text !== 'string' || text.trim().length === 0) {
+        return { ok: false, message: 'text is required' };
+    }
+
+    if (mode !== 'merge' && mode !== 'replace') {
+        return { ok: false, message: 'mode must be merge or replace' };
+    }
+
+    return { text, mode };
+};
+
+export function createDeckRoute(resolver: ScryfallScanResolver): Router {
+const router = Router();
 
 // GET /api/decks
 router.get('/', requireJwt, async (req: Request, res: Response) => {
@@ -258,6 +286,27 @@ router.post('/', requireJwt, async (req: Request, res: Response) => {
         });
     } catch (error) {
         return mapDeckServiceError(error, res, 'Failed to create deck');
+    }
+});
+
+// GET /api/decks/card-availability?scryfallId=...
+router.get('/card-availability', requireJwt, async (req: Request, res: Response) => {
+    try {
+        const user = req.user as { id: string };
+        const scryfallId = req.query.scryfallId;
+
+        if (typeof scryfallId !== 'string' || scryfallId.trim().length === 0) {
+            return res.status(400).json({ message: 'scryfallId is required' });
+        }
+
+        const availability = await getCardAvailabilityByScryfallId(user.id, scryfallId.trim());
+        if (!availability) {
+            return res.status(404).json({ message: 'Card not found' });
+        }
+
+        return res.status(200).json(availability);
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to load card availability', error });
     }
 });
 
@@ -307,6 +356,46 @@ router.post(
         }
     },
 );
+
+// POST /api/decks/:id/import-list
+router.post('/:id/import-list', requireJwt, async (req: Request, res: Response) => {
+    try {
+        const user = req.user as any;
+        const validation = validateImportListBody(req.body);
+
+        if ('ok' in validation) {
+            return res.status(400).json({ message: validation.message });
+        }
+
+        const result = await importDeckFromList(
+            user.id,
+            req.params.id,
+            validation,
+            resolver,
+        );
+
+        publishSyncForUser(user.id);
+
+        return res.status(200).json({
+            message: 'Deck list imported',
+            result,
+        });
+    } catch (error) {
+        return mapDeckServiceError(error, res, 'Failed to import deck list');
+    }
+});
+
+// GET /api/decks/:id/export-list
+router.get('/:id/export-list', requireJwt, async (req: Request, res: Response) => {
+    try {
+        const user = req.user as any;
+        const text = await exportDeckToList(user.id, req.params.id);
+
+        return res.status(200).json({ text });
+    } catch (error) {
+        return mapDeckServiceError(error, res, 'Failed to export deck list');
+    }
+});
 
 // GET /api/decks/:id/cards/:deckCardId/collection-options
 router.get(
@@ -502,4 +591,5 @@ router.delete('/:id', requireJwt, async (req: Request, res: Response) => {
     }
 });
 
-export default router;
+return router;
+}

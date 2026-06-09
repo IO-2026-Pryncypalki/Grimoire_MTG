@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 enum DeckViewMode {
   list,
   grid,
@@ -7,10 +9,10 @@ enum DeckViewMode {
 }
 
 extension DeckViewModeX on DeckViewMode {
-  String get label => switch (this) {
-        DeckViewMode.list => 'Lista',
-        DeckViewMode.grid => 'Siatka',
-        DeckViewMode.stack => 'Stos',
+  String label(AppLocalizations l10n) => switch (this) {
+        DeckViewMode.list => l10n.deckViewList,
+        DeckViewMode.grid => l10n.deckViewGrid,
+        DeckViewMode.stack => l10n.deckViewStack,
       };
 
   IconData get icon => switch (this) {

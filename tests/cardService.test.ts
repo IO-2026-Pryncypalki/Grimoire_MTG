@@ -18,6 +18,15 @@ import { ensureCardInDb, getCardDetails, searchCards } from '../src/backend/serv
 
 const CARD_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
+const expectScryfallFetch = (fetchMock: jest.Mock, url: string) => {
+    expect(fetchMock).toHaveBeenCalledWith(url, {
+        headers: {
+            Accept: 'application/json',
+            'User-Agent': 'GrimoireMTG/1.0 contact:github.com/grimoire-mtg',
+        },
+    });
+};
+
 const scryfallPayload = {
     id: CARD_ID,
     name: 'Lightning Bolt',
@@ -111,9 +120,7 @@ describe('ensureCardInDb', () => {
         const result = await ensureCardInDb(CARD_ID);
 
         expect(result).toBe(existing);
-        expect(fetchMock).toHaveBeenCalledWith(
-            `https://api.scryfall.com/cards/${CARD_ID}`,
-        );
+        expectScryfallFetch(fetchMock, `https://api.scryfall.com/cards/${CARD_ID}`);
         expect(upsertCardLegalities).toHaveBeenCalledWith(
             expect.arrayContaining([
                 expect.objectContaining({ scryfallId: CARD_ID, format: 'Modern', status: 'legal' }),
@@ -135,9 +142,7 @@ describe('ensureCardInDb', () => {
 
         const result = await ensureCardInDb(CARD_ID);
 
-        expect(fetchMock).toHaveBeenCalledWith(
-            `https://api.scryfall.com/cards/${CARD_ID}`,
-        );
+        expectScryfallFetch(fetchMock, `https://api.scryfall.com/cards/${CARD_ID}`);
         expect(CardModel.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 scryfallId: CARD_ID,
@@ -281,16 +286,25 @@ describe('getCardDetails', () => {
         });
     });
 
-    test('odświeża kartę ze Scryfall i zapisuje do bazy', async () => {
+    test('zwraca kartę z bazy gdy już istnieje', async () => {
         (CardModel.findByPk as jest.Mock).mockResolvedValue(dbCardModel());
 
         const card = await getCardDetails(CARD_ID);
 
         expect(card.getName()).toBe('Lightning Bolt');
         expect(card.getOracleText()).toBe('Lightning Bolt deals 3 damage to any target.');
-        expect(fetchMock).toHaveBeenCalledWith(
-            `https://api.scryfall.com/cards/${CARD_ID}`,
-        );
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(CardModel.upsert).not.toHaveBeenCalled();
+    });
+
+    test('pobiera ze Scryfall i zapisuje gdy karta nie jest w bazie', async () => {
+        (CardModel.findByPk as jest.Mock).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+
+        const card = await getCardDetails(CARD_ID);
+
+        expect(card.getScryfallId()).toBe(CARD_ID);
+        expect(card.getTypeLine()).toBe('Instant');
+        expectScryfallFetch(fetchMock, `https://api.scryfall.com/cards/${CARD_ID}`);
         expect(CardModel.upsert).toHaveBeenCalledWith(
             expect.objectContaining({
                 scryfallId: CARD_ID,
@@ -299,15 +313,5 @@ describe('getCardDetails', () => {
             }),
         );
         expect(upsertCardLegalities).toHaveBeenCalled();
-    });
-
-    test('zwraca domenę ze Scryfall gdy upsert nie ma wiersza w bazie', async () => {
-        (CardModel.findByPk as jest.Mock).mockResolvedValue(null);
-
-        const card = await getCardDetails(CARD_ID);
-
-        expect(card.getScryfallId()).toBe(CARD_ID);
-        expect(card.getTypeLine()).toBe('Instant');
-        expect(CardModel.upsert).toHaveBeenCalled();
     });
 });

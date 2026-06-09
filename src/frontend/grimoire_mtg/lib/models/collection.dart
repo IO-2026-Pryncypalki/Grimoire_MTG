@@ -70,6 +70,25 @@ class CollectionResponse {
       );
 }
 
+class CollectionEntryAssignmentDto {
+  CollectionEntryAssignmentDto({
+    required this.deckId,
+    required this.deckName,
+    required this.quantity,
+  });
+
+  final String deckId;
+  final String deckName;
+  final int quantity;
+
+  factory CollectionEntryAssignmentDto.fromJson(Map<String, dynamic> json) =>
+      CollectionEntryAssignmentDto(
+        deckId: json['deckId'] as String,
+        deckName: json['deckName'] as String,
+        quantity: readInt(json['quantity'], defaultValue: 0),
+      );
+}
+
 class CollectionFilters {
   CollectionFilters({this.color, this.type, this.edition, this.cmc});
 

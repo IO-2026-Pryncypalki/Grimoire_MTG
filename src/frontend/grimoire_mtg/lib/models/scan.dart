@@ -10,14 +10,14 @@ class ScanResponse {
 
   final String resolution;
   final Map<String, dynamic>? parsed;
-  final List<CardDto> cards;
+  final List<CardDetailDto> cards;
   final int total;
 
   factory ScanResponse.fromJson(Map<String, dynamic> json) => ScanResponse(
         resolution: json['resolution'] as String,
         parsed: json['parsed'] as Map<String, dynamic>?,
         cards: (json['cards'] as List<dynamic>?)
-                ?.map((e) => CardDto.fromJson(e as Map<String, dynamic>))
+                ?.map((e) => CardDetailDto.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
         total: json['total'] as int? ?? 0,

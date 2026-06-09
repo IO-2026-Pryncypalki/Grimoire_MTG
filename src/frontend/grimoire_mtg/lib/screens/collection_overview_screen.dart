@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../services/auth_service.dart';
 import '../state/collection_store.dart';
 import '../utils/card_grid.dart';
@@ -48,7 +49,10 @@ class _CollectionOverviewScreenState extends State<CollectionOverviewScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Zaktualizowano ${result['updatedCards']}/${result['totalCards']} kart',
+              context.l10n.cardsUpdated(
+                result['updatedCards'] as int,
+                result['totalCards'] as int,
+              ),
             ),
           ),
         );
@@ -65,10 +69,12 @@ class _CollectionOverviewScreenState extends State<CollectionOverviewScreen> {
   Widget build(BuildContext context) {
     final store = context.watch<CollectionStore>();
     final data = store.data;
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context).toString();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Moja Kolekcja'),
+        title: Text(l10n.collectionTitle),
         actions: [
           if (store.refreshing)
             const Padding(
@@ -86,7 +92,7 @@ class _CollectionOverviewScreenState extends State<CollectionOverviewScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => _refreshPrices(store),
-            tooltip: 'Odśwież ceny',
+            tooltip: l10n.collectionRefreshPrices,
           ),
           IconButton(
             icon: const Icon(Icons.search),
@@ -112,14 +118,18 @@ class _CollectionOverviewScreenState extends State<CollectionOverviewScreen> {
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Text(
-                              'Wartość: ${NumberFormat.simpleCurrency().format(data?.totalValue ?? 0)} • ${data?.entries.length ?? 0} wpisów',
+                              l10n.collectionValueSummary(
+                                NumberFormat.simpleCurrency(locale: locale)
+                                    .format(data?.totalValue ?? 0),
+                                data?.entries.length ?? 0,
+                              ),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                           ),
                         ),
                         if (data == null || data.entries.isEmpty)
-                          const SliverFillRemaining(
-                            child: Center(child: Text('Kolekcja jest pusta')),
+                          SliverFillRemaining(
+                            child: Center(child: Text(l10n.collectionEmpty)),
                           )
                         else
                           SliverPadding(

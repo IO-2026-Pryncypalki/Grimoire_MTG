@@ -1,0 +1,408 @@
+{
+  "@@locale": "pl",
+  "navSearch": "Szukaj",
+  "navCollection": "Kolekcja",
+  "navDecks": "Talie",
+  "navProfile": "Profil",
+  "navScanner": "Skaner",
+  "commonCancel": "Anuluj",
+  "commonDelete": "Usuń",
+  "commonOK": "OK",
+  "commonSave": "Zapisz",
+  "commonApply": "Zastosuj",
+  "commonClear": "Wyczyść",
+  "commonRetry": "Spróbuj ponownie",
+  "commonReplace": "Zastąp",
+  "commonTransfer": "Przenieś",
+  "commonFill": "Uzupełnij",
+  "commonAdd": "Dodaj",
+  "errorAppStartup": "Błąd uruchomienia aplikacji",
+  "errorSessionExpired": "Sesja wygasła. Zaloguj się ponownie.",
+  "errorServer": "Błąd serwera ({statusCode}).",
+  "@errorServer": {
+    "placeholders": {
+      "statusCode": {"type": "int"}
+    }
+  },
+  "errorScryfallRateLimit": "Limit Scryfall — spróbuj za chwilę.",
+  "errorNoConnection": "Brak połączenia z serwerem. Sprawdź sieć i spróbuj ponownie.",
+  "errorLoadCollection": "Nie udało się wczytać kolekcji",
+  "errorLoadDecks": "Nie udało się wczytać talii",
+  "errorNoLoginTokens": "Brak tokenów po logowaniu.",
+  "loginTagline": "Zarządzaj kolekcją i taliami Magic",
+  "loginGoogle": "Zaloguj przez Google",
+  "profileTitle": "Profil Użytkownika",
+  "profileUsername": "Nazwa użytkownika",
+  "profileJoined": "Dołączono: {date}",
+  "@profileJoined": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "profileDecks": "Talie",
+  "profileUniqueCards": "Unikalne karty",
+  "profilePhysicalCards": "Fizyczne karty",
+  "profileEditName": "Edytuj nazwę",
+  "profileSaveName": "Zapisz nazwę",
+  "profileLogout": "Wyloguj",
+  "profileDeleteAccount": "Usuń konto",
+  "profileUpdated": "Profil zaktualizowany",
+  "profileDeleteConfirm": "Usunąć konto?",
+  "profileDeleteConfirmBody": "Tej operacji nie można cofnąć.",
+  "profileLanguage": "Język",
+  "collectionTitle": "Moja Kolekcja",
+  "collectionEmpty": "Kolekcja jest pusta",
+  "collectionValueSummary": "Wartość: {value} • {count} wpisów",
+  "@collectionValueSummary": {
+    "placeholders": {
+      "value": {"type": "String"},
+      "count": {"type": "int"}
+    }
+  },
+  "collectionRefreshPrices": "Odśwież ceny",
+  "cardsUpdated": "Zaktualizowano {updated}/{total} kart",
+  "@cardsUpdated": {
+    "placeholders": {
+      "updated": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "collectionFiltersTitle": "Filtry kolekcji",
+  "collectionFilterColor": "Kolor (R, U, G, B, W)",
+  "collectionFilterType": "Typ (Creature, Instant, ...)",
+  "collectionFilterEdition": "Edycja / set",
+  "collectionFilterCmc": "CMC",
+  "collectionFilterSummaryColor": "kolor: {value}",
+  "@collectionFilterSummaryColor": {
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "collectionFilterSummaryType": "typ: {value}",
+  "@collectionFilterSummaryType": {
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "collectionFilterSummaryEdition": "edycja: {value}",
+  "@collectionFilterSummaryEdition": {
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "collectionFilterSummaryCmc": "CMC: {value}",
+  "@collectionFilterSummaryCmc": {
+    "placeholders": {"value": {"type": "int"}}
+  },
+  "decksTitle": "Moje Talie",
+  "decksEmpty": "Brak talii — utwórz pierwszą",
+  "decksNewDeck": "Nowa talia",
+  "deckNew": "Nowa Talia",
+  "deckSave": "ZAPISZ",
+  "deckName": "Nazwa talii",
+  "deckDescription": "Opis (opcjonalnie)",
+  "deckDeleteConfirm": "Usunąć talię?",
+  "deckRemoveConfirm": "Usunąć z talii?",
+  "deckRemoveAllCopies": "Usunąć wszystkie {quantity} kopie: {name}?",
+  "@deckRemoveAllCopies": {
+    "placeholders": {
+      "quantity": {"type": "int"},
+      "name": {"type": "String"}
+    }
+  },
+  "deckRemoveCard": "Usunąć kartę: {name}?",
+  "@deckRemoveCard": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deckRemoveFromDeck": "Usuń z talii",
+  "deckCardDetails": "Szczegóły karty",
+  "deckEmptyCards": "Brak kart w talii",
+  "deckValidationTitle": "Walidacja talii",
+  "deckFormatNoIssues": "Format: bez uwag.",
+  "deckFormatIssues": "Format:",
+  "deckAssignmentsAll": "Przypisania: wszystkie kopie z kolekcji.",
+  "deckAssignmentsEmpty": "Przypisania: brak kart w talii.",
+  "deckAssignmentsIssues": "Przypisania:",
+  "deckFillFromCollection": "Uzupełnij z kolekcji?",
+  "deckFillFromCollectionBody": "Przypisać kopie z kolekcji do {unfilled} brakujących slotów (dopasowanie po nazwie karty)?",
+  "@deckFillFromCollectionBody": {
+    "placeholders": {"unfilled": {"type": "int"}}
+  },
+  "deckFillFromCollectionTooltip": "Uzupełnij z kolekcji",
+  "deckExportList": "Eksportuj listę",
+  "deckImportList": "Import z listy",
+  "deckAddCard": "Dodaj kartę",
+  "deckValidate": "Waliduj",
+  "deckExportEmpty": "Talia jest pusta — skopiowano pustą listę",
+  "deckExportCopied": "Skopiowano listę talii do schowka",
+  "deckAssignedSummary": "Przypisano {copies} kopii do {slots} pozycji{skipped}",
+  "@deckAssignedSummary": {
+    "placeholders": {
+      "copies": {"type": "int"},
+      "slots": {"type": "int"},
+      "skipped": {"type": "String"}
+    }
+  },
+  "deckAssignedSkipped": " • {count} bez kopii",
+  "@deckAssignedSkipped": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "deckNoAvailableCopies": "Brak dostępnych kopii — wszystkie są już przypisane w innych taliach",
+  "deckTransferCopies": "Przenieść kopie?",
+  "deckTransferCopiesBody": "Ten wpis ma {count} kopii przypisanych w innej talii.\n\nPrzypisywanie tutaj usunie je stamtąd:\n{sources}",
+  "@deckTransferCopiesBody": {
+    "placeholders": {
+      "count": {"type": "int"},
+      "sources": {"type": "String"}
+    }
+  },
+  "deckTransferSource": "{quantity}× z talii „{deckName}”",
+  "@deckTransferSource": {
+    "placeholders": {
+      "quantity": {"type": "int"},
+      "deckName": {"type": "String"}
+    }
+  },
+  "deckTransferPickSource": "Wybierz talię, z której zabrać kopie:",
+  "deckAssignCopies": "Przypisz kopie",
+  "deckAssignFromCollection": "Przypisz kopie z kolekcji",
+  "deckOptionFree": "Wolne: {available} • do slotu: {assignable} • {version}",
+  "@deckOptionFree": {
+    "placeholders": {
+      "available": {"type": "int"},
+      "assignable": {"type": "int"},
+      "version": {"type": "String"}
+    }
+  },
+  "deckOptionTransfer": "Przenieś do {assignable} • {elsewhere} w innej talii • {version}",
+  "@deckOptionTransfer": {
+    "placeholders": {
+      "assignable": {"type": "int"},
+      "elsewhere": {"type": "int"},
+      "version": {"type": "String"}
+    }
+  },
+  "deckOptionSlot": "Do slotu: {assignable} • {version}",
+  "@deckOptionSlot": {
+    "placeholders": {
+      "assignable": {"type": "int"},
+      "version": {"type": "String"}
+    }
+  },
+  "deckOptionOtherVersion": "{setCode} • inna wersja",
+  "@deckOptionOtherVersion": {
+    "placeholders": {"setCode": {"type": "String"}}
+  },
+  "deckFormatOk": "Format OK",
+  "deckFormatWarnings": "Format: uwagi",
+  "deckFormatValidTooltip": "Talia spełnia wymagania formatu",
+  "deckAssigned": "Przypisane",
+  "deckNotAssigned": "Brak przypisań",
+  "deckAllCopiesAssigned": "Wszystkie kopie przypisane z kolekcji",
+  "deckListAllAssigned": "Wszystkie kopie z kolekcji przypisane",
+  "deckListMissingAssignments": "Brak pełnych przypisań",
+  "deckViewList": "Lista",
+  "deckViewGrid": "Siatka",
+  "deckViewStack": "Stos",
+  "deckViewTooltip": "Widok: {mode}",
+  "@deckViewTooltip": {
+    "placeholders": {"mode": {"type": "String"}}
+  },
+  "deckBoardMain": "Główna",
+  "deckBoardEmpty": "0 kart",
+  "deckBoardSummary": "{positions} poz. • {copies} kopii • {filled}/{copiesTotal} przypisane",
+  "@deckBoardSummary": {
+    "placeholders": {
+      "positions": {"type": "int"},
+      "copies": {"type": "int"},
+      "filled": {"type": "int"},
+      "copiesTotal": {"type": "int"}
+    }
+  },
+  "deckValidatorMainMin60": "Main deck wymaga min. 60 kart (masz {count}).",
+  "@deckValidatorMainMin60": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "deckValidatorCommanderMin100": "Commander wymaga 100 kart (masz {count}).",
+  "@deckValidatorCommanderMin100": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "deckValidatorLegalityWarnings": "{count} kart z ostrzeżeniem legalności.",
+  "@deckValidatorLegalityWarnings": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "deckValidatorUnfilledPositions": "{positions} pozycji w kolekcji bez pełnego przypisania ({copies} kopii).",
+  "@deckValidatorUnfilledPositions": {
+    "placeholders": {
+      "positions": {"type": "int"},
+      "copies": {"type": "int"}
+    }
+  },
+  "deckValidatorNotInCollection": "{count} pozycji bez karty w kolekcji.",
+  "@deckValidatorNotInCollection": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "deckValidatorCopyLimit": "Karta przekracza limit {max} kopii ({max} dozwolone, {actual} w decku).",
+  "@deckValidatorCopyLimit": {
+    "placeholders": {
+      "max": {"type": "int"},
+      "actual": {"type": "int"}
+    }
+  },
+  "cardSearchTitle": "Szukaj kart",
+  "cardSearchHint": "Nazwa karty...",
+  "cardSearchNotFound": "Nie znaleziono kart dla „{query}”",
+  "@cardSearchNotFound": {
+    "placeholders": {"query": {"type": "String"}}
+  },
+  "cardSearchDidYouMean": "Czy chodziło Ci o:",
+  "cardSearchMinChars": "Wpisz co najmniej 2 znaki, aby szukać w Scryfall",
+  "cardSearchMinCharsShort": "Wpisz co najmniej 2 znaki",
+  "cardSearchAutocomplete": "Pokazano wyniki dla podobnych nazw",
+  "cardSearchNoResults": "Nie znaleziono kart dla aktywnych filtrów",
+  "searchFiltersLabel": "Filtry",
+  "searchFiltersActive": "Filtry ({count})",
+  "@searchFiltersActive": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "searchFilterClear": "Wyczyść filtry",
+  "searchFilterColors": "Kolory",
+  "searchFilterType": "Typ",
+  "searchFilterTypeAny": "Dowolny typ",
+  "searchFilterTypeCreature": "Stworzenie",
+  "searchFilterTypeInstant": "Błyskawica",
+  "searchFilterTypeSorcery": "Czary",
+  "searchFilterTypeEnchantment": "Zaczarowanie",
+  "searchFilterTypeArtifact": "Artefakt",
+  "searchFilterTypePlaneswalker": "Płanetowładca",
+  "searchFilterTypeLand": "Ląd",
+  "searchFilterRarity": "Rzadkość",
+  "searchFilterCmc": "CMC",
+  "searchFilterExactColors": "dokładnie",
+  "cardDefaultName": "Karta",
+  "cardPowerToughness": "Siła/Wytrzymałość: {value}",
+  "@cardPowerToughness": {
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "cardRarity": "Rzadkość: {value}",
+  "@cardRarity": {
+    "placeholders": {"value": {"type": "String"}}
+  },
+  "cardColors": "Kolory",
+  "cardColorIdentity": "Tożsamość",
+  "cardOpenScryfall": "Otwórz w Scryfall",
+  "cardAddToCollection": "Dodano do kolekcji",
+  "cardCreateDeckFirst": "Najpierw utwórz talię",
+  "cardAddToDeck": "Dodano do talii",
+  "cardSelectDeck": "Wybierz talię",
+  "cardCollectionButton": "Kolekcja",
+  "cardDeckButton": "Talia",
+  "addToCollectionTitle": "Dodaj do kolekcji",
+  "addToCollectionQuantity": "Ilość:",
+  "addToDeckTitle": "Dodaj do talii",
+  "addToDeckQuantity": "Ilość w talii:",
+  "addToDeckAssignFromCollection": "Przypisz z kolekcji",
+  "addToDeckAvailableCopies": "Dostępne kopie: {count}",
+  "@addToDeckAvailableCopies": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "addToDeckExceedsQuantity": "Przypisane kopie przekraczają ilość w talii",
+  "addToDeckExceedsOwnedQuantity": "Wszystkie posiadane kopie tej karty są już w innych taliach",
+  "addToDeckAvailableToAdd": "Można dodać do talii: {count}",
+  "@addToDeckAvailableToAdd": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "addToDeckAllCopiesInDecks": "Wszystkie {owned} posiadane kopie są już w taliach",
+  "@addToDeckAllCopiesInDecks": {
+    "placeholders": {
+      "owned": { "type": "int" }
+    }
+  },
+  "addToDeckUsedInDeck": "{quantity}× w {deckName}",
+  "@addToDeckUsedInDeck": {
+    "placeholders": {
+      "quantity": { "type": "int" },
+      "deckName": { "type": "String" }
+    }
+  },
+  "deckBoardZone": "Strefa",
+  "deckAssignedCount": "Przypisane: {assigned} / {total}",
+  "@deckAssignedCount": {
+    "placeholders": {
+      "assigned": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "addCardToDeckTitle": "Dodaj kartę do talii",
+  "addCardToDeckTabCollection": "Kolekcja",
+  "addCardToDeckTabSearch": "Szukaj",
+  "addCardToDeckEmptyCollection": "Kolekcja jest pusta.\nUżyj zakładki Szukaj, aby dodać karty spoza kolekcji.",
+  "addCardToDeckSearchHint": "Szukaj po nazwie...",
+  "addCardToDeckFilters": "Filtry kolekcji",
+  "addCardToDeckNoFilterMatch": "Brak kart pasujących do filtrów",
+  "collectionEntryDeleteConfirm": "Usunąć wpis?",
+  "collectionEntryDelete": "Usuń wpis",
+  "collectionEntryChangeCondition": "Zmień stan",
+  "collectionEntryQuantityToMove": "Ilość do przeniesienia:",
+  "collectionEntrySaveNotes": "Zapisz notatki",
+  "collectionYourCollection": "Twoja kolekcja",
+  "collectionConditionChanged": "Zmieniono stan",
+  "collectionNotes": "Notatki",
+  "collectionEntryDeckUsage": "Użycie w taliach",
+  "collectionEntryUnassigned": "{count}× nieprzypisane",
+  "@collectionEntryUnassigned": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "collectionNotInCollection": "Brak w kolekcji",
+  "fillStatusAssigned": "Przypisano {filled}/{total} kopii",
+  "@fillStatusAssigned": {
+    "placeholders": {
+      "filled": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "fillStatusMissing": "{count} brak",
+  "@fillStatusMissing": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "importTitle": "Import z listy",
+  "importAction": "IMPORT",
+  "importReplaceConfirm": "Zastąpić talię?",
+  "importReplaceBody": "Wszystkie karty i przypisania w tej talii zostaną usunięte przed importem.",
+  "importMerge": "Dodaj do talii",
+  "importReplace": "Zastąp talię",
+  "importHint": "Wklej listę w formacie „1 Nazwa karty”, z opcjonalnymi sekcjami // Commander, // Sideboard lub // Oathbreaker.",
+  "importPasteRequired": "Wklej listę kart do importu",
+  "importRecognizing": "Rozpoznawanie kart…",
+  "importComplete": "Import zakończony",
+  "importImportedCount": "Zaimportowano {count} pozycji.",
+  "@importImportedCount": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "importClearedExisting": "Poprzednia zawartość talii została usunięta.",
+  "importUnrecognized": "Nierozpoznane karty ({count}):",
+  "@importUnrecognized": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "importUnrecognizedLine": " (linia {line})",
+  "@importUnrecognizedLine": {
+    "placeholders": {"line": {"type": "int"}}
+  },
+  "importAndMore": "… i {count} więcej",
+  "@importAndMore": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "scanNoText": "Nie wykryto tekstu na karcie",
+  "scanError": "Błąd skanowania: {error}",
+  "@scanError": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "scanTitle": "Skan",
+  "scanNotRecognized": "Nie rozpoznano karty",
+  "scanSearchManually": "Wyszukaj ręcznie",
+  "scanSelectVariant": "Wybierz wariant",
+  "scanCreateDeckInTab": "Utwórz talię w zakładce Talie",
+  "scanAddedToCollectionAndDeck": "Dodano do kolekcji i talii"
+}

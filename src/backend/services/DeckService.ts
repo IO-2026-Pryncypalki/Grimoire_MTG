@@ -352,7 +352,7 @@ export const addCardToDeck = async (
         throw new Error('Deck not found');
     }
 
-    await ensureCardInDb(input.scryfallId);
+    const cardModel = await ensureCardInDb(input.scryfallId);
 
     const card = await addCardToDeckForUser(deckId, userId, {
         scryfallId: input.scryfallId,

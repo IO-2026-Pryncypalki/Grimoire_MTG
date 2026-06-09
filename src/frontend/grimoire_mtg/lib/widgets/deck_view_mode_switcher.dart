@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../models/deck_view_mode.dart';
 import '../utils/responsive.dart';
 
@@ -17,6 +18,8 @@ class DeckViewModeSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     if (context.isMediumUp) {
       return SegmentedButton<DeckViewMode>(
         style: inAppBar
@@ -30,8 +33,8 @@ class DeckViewModeSwitcher extends StatelessWidget {
             ButtonSegment(
               value: m,
               icon: Icon(m.icon, size: 20),
-              label: inAppBar ? null : Text(m.label),
-              tooltip: m.label,
+              label: inAppBar ? null : Text(m.label(l10n)),
+              tooltip: m.label(l10n),
             ),
         ],
         selected: {mode},
@@ -41,7 +44,7 @@ class DeckViewModeSwitcher extends StatelessWidget {
 
     return PopupMenuButton<DeckViewMode>(
       icon: Icon(mode.icon),
-      tooltip: 'Widok: ${mode.label}',
+      tooltip: l10n.deckViewTooltip(mode.label(l10n)),
       initialValue: mode,
       onSelected: onChanged,
       itemBuilder: (context) => [
@@ -52,7 +55,7 @@ class DeckViewModeSwitcher extends StatelessWidget {
               children: [
                 Icon(m.icon),
                 const SizedBox(width: 12),
-                Text(m.label),
+                Text(m.label(l10n)),
                 if (m == mode) ...[
                   const Spacer(),
                   const Icon(Icons.check, size: 18),

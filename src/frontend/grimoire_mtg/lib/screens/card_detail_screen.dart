@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/l10n_ext.dart';
 import '../models/card.dart';
 import '../models/collection.dart';
 import '../models/deck.dart';
@@ -15,6 +16,7 @@ import '../widgets/add_to_collection_sheet.dart';
 import '../widgets/api_error_view.dart';
 import '../widgets/collection_entry_panel.dart';
 import '../widgets/content_width.dart';
+import '../widgets/mana_symbol_text.dart';
 import '../utils/scryfall_image_url.dart';
 import '../widgets/mtg_network_card_image.dart';
 
@@ -27,7 +29,7 @@ class CardDetailScreen extends StatefulWidget {
   });
 
   final String scryfallId;
-  final CardDto? initialCard;
+  final CardDetailDto? initialCard;
   final CollectionEntryDto? collectionEntry;
 
   @override
@@ -42,7 +44,24 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.initialCard != null) {
+      _card = widget.initialCard;
+      _loading = false;
+      _refreshInBackground();
+    } else {
+      _load();
+    }
+  }
+
+  Future<void> _refreshInBackground() async {
+    try {
+      final card = await context.read<AuthService>().api.getCardDetails(widget.scryfallId);
+      if (mounted) {
+        setState(() => _card = card);
+      }
+    } on ApiException {
+      // Scan already returned card data; keep showing initialCard.
+    }
   }
 
   Future<void> _load() async {
@@ -76,7 +95,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     );
     if (added == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Dodano do kolekcji')),
+        SnackBar(content: Text(context.l10n.cardAddToCollection)),
       );
     }
   }
@@ -87,7 +106,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     if (!mounted) return;
     if (decks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Najpierw utwórz talię')),
+        SnackBar(content: Text(context.l10n.cardCreateDeckFirst)),
       );
       return;
     }
@@ -100,7 +119,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
       await syncAfterLocalMutation(context, collection: true, decks: true, refreshAll: false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Dodano do talii')),
+          SnackBar(content: Text(context.l10n.cardAddToDeck)),
         );
       }
     } on ApiException catch (e) {
@@ -112,11 +131,12 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
 
   Future<String?> _showDeckPicker(List<DeckListItem> decks) {
     Widget buildPicker(void Function(String id) onSelect) {
+      final l10n = context.l10n;
       return SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const ListTile(title: Text('Wybierz talię')),
+            ListTile(title: Text(l10n.cardSelectDeck)),
             ...decks.map(
               (d) => ListTile(
                 title: Text(d.name),
@@ -194,13 +214,15 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
 
   Widget _buildPriceLine(String label, double? value) {
     if (value == null) return const SizedBox.shrink();
+    final locale = Localizations.localeOf(context).toLanguageTag();
     return Text(
-      '$label: ${NumberFormat.simpleCurrency().format(value)}',
+      '$label: ${NumberFormat.simpleCurrency(locale: locale).format(value)}',
       style: const TextStyle(color: Colors.greenAccent),
     );
   }
 
   Widget _buildDetails(CardDetailDto card) {
+    final l10n = context.l10n;
     final setLine = _formatSetLine(card);
     final pt = card.power != null && card.toughness != null
         ? '${card.power}/${card.toughness}'
@@ -216,14 +238,14 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
         Text(card.typeLine ?? '', style: Theme.of(context).textTheme.titleMedium),
         if (card.manaCost != null) ...[
           const SizedBox(height: 4),
-          Text(card.manaCost!),
+          ManaSymbolText(card.manaCost!, symbolSize: 18),
         ],
         if (card.cmc != null)
           Text('CMC: ${card.cmc!.toStringAsFixed(card.cmc! % 1 == 0 ? 0 : 1)}'),
-        if (pt != null) Text('Siła/Wytrzymałość: $pt'),
-        if (card.rarity != null) Text('Rzadkość: ${card.rarity}'),
-        _buildColorChips(card.colors, 'Kolory'),
-        _buildColorChips(card.colorIdentity, 'Tożsamość'),
+        if (pt != null) Text(l10n.cardPowerToughness(pt)),
+        if (card.rarity != null) Text(l10n.cardRarity(card.rarity!)),
+        _buildColorChips(card.colors, l10n.cardColors),
+        _buildColorChips(card.colorIdentity, l10n.cardColorIdentity),
         const SizedBox(height: 8),
         _buildPriceLine('USD', card.priceUsd ?? card.price),
         _buildPriceLine('USD Foil', card.priceUsdFoil),
@@ -231,14 +253,14 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
         _buildPriceLine('EUR Foil', card.priceEurFoil),
         if (card.oracleText != null) ...[
           const SizedBox(height: 12),
-          Text(card.oracleText!),
+          ManaSymbolText(card.oracleText!),
         ],
         if (card.scryfallUri != null) ...[
           const SizedBox(height: 12),
           TextButton.icon(
             onPressed: () => _openScryfall(card.scryfallUri!),
             icon: const Icon(Icons.open_in_new),
-            label: const Text('Otwórz w Scryfall'),
+            label: Text(l10n.cardOpenScryfall),
           ),
         ],
         if (widget.collectionEntry != null) ...[
@@ -259,14 +281,14 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
               Expanded(
                 child: FilledButton(
                   onPressed: _showAddToCollection,
-                  child: const Text('Kolekcja'),
+                  child: Text(l10n.cardCollectionButton),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
                   onPressed: _showAddToDeck,
-                  child: const Text('Talia'),
+                  child: Text(l10n.cardDeckButton),
                 ),
               ),
             ],
@@ -307,6 +329,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     if (_loading) {
       return Scaffold(
         appBar: AppBar(),
@@ -326,7 +349,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     final showImage = _hasDisplayableImage(card);
 
     return Scaffold(
-      appBar: AppBar(title: Text(card.name ?? 'Karta')),
+      appBar: AppBar(title: Text(card.name ?? l10n.cardDefaultName)),
       body: ContentWidth(
         maxWidth: 900,
         child: SingleChildScrollView(

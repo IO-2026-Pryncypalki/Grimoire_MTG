@@ -24,6 +24,7 @@ describe('toCardDto', () => {
       imageUrl: 'https://example.com/bolt.jpg',
       imageUrlHiRes: 'https://example.com/bolt.jpg',
       price: 1.5,
+      releasedAt: null,
     });
   });
 
@@ -40,6 +41,18 @@ describe('toCardDto', () => {
     expect(toCardDto(card).imageUrlHiRes).toBe(
       'https://cards.scryfall.io/large/front/a/b/abc.jpg',
     );
+  });
+
+  test('mapuje releasedAt z Scryfall', () => {
+    const card = new Card({
+      id: 'abc-123',
+      name: 'Lightning Bolt',
+      set: 'tsr',
+      released_at: '2021-03-19',
+      prices: { usd: 1, usd_foil: 0, eur: 0, eur_foil: 0 },
+    });
+
+    expect(toCardDto(card).releasedAt).toBe('2021-03-19');
   });
 });
 
@@ -88,6 +101,7 @@ describe('toCardDetailDto', () => {
       priceEur: 1.2,
       priceEurFoil: 2.5,
       scryfallUri: 'https://scryfall.com/card/tsr/333',
+      releasedAt: null,
     });
   });
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/l10n_ext.dart';
 import '../services/auth_service.dart';
 import '../state/collection_store.dart';
 import '../utils/responsive.dart';
@@ -82,6 +83,7 @@ class _AddToCollectionSheetState extends State<AddToCollectionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Padding(
       padding: EdgeInsets.only(
         left: 16,
@@ -94,7 +96,7 @@ class _AddToCollectionSheetState extends State<AddToCollectionSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Dodaj do kolekcji',
+            l10n.addToCollectionTitle,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           if (widget.initialName != null)
@@ -102,7 +104,7 @@ class _AddToCollectionSheetState extends State<AddToCollectionSheet> {
           const SizedBox(height: 16),
           Row(
             children: [
-              const Text('Ilość:'),
+              Text(l10n.addToCollectionQuantity),
               IconButton(
                 onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
                 icon: const Icon(Icons.remove),
@@ -129,7 +131,7 @@ class _AddToCollectionSheetState extends State<AddToCollectionSheet> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Dodaj'),
+                : Text(l10n.commonAdd),
           ),
         ],
       ),

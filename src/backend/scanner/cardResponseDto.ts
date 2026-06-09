@@ -10,6 +10,7 @@ export interface CardDto {
   imageUrl: string | null;
   imageUrlHiRes: string | null;
   price: number | null;
+  releasedAt: string | null;
 }
 
 export interface CardDetailDto extends CardDto {
@@ -40,6 +41,7 @@ export function toCardDto(card: Card): CardDto {
     imageUrl: card.getImageUrl(),
     imageUrlHiRes: card.getImageUrlHiRes('grid'),
     price: card.getCurrentPrice(),
+    releasedAt: card.getReleasedAt(),
   };
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../services/auth_service.dart';
 import '../widgets/content_width.dart';
 
@@ -10,6 +11,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
+    final l10n = context.l10n;
 
     return Scaffold(
       body: Center(
@@ -31,7 +33,7 @@ class LoginScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 8),
-                const Text('Zarządzaj kolekcją i taliami Magic'),
+                Text(l10n.loginTagline),
                 const SizedBox(height: 32),
                 if (auth.error != null) ...[
                   Text(
@@ -45,14 +47,14 @@ class LoginScreen extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: auth.isLoading ? null : () => auth.retryRestoreSession(),
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Spróbuj ponownie'),
+                    label: Text(l10n.commonRetry),
                   ),
                   const SizedBox(height: 12),
                 ],
                 FilledButton.icon(
                   onPressed: auth.isLoading ? null : () => auth.login(),
                   icon: const Icon(Icons.login),
-                  label: const Text('Zaloguj przez Google'),
+                  label: Text(l10n.loginGoogle),
                 ),
               ],
             ),

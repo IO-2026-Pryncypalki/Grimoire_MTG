@@ -123,6 +123,16 @@ class GrimoireApi {
     return _client.post('/api/collection/refresh-prices');
   }
 
+  Future<List<CollectionEntryAssignmentDto>> getCollectionEntryAssignments(
+    String entryId,
+  ) async {
+    final json = await _client.get('/api/collection/entries/$entryId/assignments');
+    final list = json['assignments'] as List<dynamic>? ?? [];
+    return list
+        .map((e) => CollectionEntryAssignmentDto.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<SyncStatus> getSyncStatus() async {
     final json = await _client.get('/api/sync/status');
     return SyncStatus.fromJson(json);
@@ -203,6 +213,14 @@ class GrimoireApi {
     );
   }
 
+  Future<CardAvailabilityDto> getCardAvailability(String scryfallId) async {
+    final json = await _client.get(
+      '/api/decks/card-availability',
+      query: {'scryfallId': scryfallId},
+    );
+    return CardAvailabilityDto.fromJson(json);
+  }
+
   Future<List<CollectionOptionDto>> getCollectionOptions({
     required String deckId,
     required String deckCardId,
@@ -220,15 +238,46 @@ class GrimoireApi {
     return AssignDeckByNameSummary.fromJson(json);
   }
 
+  Future<ImportDeckListResultDto> importDeckList({
+    required String deckId,
+    required String text,
+    required String mode,
+  }) async {
+    final json = await _client.post('/api/decks/$deckId/import-list', body: {
+      'text': text,
+      'mode': mode,
+    });
+    return ImportDeckListResultDto.fromJson(json['result'] as Map<String, dynamic>);
+  }
+
+  Future<Map<String, String>> getSymbology() async {
+    final json = await _client.get('/api/symbology');
+    final list = json['symbols'] as List<dynamic>? ?? [];
+    return {
+      for (final e in list)
+        e['symbol'] as String: e['svgUri'] as String,
+    };
+  }
+
+  Future<String> exportDeckList(String deckId) async {
+    final json = await _client.get('/api/decks/$deckId/export-list');
+    return json['text'] as String;
+  }
+
   Future<FillStatusDto> assignToDeck({
     required String deckId,
     required String deckCardId,
     required String collectionEntryId,
     required int quantity,
+    String? preferredSourceDeckId,
   }) async {
     final json = await _client.post(
       '/api/decks/$deckId/cards/$deckCardId/assignments',
-      body: {'collectionEntryId': collectionEntryId, 'quantity': quantity},
+      body: {
+        'collectionEntryId': collectionEntryId,
+        'quantity': quantity,
+        'preferredSourceDeckId': preferredSourceDeckId,
+      },
     );
     return FillStatusDto.fromJson(json['fillStatus'] as Map<String, dynamic>);
   }

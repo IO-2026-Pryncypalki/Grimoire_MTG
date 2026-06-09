@@ -1,7 +1,8 @@
+import '../l10n/app_localizations.dart';
 import '../models/deck.dart';
 
-String deckBoardLabel(String board) => switch (board) {
-      'main' => 'Główna',
+String deckBoardLabel(String board, AppLocalizations l10n) => switch (board) {
+      'main' => l10n.deckBoardMain,
       'sideboard' => 'Sideboard',
       'commander' => 'Commander',
       _ => board,
@@ -17,10 +18,10 @@ List<DeckCardItem> sortedCardsForBoard(DeckDetails deck, String board) {
   return cards;
 }
 
-String deckBoardSummary(List<DeckCardItem> cards) {
-  if (cards.isEmpty) return '0 kart';
+String deckBoardSummary(List<DeckCardItem> cards, AppLocalizations l10n) {
+  if (cards.isEmpty) return l10n.deckBoardEmpty;
   final positions = cards.length;
   final copies = cards.fold<int>(0, (sum, c) => sum + c.quantity);
   final filled = cards.fold<int>(0, (sum, c) => sum + c.fillStatus.filledQty);
-  return '$positions poz. • $copies kopii • $filled/$copies przypisane';
+  return l10n.deckBoardSummary(positions, copies, filled, copies);
 }

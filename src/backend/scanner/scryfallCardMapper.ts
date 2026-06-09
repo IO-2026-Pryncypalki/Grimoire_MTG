@@ -90,5 +90,6 @@ export function mapScryfallJsonToCard(data: Record<string, unknown>): Card {
       : null,
     prices: mapScryfallPrices(data),
     scryfall_uri: (data.scryfall_uri as string | null) ?? null,
+    released_at: (data.released_at as string | null) ?? null,
   });
 }

@@ -1,12 +1,18 @@
 import 'dart:developer' as developer;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
 import 'app_bootstrap.dart';
+import 'l10n/app_localizations.dart';
 import 'services/auth_service.dart';
+import 'services/locale_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  final localeService = LocaleService();
+  await localeService.init();
 
   FlutterError.onError = (details) {
     developer.log(
@@ -17,7 +23,18 @@ Future<void> main() async {
     FlutterError.presentError(details);
   };
 
+  PlatformDispatcher.instance.onError = (error, stack) {
+    developer.log(
+      error.toString(),
+      name: 'PlatformDispatcher',
+      stackTrace: stack,
+      error: error,
+    );
+    return false;
+  };
+
   ErrorWidget.builder = (details) {
+    final l10n = lookupAppLocalizations(localeService.locale);
     return Material(
       color: Colors.black,
       child: Padding(
@@ -29,9 +46,9 @@ Future<void> main() async {
               children: [
                 const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
                 const SizedBox(height: 16),
-                const Text(
-                  'Błąd uruchomienia aplikacji',
-                  style: TextStyle(
+                Text(
+                  l10n.errorAppStartup,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -51,8 +68,8 @@ Future<void> main() async {
     );
   };
 
-  final auth = AuthService();
+  final auth = AuthService(localeService: localeService);
   await auth.init();
 
-  runApp(AppBootstrap(auth: auth));
+  runApp(AppBootstrap(auth: auth, localeService: localeService));
 }

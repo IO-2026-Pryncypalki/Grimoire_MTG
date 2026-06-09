@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../state/deck_store.dart';
 import '../utils/responsive.dart';
 import '../utils/sync_after_mutation.dart';
@@ -57,16 +58,17 @@ class _DeckOverviewScreenState extends State<DeckOverviewScreen> {
   @override
   Widget build(BuildContext context) {
     final store = context.watch<DeckStore>();
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Moje Talie'),
+        title: Text(l10n.decksTitle),
         actions: [
           if (context.isMediumUp)
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: _openCreateDeck,
-              tooltip: 'Nowa talia',
+              tooltip: l10n.decksNewDeck,
             ),
           if (store.refreshing)
             const Padding(
@@ -90,9 +92,9 @@ class _DeckOverviewScreenState extends State<DeckOverviewScreen> {
                     child: store.decks.isEmpty
                         ? ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            children: const [
-                              SizedBox(height: 120),
-                              Center(child: Text('Brak talii — utwórz pierwszą')),
+                            children: [
+                              const SizedBox(height: 120),
+                              Center(child: Text(l10n.decksEmpty)),
                             ],
                           )
                         : LayoutBuilder(

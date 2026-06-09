@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../models/deck.dart';
 
 class FillStatusIndicator extends StatelessWidget {
@@ -14,9 +15,11 @@ class FillStatusIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     if (!inCollection) {
       return Tooltip(
-        message: 'Brak w kolekcji',
+        message: l10n.collectionNotInCollection,
         child: Icon(
           Icons.inventory_2_outlined,
           color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -30,10 +33,12 @@ class FillStatusIndicator extends StatelessWidget {
     }
 
     return Tooltip(
-      message:
-          'Przypisano ${fillStatus.filledQty}/${fillStatus.quantity} kopii',
+      message: l10n.fillStatusAssigned(
+        fillStatus.filledQty,
+        fillStatus.quantity,
+      ),
       child: Chip(
-        label: Text('${fillStatus.unfilledQty} brak'),
+        label: Text(l10n.fillStatusMissing(fillStatus.unfilledQty)),
         backgroundColor: Colors.orange.withValues(alpha: 0.3),
         visualDensity: VisualDensity.compact,
       ),

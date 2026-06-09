@@ -67,7 +67,7 @@ class DeckCardGridTile extends StatelessWidget {
                     data: Theme.of(context).copyWith(
                       iconTheme: const IconThemeData(color: Colors.white),
                     ),
-                    child: actions.menuButton(card),
+                    child: actions.menuButton(context, card),
                   ),
                 ),
               ),

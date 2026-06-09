@@ -1,3 +1,7 @@
+jest.mock('../src/backend/repositories/DeckCardAssignmentRepository', () => ({
+    getOwnedCardNamesForUser: jest.fn(),
+}));
+
 jest.mock('../src/backend/repositories/DeckRepository', () => ({
     addCardToDeckForUser: jest.fn(),
     getByIdForUser: jest.fn(),
@@ -28,6 +32,7 @@ import {
     getByIdForUser,
     getByIdForUserWithCards,
 } from '../src/backend/repositories/DeckRepository';
+import { getOwnedCardNamesForUser } from '../src/backend/repositories/DeckCardAssignmentRepository';
 import { ensureCardInDb } from '../src/backend/services/CardService';
 import {
     getWarningForCard,
@@ -66,7 +71,10 @@ const deckCardRecord = {
 describe('DeckService formatWarning', () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        (ensureCardInDb as jest.Mock).mockResolvedValue({ scryfallId: SCRYFALL_ID });
+        (ensureCardInDb as jest.Mock).mockResolvedValue({
+            get: (field: string) => (field === 'name' ? 'Lightning Bolt' : SCRYFALL_ID),
+        });
+        (getOwnedCardNamesForUser as jest.Mock).mockResolvedValue(new Set(['lightning bolt']));
     });
 
     describe('addCardToDeck', () => {
@@ -120,6 +128,7 @@ describe('DeckService formatWarning', () => {
 
             expect(addCardToDeckForUser).not.toHaveBeenCalled();
         });
+
     });
 
     describe('getDeckDetails', () => {

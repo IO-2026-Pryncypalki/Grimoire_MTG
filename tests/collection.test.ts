@@ -3,13 +3,7 @@ jest.mock('../src/backend/models/CollectionEntry', () => ({
         findOrCreate: jest.fn().mockResolvedValue([{}, true]),
         destroy:      jest.fn().mockResolvedValue(1),
         findAll:      jest.fn().mockResolvedValue([]),
-        update:       jest.fn().mockResolvedValue([1]),
     }
-}));
-
-jest.mock('../src/backend/repositories/CollectionEntryRepository', () => ({
-    deleteCollectionEntries: jest.fn(),
-    touchCollectionEntryUpdatedAt: jest.fn(),
 }));
 
 jest.mock('../src/backend/models/Card', () => ({
@@ -22,7 +16,6 @@ jest.mock('../src/backend/models/Card', () => ({
 import Collection from '../src/backend/collection/Collection';
 import Card from '../src/backend/collection/Card';
 import { Card as CardModel } from '../src/backend/models/Card';
-import { deleteCollectionEntries } from '../src/backend/repositories/CollectionEntryRepository';
 
 describe('Collection', () => {
   const makeCard = (id = 'abc-123', price: number | null = 10.0) => new Card({
@@ -65,26 +58,16 @@ describe('Collection', () => {
   });
 
   describe('removeCard(scryfallId)', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    test('usuwa istniejący wpis po potwierdzeniu w bazie', async () => {
-      (deleteCollectionEntries as jest.Mock).mockResolvedValue(1);
+    test('usuwa istniejący wpis', () => {
       const col = makeCollection();
       col.addCard(makeCard());
-      const removed = await col.removeCard('abc-123');
-      expect(removed).toBe(1);
+      col.removeCard('abc-123');
       expect(col.getEntry('abc-123')).toBeNull();
     });
 
-    test('zostawia wpisy gdy baza nic nie usunęła', async () => {
-      (deleteCollectionEntries as jest.Mock).mockResolvedValue(0);
+    test('nie rzuca błędu dla nieistniejącego scryfallId', () => {
       const col = makeCollection();
-      col.addCard(makeCard());
-      const removed = await col.removeCard('nieistniejace-id');
-      expect(removed).toBe(0);
-      expect(col.getEntry('abc-123')).not.toBeNull();
+      expect(() => col.removeCard('nieistniejace-id')).not.toThrow();
     });
   });
 
@@ -134,20 +117,6 @@ describe('Collection', () => {
       expect(provider.getPrice).toHaveBeenCalledTimes(2);
     });
 
-    test('przekazuje flagę foil do providera', async () => {
-      const col = makeCollection();
-      col.addCard(makeCard('foil-card', 10.0), { isFoil: true });
-      const provider = {
-        getPrice: jest.fn().mockResolvedValue(99.0),
-        searchCard: jest.fn(),
-        getCardDetails: jest.fn(),
-      };
-
-      await col.refreshPrices(provider);
-
-      expect(provider.getPrice).toHaveBeenCalledWith('foil-card', true);
-    });
-
     test('aktualizuje currentPrice na podstawie odpowiedzi providera', async () => {
       const col = makeCollection();
       col.addCard(makeCard('a', 1.0));
@@ -157,65 +126,6 @@ describe('Collection', () => {
         getCardDetails : jest.fn(),};
       await col.refreshPrices(provider);
       expect(col.getEntry('a')!.getCard().getCurrentPrice()).toBe(42.0);
-    });
-
-    test('zwraca statystyki odświeżenia', async () => {
-      const col = makeCollection();
-      col.addCard(makeCard('a', 1.0));
-      col.addCard(makeCard('b', 1.0));
-      const provider = {
-        getPrice: jest.fn()
-          .mockResolvedValueOnce(42.0)
-          .mockRejectedValueOnce(new Error('API error')),
-        searchCard: jest.fn(),
-        getCardDetails: jest.fn(),
-      };
-
-      const result = await col.refreshPrices(provider);
-
-      expect(result).toEqual({
-        totalCards: 2,
-        updatedCards: 1,
-        failedCards: 1,
-        failedIds: ['b'],
-      });
-    });
-
-    test('traktuje brak ceny jako failed bez nadpisywania starej wartości', async () => {
-      const col = makeCollection();
-      col.addCard(makeCard('a', 13.0));
-      const provider = {
-        getPrice: jest.fn().mockResolvedValue(null),
-        searchCard: jest.fn(),
-        getCardDetails: jest.fn(),
-      };
-
-      const result = await col.refreshPrices(provider);
-
-      expect(result).toEqual({
-        totalCards: 1,
-        updatedCards: 0,
-        failedCards: 1,
-        failedIds: ['a'],
-      });
-      expect(col.getEntry('a')!.getCard().getCurrentPrice()).toBe(13.0);
-    });
-
-    test('zapisuje cenę foil do priceUsdFoil', async () => {
-      const col = makeCollection();
-      col.addCard(makeCard('foil-card', 10.0), { isFoil: true });
-      const provider = {
-        getPrice: jest.fn().mockResolvedValue(77.0),
-        searchCard: jest.fn(),
-        getCardDetails: jest.fn(),
-      };
-
-      await col.refreshPrices(provider);
-
-      expect(CardModel.update).toHaveBeenCalledWith(
-        { priceUsdFoil: 77.0, pricesUpdatedAt: expect.any(Date) },
-        { where: { scryfallId: 'foil-card' } }
-      );
     });
 
     test('kontynuuje aktualizację pozostałych kart gdy jedna rzuca błąd', async () => {

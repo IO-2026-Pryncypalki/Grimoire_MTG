@@ -137,25 +137,27 @@ export default class Collection {
 
     // Moves `quantity` copies from one condition to another.
     // Decrements source; creates or increments destination.
-    // If source hits 0 it's pruned from the in-memory list.
-    public transferCondition(
+    // If source hits 0 it's removed from DB and the in-memory list.
+    public async transferCondition(
         scryfallId: string,
         fromCondition: string,
         toCondition: string,
         isFoil: boolean,
         quantity: number = 1
-    ): void {
+    ): Promise<void> {
         const fromEntry = this.getEntry(scryfallId, fromCondition, isFoil);
         if (!fromEntry) throw new Error('Source entry not found');
         if (fromEntry.getQuantity() < quantity) throw new Error('Not enough cards in that condition');
 
-        fromEntry.updateQuantity(-quantity);
+        const card = fromEntry.getCard();
+
+        await this.updateEntryQuantity(fromEntry, -quantity);
 
         const toEntry = this.getEntry(scryfallId, toCondition, isFoil);
         if (toEntry) {
-            toEntry.updateQuantity(quantity);
+            await this.updateEntryQuantity(toEntry, quantity);
         } else {
-            this.addCard(fromEntry.getCard(), { quantity, condition: toCondition, isFoil });
+            await this.addCardAndSave(card, { quantity, condition: toCondition, isFoil });
         }
 
         this.pruneEmpty();

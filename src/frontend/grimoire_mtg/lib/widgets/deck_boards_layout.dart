@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../models/deck.dart';
 import '../utils/deck_board_layout.dart';
 
@@ -29,9 +30,9 @@ class DeckBoardsLayout extends StatelessWidget {
     }
 
     if (entries.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
-        child: Center(child: Text('Brak kart w talii')),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        child: Center(child: Text(context.l10n.deckEmptyCards)),
       );
     }
 

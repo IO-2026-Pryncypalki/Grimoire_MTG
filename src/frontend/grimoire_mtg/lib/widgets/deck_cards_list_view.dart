@@ -111,7 +111,7 @@ class DeckCardsListView extends StatelessWidget {
             fillStatus: card.fillStatus,
             inCollection: card.inCollection,
           ),
-          actions.menuButton(card),
+          actions.menuButton(context, card),
         ],
       ),
     );

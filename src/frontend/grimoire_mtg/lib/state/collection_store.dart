@@ -1,13 +1,16 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/app_localizations.dart';
 import '../models/collection.dart';
 import '../services/auth_service.dart';
+import '../services/locale_service.dart';
 
 class CollectionStore extends ChangeNotifier {
-  CollectionStore(this._auth);
+  CollectionStore(this._auth, this._localeService);
 
   AuthService _auth;
+  LocaleService _localeService;
   Future<void>? _inFlight;
 
   CollectionResponse? data;
@@ -19,6 +22,10 @@ class CollectionStore extends ChangeNotifier {
 
   void updateAuth(AuthService auth) {
     _auth = auth;
+  }
+
+  void updateLocale(LocaleService localeService) {
+    _localeService = localeService;
   }
 
   Future<void> load() async {
@@ -102,7 +109,7 @@ class CollectionStore extends ChangeNotifier {
     } on ApiException catch (e) {
       error = e.message;
     } catch (e, stack) {
-      error = 'Nie udało się wczytać kolekcji';
+      error = lookupAppLocalizations(_localeService.locale).errorLoadCollection;
       if (kDebugMode) {
         debugPrint('CollectionStore fetch failed: $e\n$stack');
       }

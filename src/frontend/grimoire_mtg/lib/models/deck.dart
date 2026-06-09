@@ -298,3 +298,118 @@ class AssignDeckByNameSummary {
         skippedNoName: json['skippedNoName'] as int? ?? 0,
       );
 }
+
+class CardAvailabilityDto {
+  CardAvailabilityDto({
+    required this.ownedQty,
+    required this.inDecksQty,
+    required this.availableToAdd,
+    required this.decksUsing,
+  });
+
+  final int ownedQty;
+  final int inDecksQty;
+  final int availableToAdd;
+  final List<DeckUsingCardDto> decksUsing;
+
+  bool get enforceCollectionLimit => ownedQty > 0;
+
+  factory CardAvailabilityDto.fromJson(Map<String, dynamic> json) =>
+      CardAvailabilityDto(
+        ownedQty: json['ownedQty'] as int? ?? 0,
+        inDecksQty: json['inDecksQty'] as int? ?? 0,
+        availableToAdd: json['availableToAdd'] as int? ?? 0,
+        decksUsing: (json['decksUsing'] as List<dynamic>? ?? [])
+            .map((e) => DeckUsingCardDto.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
+class DeckUsingCardDto {
+  DeckUsingCardDto({
+    required this.deckId,
+    required this.deckName,
+    required this.deckCardId,
+    required this.quantity,
+  });
+
+  final String deckId;
+  final String deckName;
+  final String deckCardId;
+  final int quantity;
+
+  factory DeckUsingCardDto.fromJson(Map<String, dynamic> json) =>
+      DeckUsingCardDto(
+        deckId: json['deckId'] as String,
+        deckName: json['deckName'] as String,
+        deckCardId: json['deckCardId'] as String,
+        quantity: json['quantity'] as int,
+      );
+}
+
+class ImportedDeckListItemDto {
+  ImportedDeckListItemDto({
+    required this.name,
+    required this.scryfallId,
+    required this.quantity,
+    required this.board,
+  });
+
+  final String name;
+  final String scryfallId;
+  final int quantity;
+  final String board;
+
+  factory ImportedDeckListItemDto.fromJson(Map<String, dynamic> json) =>
+      ImportedDeckListItemDto(
+        name: json['name'] as String,
+        scryfallId: json['scryfallId'] as String,
+        quantity: json['quantity'] as int,
+        board: json['board'] as String,
+      );
+}
+
+class ImportDeckListFailureDto {
+  ImportDeckListFailureDto({
+    required this.name,
+    required this.reason,
+    this.line,
+  });
+
+  final String name;
+  final String reason;
+  final int? line;
+
+  factory ImportDeckListFailureDto.fromJson(Map<String, dynamic> json) =>
+      ImportDeckListFailureDto(
+        name: json['name'] as String,
+        reason: json['reason'] as String,
+        line: json['line'] as int?,
+      );
+}
+
+class ImportDeckListResultDto {
+  ImportDeckListResultDto({
+    required this.mode,
+    required this.imported,
+    required this.failed,
+    required this.clearedExisting,
+  });
+
+  final String mode;
+  final List<ImportedDeckListItemDto> imported;
+  final List<ImportDeckListFailureDto> failed;
+  final bool clearedExisting;
+
+  factory ImportDeckListResultDto.fromJson(Map<String, dynamic> json) =>
+      ImportDeckListResultDto(
+        mode: json['mode'] as String,
+        imported: (json['imported'] as List<dynamic>? ?? [])
+            .map((e) => ImportedDeckListItemDto.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        failed: (json['failed'] as List<dynamic>? ?? [])
+            .map((e) => ImportDeckListFailureDto.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        clearedExisting: json['clearedExisting'] as bool? ?? false,
+      );
+}

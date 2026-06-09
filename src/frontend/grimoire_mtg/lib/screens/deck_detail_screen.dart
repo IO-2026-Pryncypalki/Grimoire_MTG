@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/l10n_ext.dart';
 import '../models/deck.dart';
 import '../models/deck_view_mode.dart';
 import '../services/auth_service.dart';
@@ -21,6 +24,7 @@ import '../widgets/deck_cards_stack_view.dart';
 import '../widgets/deck_view_mode_switcher.dart';
 import 'add_card_to_deck_screen.dart';
 import 'card_detail_screen.dart';
+import 'import_deck_list_screen.dart';
 
 class DeckDetailScreen extends StatefulWidget {
   const DeckDetailScreen({super.key, required this.deckId});
@@ -35,6 +39,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   late final SyncService _sync;
   DeckViewMode _viewMode = DeckViewMode.list;
   bool _viewModeLoaded = false;
+  bool _exporting = false;
 
   @override
   void initState() {
@@ -98,7 +103,8 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   }
 
   Future<void> _validateAndSave(DeckDetails deck) async {
-    final result = validateDeck(deck);
+    final l10n = context.l10n;
+    final result = validateDeck(deck, l10n);
     try {
       await context.read<AuthService>().api.updateDeck(
             widget.deckId,
@@ -108,20 +114,20 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
       if (mounted) {
         final body = StringBuffer();
         if (result.formatMessages.isEmpty) {
-          body.writeln('Format: bez uwag.');
+          body.writeln(l10n.deckFormatNoIssues);
         } else {
-          body.writeln('Format:');
+          body.writeln(l10n.deckFormatIssues);
           for (final m in result.formatMessages) {
             body.writeln('• $m');
           }
         }
         body.writeln();
         if (result.isFullyAssigned) {
-          body.writeln('Przypisania: wszystkie kopie z kolekcji.');
+          body.writeln(l10n.deckAssignmentsAll);
         } else if (result.assignmentMessages.isEmpty) {
-          body.writeln('Przypisania: brak kart w talii.');
+          body.writeln(l10n.deckAssignmentsEmpty);
         } else {
-          body.writeln('Przypisania:');
+          body.writeln(l10n.deckAssignmentsIssues);
           for (final m in result.assignmentMessages) {
             body.writeln('• $m');
           }
@@ -130,10 +136,10 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Walidacja talii'),
+            title: Text(l10n.deckValidationTitle),
             content: Text(body.toString().trim()),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.commonOK)),
             ],
           ),
         );
@@ -149,13 +155,16 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   Future<void> _deleteDeck() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Usunąć talię?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Usuń')),
-        ],
-      ),
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx)!;
+        return AlertDialog(
+          title: Text(l10n.deckDeleteConfirm),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.commonCancel)),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.commonDelete)),
+          ],
+        );
+      },
     );
     if (confirm != true) return;
 
@@ -174,18 +183,21 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final name = card.name ?? card.scryfallId;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Usunąć z talii?'),
-        content: Text(
-          card.quantity > 1
-              ? 'Usunąć wszystkie ${card.quantity} kopie: $name?'
-              : 'Usunąć kartę: $name?',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Usuń')),
-        ],
-      ),
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx)!;
+        return AlertDialog(
+          title: Text(l10n.deckRemoveConfirm),
+          content: Text(
+            card.quantity > 1
+                ? l10n.deckRemoveAllCopies(card.quantity, name)
+                : l10n.deckRemoveCard(name),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.commonCancel)),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.commonDelete)),
+          ],
+        );
+      },
     );
     if (confirm != true) return;
 
@@ -223,10 +235,8 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final assignable = options.where((o) => o.assignableToSlot > 0).toList();
     if (assignable.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Brak dostępnych kopii — wszystkie są już przypisane w innych taliach',
-          ),
+        SnackBar(
+          content: Text(context.l10n.deckNoAvailableCopies),
         ),
       );
       return;
@@ -236,9 +246,10 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
 
     if (selected == null) return;
 
+    String? preferredSourceDeckId;
     if (selected.assignedElsewhere > 0) {
-      final confirmed = await _confirmTransferAssignment(selected);
-      if (confirmed != true) return;
+      preferredSourceDeckId = await _pickTransferSource(selected);
+      if (!mounted || preferredSourceDeckId == null) return;
     }
 
     final maxQty = selected.assignableToSlot.clamp(1, card.fillStatus.unfilledQty);
@@ -249,6 +260,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
         deckCardId: card.id,
         collectionEntryId: selected.collectionEntryId,
         quantity: qty,
+        preferredSourceDeckId: preferredSourceDeckId,
       );
       await _refreshStores();
     } on ApiException catch (e) {
@@ -258,52 +270,85 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     }
   }
 
-  Future<bool?> _confirmTransferAssignment(CollectionOptionDto option) {
-    final sources = option.transferSources
-        .map((s) => '${s.quantity}× z talii „${s.deckName}”')
-        .join('\n');
-    return showDialog<bool>(
+  Future<String?> _pickTransferSource(CollectionOptionDto option) {
+    return showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Przenieść kopie?'),
-        content: Text(
-          'Ten wpis ma ${option.assignedElsewhere} kopii przypisanych w innej talii.\n\n'
-          'Przypisywanie tutaj usunie je stamtąd:\n$sources',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Przenieś')),
-        ],
-      ),
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(ctx)!;
+        String? selected =
+            option.transferSources.length == 1 ? option.transferSources.first.deckId : null;
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: Text(l10n.deckTransferCopies),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.deckTransferPickSource),
+                  const SizedBox(height: 8),
+                  RadioGroup<String>(
+                    groupValue: selected,
+                    onChanged: (v) => setState(() => selected = v),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: option.transferSources
+                          .map(
+                            (s) => RadioListTile<String>(
+                              value: s.deckId,
+                              title: Text(l10n.deckTransferSource(s.quantity, s.deckName)),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(l10n.commonCancel),
+                ),
+                FilledButton(
+                  onPressed: selected == null ? null : () => Navigator.pop(ctx, selected),
+                  child: Text(l10n.commonTransfer),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
-  String _collectionOptionSubtitle(CollectionOptionDto o) {
+  String _collectionOptionSubtitle(CollectionOptionDto o, AppLocalizations l10n) {
     final version = o.isExactPrinting
         ? (o.setCode ?? '')
-        : '${o.setCode ?? '?'} • inna wersja';
+        : l10n.deckOptionOtherVersion(o.setCode ?? '?');
     if (o.availableToAssign > 0) {
-      return 'Wolne: ${o.availableToAssign} • do slotu: ${o.assignableToSlot} • $version';
+      return l10n.deckOptionFree(o.availableToAssign, o.assignableToSlot, version);
     }
     if (o.assignedElsewhere > 0) {
-      return 'Przenieś do ${o.assignableToSlot} • ${o.assignedElsewhere} w innej talii • $version';
+      return l10n.deckOptionTransfer(o.assignableToSlot, o.assignedElsewhere, version);
     }
-    return 'Do slotu: ${o.assignableToSlot} • $version';
+    return l10n.deckOptionSlot(o.assignableToSlot, version);
   }
 
   Future<CollectionOptionDto?> _showCollectionOptionPicker(
     List<CollectionOptionDto> options,
   ) {
     Widget buildPicker(void Function(CollectionOptionDto option) onSelect) {
+      final l10n = context.l10n;
       return SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const ListTile(title: Text('Przypisz kopie z kolekcji')),
+            ListTile(title: Text(l10n.deckAssignFromCollection)),
             ...options.map(
               (o) => ListTile(
                 title: Text('${o.condition}${o.isFoil ? ' Foil' : ''}'),
-                subtitle: Text(_collectionOptionSubtitle(o)),
+                subtitle: Text(_collectionOptionSubtitle(o, l10n)),
                 onTap: () => onSelect(o),
               ),
             ),
@@ -333,6 +378,34 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
   bool _deckHasUnfilledSlots(DeckDetails deck) =>
       deck.cards.any((c) => c.fillStatus.unfilledQty > 0);
 
+  Future<void> _exportDeckToClipboard() async {
+    if (_exporting) return;
+
+    setState(() => _exporting = true);
+    try {
+      final text = await context.read<AuthService>().api.exportDeckList(widget.deckId);
+      await Clipboard.setData(ClipboardData(text: text));
+      if (mounted) {
+        final l10n = context.l10n;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              text.isEmpty
+                  ? l10n.deckExportEmpty
+                  : l10n.deckExportCopied,
+            ),
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
   Future<void> _assignDeckFromCollectionByName(DeckDetails deck) async {
     final unfilled = deck.cards.fold<int>(
       0,
@@ -343,16 +416,19 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
     final confirm = unfilled > 10
         ? await showDialog<bool>(
             context: context,
-            builder: (ctx) => AlertDialog(
-              title: const Text('Uzupełnij z kolekcji?'),
-              content: Text(
-                'Przypisać kopie z kolekcji do $unfilled brakujących slotów (dopasowanie po nazwie karty)?',
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Anuluj')),
-                FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Uzupełnij')),
-              ],
-            ),
+            builder: (ctx) {
+              final l10n = AppLocalizations.of(ctx)!;
+              return AlertDialog(
+                title: Text(l10n.deckFillFromCollection),
+                content: Text(
+                  l10n.deckFillFromCollectionBody(unfilled),
+                ),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.commonCancel)),
+                  FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.commonFill)),
+                ],
+              );
+            },
           )
         : true;
 
@@ -365,11 +441,14 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
           .assignDeckFromCollectionByName(widget.deckId);
       await _refreshStores();
       if (mounted) {
+        final l10n = context.l10n;
+        final skipped = summary.skippedNoCollection > 0
+            ? l10n.deckAssignedSkipped(summary.skippedNoCollection)
+            : '';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Przypisano ${summary.assignedCopies} kopii do ${summary.assignedSlots} pozycji'
-              '${summary.skippedNoCollection > 0 ? ' • ${summary.skippedNoCollection} bez kopii' : ''}',
+              l10n.deckAssignedSummary(summary.assignedCopies, summary.assignedSlots, skipped),
             ),
           ),
         );
@@ -392,6 +471,7 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final detailStore = context.watch<DeckDetailStore>();
     final deck = detailStore.deckFor(widget.deckId);
     final loading = detailStore.isLoading(widget.deckId);
@@ -427,8 +507,29 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
             IconButton(
               icon: const Icon(Icons.playlist_add_check),
               onPressed: () => _assignDeckFromCollectionByName(deck),
-              tooltip: 'Uzupełnij z kolekcji',
+              tooltip: l10n.deckFillFromCollectionTooltip,
             ),
+          IconButton(
+            icon: _exporting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.download),
+            onPressed: _exporting ? null : _exportDeckToClipboard,
+            tooltip: l10n.deckExportList,
+          ),
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ImportDeckListScreen(deckId: widget.deckId),
+              ),
+            ).then((_) => _refreshStores()),
+            tooltip: l10n.deckImportList,
+          ),
           if (context.isMediumUp)
             IconButton(
               icon: const Icon(Icons.add),
@@ -438,12 +539,12 @@ class _DeckDetailScreenState extends State<DeckDetailScreen> {
                   builder: (_) => AddCardToDeckScreen(deckId: widget.deckId),
                 ),
               ).then((_) => _refreshStores()),
-              tooltip: 'Dodaj kartę',
+              tooltip: l10n.deckAddCard,
             ),
           IconButton(
             icon: const Icon(Icons.fact_check),
             onPressed: () => _validateAndSave(deck),
-            tooltip: 'Waliduj',
+            tooltip: l10n.deckValidate,
           ),
           IconButton(icon: const Icon(Icons.delete), onPressed: _deleteDeck),
         ],

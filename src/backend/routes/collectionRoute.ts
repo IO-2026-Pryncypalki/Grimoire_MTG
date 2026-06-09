@@ -7,6 +7,7 @@ import ScryfallAdapter from '../adapters/ScryfallAdapter';
 import { ensureCardInDb } from '../services/CardService';
 import type { CardCondition } from '../models/CollectionEntry';
 import { publishSyncForUser } from '../services/syncPublish';
+import { listAssignmentsForCollectionEntry } from '../repositories/DeckCardAssignmentRepository';
 
 const router = Router();
 
@@ -185,6 +186,24 @@ router.post('/refresh-prices', requireJwt, async (req: Request, res: Response) =
     }
 });
 
+// GET /api/collection/entries/:entryId/assignments
+router.get('/entries/:entryId/assignments', requireJwt, async (req: Request, res: Response) => {
+    try {
+        const user = req.user as { id: string };
+        const { entryId } = req.params;
+        const assignments = await listAssignmentsForCollectionEntry(user.id, entryId);
+        return res.status(200).json({
+            assignments: assignments.map(a => ({
+                deckId: a.deckId,
+                deckName: a.deckName,
+                quantity: a.quantity,
+            })),
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to load entry assignments', error });
+    }
+});
+
 // PATCH /api/collection/:scryfallId/transfer
 // Body: { fromCondition, toCondition, isFoil?, quantity? }
 router.patch('/:scryfallId/transfer', requireJwt, async (req: Request, res: Response) => {
@@ -198,7 +217,7 @@ router.patch('/:scryfallId/transfer', requireJwt, async (req: Request, res: Resp
         }
 
         const collection = await Collection.load(user.id);
-        collection.transferCondition(scryfallId, fromCondition, toCondition, isFoil, quantity);
+        await collection.transferCondition(scryfallId, fromCondition, toCondition, isFoil, quantity);
 
         publishSyncForUser(user.id);
 

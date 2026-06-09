@@ -1,13 +1,16 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/app_localizations.dart';
 import '../models/deck.dart';
 import '../services/auth_service.dart';
+import '../services/locale_service.dart';
 
 class DeckStore extends ChangeNotifier {
-  DeckStore(this._auth);
+  DeckStore(this._auth, this._localeService);
 
   AuthService _auth;
+  LocaleService _localeService;
   Future<void>? _inFlight;
 
   List<DeckListItem> decks = [];
@@ -18,6 +21,10 @@ class DeckStore extends ChangeNotifier {
 
   void updateAuth(AuthService auth) {
     _auth = auth;
+  }
+
+  void updateLocale(LocaleService localeService) {
+    _localeService = localeService;
   }
 
   Future<void> load() async {
@@ -92,7 +99,7 @@ class DeckStore extends ChangeNotifier {
     } on ApiException catch (e) {
       error = e.message;
     } catch (e, stack) {
-      error = 'Nie udało się wczytać talii';
+      error = lookupAppLocalizations(_localeService.locale).errorLoadDecks;
       if (kDebugMode) {
         debugPrint('DeckStore fetch failed: $e\n$stack');
       }

@@ -4,6 +4,7 @@ import { Card as CardModel } from '../models/Card';
 import { extractLegalitiesRows } from '../deck/scryfallFormatMap';
 import { hasLegalities, upsertCardLegalities } from '../repositories/CardLegalityRepository';
 import { mapScryfallJsonToCard, scryfallJsonToCardModelFields } from '../scanner/scryfallCardMapper';
+import { scryfallFetch, SCRYFALL_BASE } from '../scanner/scryfallHttp';
 import {
     buildOrQueryFromNames,
     buildScryfallSearchQuery,
@@ -11,8 +12,6 @@ import {
     ScryfallSearchMode,
     searchScryfallCards,
 } from '../scanner/scryfallSearch';
-
-const SCRYFALL_BASE = 'https://api.scryfall.com';
 const RATE_LIMIT_MS = 100;
 const LOCAL_TRGM_THRESHOLD = 0.25;
 const LOCAL_TRGM_LIMIT = 20;
@@ -43,7 +42,7 @@ async function waitForRateLimit(): Promise<void> {
 
 async function fetchScryfallJson(url: string): Promise<Record<string, unknown>> {
     await waitForRateLimit();
-    const response = await fetch(url);
+    const response = await scryfallFetch(url);
 
     if (response.status === 429) {
         throw new Error('Scryfall Rate Limit Exceeded');
@@ -158,13 +157,17 @@ export async function searchCards(cardName: string): Promise<SearchCardsResult> 
 }
 
 export async function getCardDetails(scryfallId: string): Promise<Card> {
+    const existing = await CardModel.findByPk(scryfallId);
+    if (existing) {
+        await ensureLegalitiesInDb(scryfallId);
+        return Card.fromModel(existing as InstanceType<typeof CardModel>);
+    }
     const data = await fetchScryfallJson(
         `${SCRYFALL_BASE}/cards/${encodeURIComponent(scryfallId)}`,
     );
     const fields = scryfallJsonToCardModelFields(data);
     await CardModel.upsert(fields);
     await syncCardLegalitiesFromScryfall(scryfallId, data);
-
     const row = await CardModel.findByPk(scryfallId);
     if (!row) {
         return mapScryfallJsonToCard(data);

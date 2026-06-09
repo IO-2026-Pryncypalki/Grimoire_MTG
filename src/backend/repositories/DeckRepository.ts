@@ -274,6 +274,19 @@ export const deleteForUser = async (deckId: string, userId: string): Promise<boo
     return deletedCount > 0;
 };
 
+export const clearDeckCardsForUser = async (deckId: string, userId: string): Promise<boolean> => {
+    const deck = await getByIdForUser(deckId, userId);
+    if (!deck) {
+        return false;
+    }
+
+    await DeckCardModel.destroy({
+        where: { deckId },
+    });
+    await touchDeckUpdatedAt(deckId);
+    return true;
+};
+
 export const touchDeckUpdatedAt = async (deckId: string): Promise<void> => {
     await DeckModel.update({ updatedAt: new Date() }, { where: { id: deckId } });
     const { publishSyncForDeck } = await import('../services/syncPublish');

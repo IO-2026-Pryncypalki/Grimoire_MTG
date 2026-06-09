@@ -444,6 +444,7 @@ export const reclaimCollectionEntryQuantity = async (
     collectionEntryId: string,
     amount: number,
     excludeDeckCardId: string,
+    preferDeckId?: string,
 ): Promise<ReclaimCollectionEntryResult> => {
     if (amount <= 0) {
         return { reclaimed: 0, affectedDeckIds: [] };
@@ -455,11 +456,18 @@ export const reclaimCollectionEntryQuantity = async (
         excludeDeckCardId,
     );
 
+    const ordered = preferDeckId
+        ? [
+              ...elsewhere.filter((a) => a.deckId === preferDeckId),
+              ...elsewhere.filter((a) => a.deckId !== preferDeckId),
+          ]
+        : elsewhere;
+
     let remaining = amount;
     let reclaimed = 0;
     const affectedDeckIds = new Set<string>();
 
-    for (const assignment of elsewhere) {
+    for (const assignment of ordered) {
         if (remaining <= 0) {
             break;
         }
@@ -481,6 +489,122 @@ export const reclaimCollectionEntryQuantity = async (
         reclaimed,
         affectedDeckIds: [...affectedDeckIds],
     };
+};
+
+export interface DeckQuantityByNameOptions {
+    excludeDeckCardId?: string;
+}
+
+export interface DeckUsingCardRecord {
+    deckId: string;
+    deckName: string;
+    deckCardId: string;
+    quantity: number;
+}
+
+export const getOwnedQuantityByCardName = async (
+    userId: string,
+    cardName: string,
+): Promise<number> => {
+    const normalized = normalizeCardName(cardName);
+    if (!normalized) {
+        return 0;
+    }
+
+    const rows = await sequelize.query<{ total: number }>(
+        `
+        SELECT COALESCE(SUM(ce.quantity), 0)::int AS total
+        FROM collection_entries ce
+        INNER JOIN cards c ON c.scryfall_id = ce.scryfall_id
+        WHERE ce.user_id = :userId
+          AND lower(trim(c.name)) = :normalized
+        `,
+        {
+            replacements: { userId, normalized },
+            type: QueryTypes.SELECT,
+        },
+    );
+
+    return rows[0]?.total ?? 0;
+};
+
+export const getDeckQuantityByCardName = async (
+    userId: string,
+    cardName: string,
+    opts: DeckQuantityByNameOptions = {},
+): Promise<number> => {
+    const normalized = normalizeCardName(cardName);
+    if (!normalized) {
+        return 0;
+    }
+
+    const excludeClause = opts.excludeDeckCardId
+        ? 'AND dc.id <> :excludeDeckCardId'
+        : '';
+
+    const rows = await sequelize.query<{ total: number }>(
+        `
+        SELECT COALESCE(SUM(dc.quantity), 0)::int AS total
+        FROM deck_cards dc
+        INNER JOIN decks d ON d.id = dc.deck_id
+        INNER JOIN cards c ON c.scryfall_id = dc.scryfall_id
+        WHERE d.user_id = :userId
+          AND lower(trim(c.name)) = :normalized
+          ${excludeClause}
+        `,
+        {
+            replacements: {
+                userId,
+                normalized,
+                ...(opts.excludeDeckCardId ? { excludeDeckCardId: opts.excludeDeckCardId } : {}),
+            },
+            type: QueryTypes.SELECT,
+        },
+    );
+
+    return rows[0]?.total ?? 0;
+};
+
+export const listDecksUsingCardName = async (
+    userId: string,
+    cardName: string,
+): Promise<DeckUsingCardRecord[]> => {
+    const normalized = normalizeCardName(cardName);
+    if (!normalized) {
+        return [];
+    }
+
+    const rows = await sequelize.query<{
+        deck_id: string;
+        deck_name: string;
+        deck_card_id: string;
+        quantity: number;
+    }>(
+        `
+        SELECT
+            d.id AS deck_id,
+            d.name AS deck_name,
+            dc.id AS deck_card_id,
+            dc.quantity
+        FROM deck_cards dc
+        INNER JOIN decks d ON d.id = dc.deck_id
+        INNER JOIN cards c ON c.scryfall_id = dc.scryfall_id
+        WHERE d.user_id = :userId
+          AND lower(trim(c.name)) = :normalized
+        ORDER BY d.name ASC, dc.id ASC
+        `,
+        {
+            replacements: { userId, normalized },
+            type: QueryTypes.SELECT,
+        },
+    );
+
+    return rows.map((row) => ({
+        deckId: row.deck_id,
+        deckName: row.deck_name,
+        deckCardId: row.deck_card_id,
+        quantity: row.quantity,
+    }));
 };
 
 export const getOwnedCardNamesForUser = async (

@@ -14,7 +14,8 @@ jest.mock('../src/backend/services/CardService', () => ({
 
 import request from 'supertest';
 import express from 'express';
-import cardRoute from '../src/backend/routes/cardRoute';
+import { createCardRoute } from '../src/backend/routes/cardRoute';
+import ScannerService from '../src/backend/scanner/ScannerService';
 import { getCardDetails, searchCards } from '../src/backend/services/CardService';
 import Card from '../src/backend/collection/Card';
 
@@ -23,7 +24,7 @@ const CARD_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 const app = express();
 app.use(express.json());
 app.use(passport.initialize());
-app.use('/api/cards', cardRoute);
+app.use('/api/cards', createCardRoute(new ScannerService()));
 
 const makeCard = () => new Card({
     id: CARD_ID,

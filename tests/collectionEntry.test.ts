@@ -21,7 +21,9 @@ jest.mock('../src/backend/models/Card', () => ({
 
 import Collection from '../src/backend/collection/Collection';
 import Card from '../src/backend/collection/Card';
+import CollectionEntry from '../src/backend/collection/CollectionEntry';
 import { deleteCollectionEntries } from '../src/backend/repositories/CollectionEntryRepository';
+import { CollectionEntry as CollectionEntryModel } from '../src/backend/models/CollectionEntry';
 
 describe('Collection', () => {
   const makeCard = (id = 'abc-123', price: number | null = 10.0) => new Card({
@@ -40,6 +42,104 @@ describe('Collection', () => {
   });
 
   const makeCollection = () => new Collection({ userId: 'user-1' });
+
+  const makeEntry = (
+    scryfallId = 'abc-123',
+    condition = 'NM',
+    quantity = 1,
+    id = 'entry-1',
+    isFoil = false,
+  ) => new CollectionEntry({
+    id,
+    card: makeCard(scryfallId),
+    quantity,
+    condition,
+    isFoil,
+    notes: null,
+  });
+
+  const makeCollectionWithEntries = (entries: CollectionEntry[]) =>
+    new Collection({ userId: 'user-1', entries });
+
+  describe('transferCondition', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    test('przenosi część kopii do nowego stanu', async () => {
+      (CollectionEntryModel.update as jest.Mock).mockResolvedValue([1]);
+      (CollectionEntryModel.findOrCreate as jest.Mock).mockResolvedValue([
+        {
+          get: () => ({
+            id: 'entry-lp',
+            scryfallId: 'abc-123',
+            quantity: 2,
+            condition: 'LP',
+            isFoil: false,
+            notes: null,
+          }),
+          reload: jest.fn().mockResolvedValue(undefined),
+          update: jest.fn().mockResolvedValue(undefined),
+        },
+        true,
+      ]);
+
+      const col = makeCollectionWithEntries([makeEntry('abc-123', 'NM', 4, 'entry-nm')]);
+      await col.transferCondition('abc-123', 'NM', 'LP', false, 2);
+
+      expect(col.getEntry('abc-123', 'NM', false)!.getQuantity()).toBe(2);
+      expect(col.getEntry('abc-123', 'LP', false)!.getQuantity()).toBe(2);
+    });
+
+    test('usuwa wpis źródłowy po przeniesieniu wszystkich kopii', async () => {
+      (deleteCollectionEntries as jest.Mock).mockResolvedValue(1);
+      (CollectionEntryModel.findOrCreate as jest.Mock).mockResolvedValue([
+        {
+          get: () => ({
+            id: 'entry-lp',
+            scryfallId: 'abc-123',
+            quantity: 1,
+            condition: 'LP',
+            isFoil: false,
+            notes: null,
+          }),
+          reload: jest.fn().mockResolvedValue(undefined),
+          update: jest.fn().mockResolvedValue(undefined),
+        },
+        true,
+      ]);
+
+      const col = makeCollectionWithEntries([makeEntry('abc-123', 'NM', 1, 'entry-nm')]);
+      await col.transferCondition('abc-123', 'NM', 'LP', false, 1);
+
+      expect(col.getEntry('abc-123', 'NM', false)).toBeNull();
+      expect(col.getEntry('abc-123', 'LP', false)!.getQuantity()).toBe(1);
+      expect(deleteCollectionEntries).toHaveBeenCalledWith({
+        userId: 'user-1',
+        entryIds: ['entry-nm'],
+      });
+    });
+
+    test('inkrementuje istniejący wpis docelowy', async () => {
+      (CollectionEntryModel.update as jest.Mock).mockResolvedValue([1]);
+
+      const col = makeCollectionWithEntries([
+        makeEntry('abc-123', 'NM', 2, 'entry-nm'),
+        makeEntry('abc-123', 'LP', 3, 'entry-lp'),
+      ]);
+      await col.transferCondition('abc-123', 'NM', 'LP', false, 1);
+
+      expect(col.getEntry('abc-123', 'NM', false)!.getQuantity()).toBe(1);
+      expect(col.getEntry('abc-123', 'LP', false)!.getQuantity()).toBe(4);
+    });
+
+    test('rzuca błąd gdy brakuje kopii w stanie źródłowym', async () => {
+      const col = makeCollectionWithEntries([makeEntry('abc-123', 'NM', 1, 'entry-nm')]);
+      await expect(
+        col.transferCondition('abc-123', 'NM', 'LP', false, 2),
+      ).rejects.toThrow('Not enough cards in that condition');
+    });
+  });
 
   describe('addCard(card)', () => {
     test('tworzy nowy wpis z quantity=1 gdy karty nie ma w kolekcji', () => {

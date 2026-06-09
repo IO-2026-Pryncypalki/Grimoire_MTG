@@ -606,6 +606,46 @@ Tworzy nowy deck.
 
 ---
 
+### `GET /api/decks/card-availability`
+
+Zwraca dostępność karty do dodania do talii na podstawie kopii w kolekcji i już przydzielonych slotów we wszystkich taliach użytkownika (dopasowanie po **nazwie** karty).
+
+**Query params:**
+
+| Param | Wymagane | Opis |
+|-------|----------|------|
+| `scryfallId` | tak | UUID karty |
+
+**Response 200:**
+```json
+{
+  "ownedQty": 1,
+  "inDecksQty": 1,
+  "availableToAdd": 0,
+  "decksUsing": [
+    {
+      "deckId": "uuid",
+      "deckName": "Mono Black",
+      "deckCardId": "uuid",
+      "quantity": 1
+    }
+  ]
+}
+```
+
+| Pole | Opis |
+|------|------|
+| `ownedQty` | Suma kopii we wszystkich wpisach kolekcji o tej nazwie |
+| `inDecksQty` | Suma `quantity` we wszystkich slotach talii o tej nazwie |
+| `availableToAdd` | `max(0, ownedQty - inDecksQty)` |
+| `decksUsing` | Talie, w których karta już występuje |
+
+Gdy użytkownik nie ma karty w kolekcji (`ownedQty = 0`), limit nie obowiązuje — `availableToAdd` może być dowolnie duże (proxy/theorycraft).
+
+**Błędy:** `400` — brak `scryfallId`; `404` — karta nie istnieje.
+
+---
+
 ### `GET /api/decks/:id`
 
 Szczegóły decku z listą kart, statusem wypełnienia i ostrzeżeniami formatu.
@@ -725,7 +765,7 @@ Dodaje kartę do decku.
 
 Jeśli karta już istnieje w danym `board`, ilość jest sumowana.
 
-**Błędy:** `400` — walidacja / przekroczenie slotów przy assignments; `404` — deck/karta nie istnieje; `429` — limit Scryfall.
+**Błędy:** `400` — walidacja / przekroczenie slotów przy assignments / `Exceeds owned collection quantity` gdy suma kopii we wszystkich taliach przekroczyłaby liczbę posiadanych egzemplarzy (dopasowanie po nazwie); `404` — deck/karta nie istnieje; `429` — limit Scryfall.
 
 ---
 
@@ -821,6 +861,75 @@ Automatycznie przypisuje brakujące kopie do slotów talii, używając wpisów k
 | `skippedNoName` | Pozycje bez nazwy karty w bazie |
 
 Preferuje dokładny printing, potem inne wersje (kolejność: `setCode`, `condition`).
+
+---
+
+### `POST /api/decks/:id/import-list`
+
+Importuje karty do talii z wklejonej listy tekstowej (format `1 Nazwa karty`, opcjonalne sekcje `// Commander`, `// Sideboard`, `// Oathbreaker`).
+
+**Body:**
+```json
+{
+  "text": "1 Sol Ring\n1 Plains\n\n// Commander\n1 Wyleth, Soul of Steel",
+  "mode": "merge"
+}
+```
+
+| Pole | Opis |
+|------|------|
+| `text` | Wklejona lista kart (wymagane) |
+| `mode` | `merge` — dodaje / sumuje ilości; `replace` — czyści talię przed importem |
+
+**Response 200:**
+```json
+{
+  "message": "Deck list imported",
+  "result": {
+    "mode": "merge",
+    "clearedExisting": false,
+    "imported": [
+      {
+        "name": "Sol Ring",
+        "scryfallId": "uuid",
+        "quantity": 1,
+        "board": "main"
+      }
+    ],
+    "failed": [
+      {
+        "line": 12,
+        "name": "Unknown Card",
+        "reason": "not_found"
+      }
+    ]
+  }
+}
+```
+
+| Pole `failed[].reason` | Opis |
+|------------------------|------|
+| `not_found` | Scryfall nie rozpoznał nazwy |
+| `rate_limit` | Przekroczony limit Scryfall dla tej pozycji |
+
+Rozpoznawanie nazw używa tego samego łańcucha co skaner (exact → SymSpell → fuzzy). Przy `replace` usuwane są wszystkie `deck_cards` (przypisania kasowane kaskadowo).
+
+---
+
+### `GET /api/decks/:id/export-list`
+
+Eksportuje talię do tekstowej listy kompatybilnej z `import-list` (format `1 Nazwa karty`, sekcje `// Commander`, `// Sideboard`, `// Oathbreaker & Signature`).
+
+**Response 200:**
+```json
+{
+  "text": "1 Sol Ring\n1 Plains\n\n// Commander\n1 Wyleth, Soul of Steel"
+}
+```
+
+Kolejność sekcji: main → sideboard (jeśli niepusty) → commander/oathbreaker (jeśli niepusty). Karty sortowane alfabetycznie w obrębie sekcji.
+
+**Uwaga (Oathbreaker):** signature spell zaimportowany do boardu `main` pozostaje w sekcji main przy eksporcie — pełny round-trip wymaga metadanych roli karty (poza zakresem v1).
 
 ---
 

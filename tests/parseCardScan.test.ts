@@ -88,6 +88,32 @@ describe('parseCardScan', () => {
     });
   });
 
+  test('findSet: rozpoznaje kody językowe poza EN', () => {
+    const raw = [
+      'Urza\'s Saga',
+      'Land',
+      'MH2 • JP',
+    ].join('\n');
+
+    expect(parseCardScan(raw)).toEqual({
+      name: 'Urza\'s Saga',
+      set: 'MH2',
+    });
+  });
+
+  test('findSet: pierwsze trafienie na linii, ignoruje fałszywy kod z końca', () => {
+    const raw = [
+      'Counterspell',
+      'Instant',
+      'TSR • EN noise DEF • JP',
+    ].join('\n');
+
+    expect(parseCardScan(raw)).toEqual({
+      name: 'Counterspell',
+      set: 'TSR',
+    });
+  });
+
   test('pomija linie-śmieci w samych capsach przy szukaniu nazwy', () => {
     const raw = [
       'IHUNG',

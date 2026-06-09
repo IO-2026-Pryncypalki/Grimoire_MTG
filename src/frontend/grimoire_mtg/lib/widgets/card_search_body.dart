@@ -4,22 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_exception.dart';
+import '../l10n/l10n_ext.dart';
 import '../models/card.dart';
+import '../models/card_search_filters.dart';
 import '../services/auth_service.dart';
 import '../utils/card_grid.dart';
+import '../utils/card_search_query.dart';
+import '../utils/responsive.dart';
 import '../widgets/api_error_view.dart';
 import '../widgets/content_width.dart';
 import '../widgets/mtg_card_tile.dart';
+import '../widgets/search_filters_panel.dart';
 
 class CardSearchBody extends StatefulWidget {
   const CardSearchBody({
     super.key,
     required this.onCardTap,
-    this.emptyHint = 'Wpisz co najmniej 2 znaki',
+    this.emptyHint,
   });
 
   final void Function(CardDto card) onCardTap;
-  final String emptyHint;
+  final String? emptyHint;
 
   @override
   State<CardSearchBody> createState() => _CardSearchBodyState();
@@ -28,6 +33,7 @@ class CardSearchBody extends StatefulWidget {
 class _CardSearchBodyState extends State<CardSearchBody> {
   final _controller = TextEditingController();
   Timer? _debounce;
+  CardSearchFilters _filters = const CardSearchFilters();
   List<CardDto> _results = [];
   bool _loading = false;
   String? _error;
@@ -44,30 +50,54 @@ class _CardSearchBodyState extends State<CardSearchBody> {
     super.dispose();
   }
 
+  bool _hasEnoughInput(String trimmed) =>
+      trimmed.length >= 2 || !_filters.isEmpty;
+
+  void _clearResults() {
+    setState(() {
+      _results = [];
+      _error = null;
+      _hasSearched = false;
+      _noMatch = false;
+      _didYouMean = const [];
+      _lastQuery = null;
+    });
+  }
+
   void _onQueryChanged(String value) {
     _debounce?.cancel();
-    if (value.trim().length < 2) {
-      setState(() {
-        _results = [];
-        _error = null;
-        _hasSearched = false;
-        _noMatch = false;
-        _didYouMean = const [];
-        _lastQuery = null;
-      });
+    final trimmed = value.trim();
+    if (!_hasEnoughInput(trimmed)) {
+      _clearResults();
       return;
     }
-    _debounce = Timer(const Duration(milliseconds: 400), () => _search(value.trim()));
+    _debounce = Timer(
+      const Duration(milliseconds: 400),
+      () => _search(trimmed),
+    );
+  }
+
+  void _onFiltersChanged(CardSearchFilters filters) {
+    _debounce?.cancel();
+    setState(() => _filters = filters);
+    final trimmed = _controller.text.trim();
+    if (trimmed.length < 2 && filters.isEmpty) {
+      _clearResults();
+      return;
+    }
+    _search(trimmed);
   }
 
   Future<void> _search(String query) async {
+    final fullQuery = buildCardSearchQuery(query, _filters);
+    if (fullQuery.isEmpty) return;
     setState(() {
       _loading = true;
       _error = null;
       _lastQuery = query;
     });
     try {
-      final result = await context.read<AuthService>().api.searchCards(query);
+      final result = await context.read<AuthService>().api.searchCards(fullQuery);
       if (mounted) {
         setState(() {
           _results = result.cards;
@@ -96,8 +126,11 @@ class _CardSearchBodyState extends State<CardSearchBody> {
   }
 
   Widget _buildEmptyState() {
-    if (!_hasSearched || (_lastQuery?.length ?? 0) < 2) {
-      return Center(child: Text(widget.emptyHint));
+    final l10n = context.l10n;
+    final hint = widget.emptyHint ?? l10n.cardSearchMinCharsShort;
+
+    if (!_hasSearched) {
+      return Center(child: Text(hint));
     }
 
     if (_noMatch && _results.isEmpty) {
@@ -108,14 +141,16 @@ class _CardSearchBodyState extends State<CardSearchBody> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Nie znaleziono kart dla „$_lastQuery”',
+                _lastQuery?.isNotEmpty == true
+                    ? l10n.cardSearchNotFound(_lastQuery!)
+                    : l10n.cardSearchNoResults,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               if (_didYouMean.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Czy chodziło Ci o:',
+                  l10n.cardSearchDidYouMean,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 8),
@@ -139,25 +174,51 @@ class _CardSearchBodyState extends State<CardSearchBody> {
       );
     }
 
-    return Center(child: Text(widget.emptyHint));
+    return Center(child: Text(hint));
+  }
+
+  Widget _buildFiltersPanel(BuildContext context) {
+    final panel = SearchFiltersPanel(
+      filters: _filters,
+      onChanged: _onFiltersChanged,
+    );
+    if (context.isMediumUp) {
+      return ColoredBox(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        child: panel,
+      );
+    }
+    final l10n = context.l10n;
+    final count = _filters.activeCount;
+    return ExpansionTile(
+      leading: const Icon(Icons.tune),
+      title: Text(
+        count > 0 ? l10n.searchFiltersActive(count) : l10n.searchFiltersLabel,
+      ),
+      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+      children: [panel],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
           child: TextField(
             controller: _controller,
-            decoration: const InputDecoration(
-              hintText: 'Nazwa karty...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: l10n.cardSearchHint,
+              prefixIcon: const Icon(Icons.search),
+              border: const OutlineInputBorder(),
             ),
             onChanged: _onQueryChanged,
           ),
         ),
+        _buildFiltersPanel(context),
         if (_loading) const LinearProgressIndicator(),
         if (_hasSearched &&
             !_loading &&
@@ -169,14 +230,17 @@ class _CardSearchBodyState extends State<CardSearchBody> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Text(
-                'Pokazano wyniki dla podobnych nazw',
+                l10n.cardSearchAutocomplete,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
           ),
         Expanded(
           child: _error != null
-              ? ApiErrorView(message: _error!, onRetry: () => _search(_controller.text))
+              ? ApiErrorView(
+                  message: _error!,
+                  onRetry: () => _search(_controller.text),
+                )
               : _results.isEmpty
                   ? _buildEmptyState()
                   : ContentWidth(

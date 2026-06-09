@@ -30,6 +30,7 @@ export default class Card {
     private priceEur: number | null;
     private priceEurFoil: number | null;
     private scryfallUri: string | null;
+    private releasedAt: string | null;
 
     constructor(data?: {
         id?: string,
@@ -51,6 +52,7 @@ export default class Card {
         image_uris?: any | null,
         prices?: Price | null,
         scryfall_uri?: string | null,
+        released_at?: string | null,
     }) {
         this.scryfallId = data?.id ?? "unknown-id";
         this.name = data?.name ?? null;
@@ -79,6 +81,7 @@ export default class Card {
         this.priceEur = data?.prices?.eur ?? null;
         this.priceEurFoil = data?.prices?.eur_foil ?? null;
         this.scryfallUri = data?.scryfall_uri ?? null;
+        this.releasedAt = data?.released_at ?? null;
     }
     public getScryfallId(): string {
         return this.scryfallId
@@ -154,6 +157,9 @@ export default class Card {
     }
     public getScryfallUri(): string | null {
         return this.scryfallUri;
+    }
+    public getReleasedAt(): string | null {
+        return this.releasedAt;
     }
 
     public updatePrice(price: number | null): void {

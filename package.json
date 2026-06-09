@@ -31,8 +31,8 @@
     "@types/cors": "^2.8.17",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
-    "@types/ws": "^8.5.14",
     "@types/node-pg-migrate": "^2.3.1",
+    "@types/ws": "^8.5.14",
     "dotenv-cli": "^11.0.0",
     "jest": "^30.3.0",
     "ts-jest": "^29.4.9",
@@ -46,7 +46,9 @@
     "transform": {
       "^.+\\.ts$": "ts-jest"
     },
-    "setupFiles": ["./jest.setup.ts"]
+    "setupFiles": [
+      "./jest.setup.ts"
+    ]
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -57,6 +59,7 @@
     "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.3",
     "node-pg-migrate": "^8.0.4",
+    "node-symspell": "^0.1.0",
     "nodemon": "^3.1.14",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",

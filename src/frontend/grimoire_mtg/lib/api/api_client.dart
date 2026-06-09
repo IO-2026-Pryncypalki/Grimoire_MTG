@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/env.dart';
+import '../l10n/app_localizations.dart';
 import 'api_exception.dart';
 import 'http_client_factory.dart';
 
@@ -17,6 +19,7 @@ class ApiClient {
     required this.saveTokens,
     required this.clearTokens,
     required this.refreshSession,
+    required this.getLocale,
     this.useBearerAuth = true,
   });
 
@@ -25,6 +28,7 @@ class ApiClient {
   final Future<void> Function(String access, String refresh) saveTokens;
   final Future<void> Function() clearTokens;
   final Future<bool> Function() refreshSession;
+  final Locale Function() getLocale;
   final bool useBearerAuth;
 
   final http.Client _client = createHttpClient();
@@ -72,9 +76,10 @@ class ApiClient {
 
   void _throwIfError(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) return;
+    final l10n = lookupAppLocalizations(getLocale());
     throw ApiException(
       response.statusCode,
-      messageFromResponse(response.statusCode, _decodeBody(response)),
+      messageFromResponse(response.statusCode, _decodeBody(response), l10n),
     );
   }
 

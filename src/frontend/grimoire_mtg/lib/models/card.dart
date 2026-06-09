@@ -11,6 +11,7 @@ class CardDto {
     this.imageUrl,
     this.imageUrlHiRes,
     this.price,
+    this.releasedAt,
   });
 
   final String scryfallId;
@@ -22,6 +23,13 @@ class CardDto {
   final String? imageUrl;
   final String? imageUrlHiRes;
   final double? price;
+  final String? releasedAt;
+
+  int? get releasedYear {
+    final value = releasedAt;
+    if (value == null || value.length < 4) return null;
+    return int.tryParse(value.substring(0, 4));
+  }
 
   factory CardDto.fromJson(Map<String, dynamic> json) => CardDto(
         scryfallId: json['scryfallId'] as String,
@@ -33,6 +41,7 @@ class CardDto {
         imageUrl: json['imageUrl'] as String?,
         imageUrlHiRes: json['imageUrlHiRes'] as String?,
         price: readDouble(json['price']),
+        releasedAt: json['releasedAt'] as String?,
       );
 }
 
@@ -47,6 +56,7 @@ class CardDetailDto extends CardDto {
     super.imageUrl,
     super.imageUrlHiRes,
     super.price,
+    super.releasedAt,
     this.manaCost,
     this.cmc,
     this.typeLine,
@@ -88,6 +98,7 @@ class CardDetailDto extends CardDto {
         imageUrl: json['imageUrl'] as String?,
         imageUrlHiRes: json['imageUrlHiRes'] as String?,
         price: readDouble(json['price']),
+        releasedAt: json['releasedAt'] as String?,
         manaCost: json['manaCost'] as String?,
         cmc: readDouble(json['cmc']),
         typeLine: json['typeLine'] as String?,

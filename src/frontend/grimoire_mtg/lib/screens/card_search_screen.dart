@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../models/card.dart';
 import '../widgets/card_search_body.dart';
 import 'card_detail_screen.dart';
@@ -18,9 +19,14 @@ class CardSearchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Szukaj kart')),
-      body: CardSearchBody(onCardTap: (card) => _openDetail(context, card)),
+      appBar: AppBar(title: Text(l10n.cardSearchTitle)),
+      body: CardSearchBody(
+        onCardTap: (card) => _openDetail(context, card),
+        emptyHint: l10n.cardSearchMinCharsShort,
+      ),
     );
   }
 }

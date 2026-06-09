@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n_ext.dart';
 import '../models/deck.dart';
 import '../utils/deck_board_layout.dart';
 
@@ -16,6 +17,8 @@ class DeckBoardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
+
     return Padding(
       padding: const EdgeInsets.only(top: 12, bottom: 8),
       child: DecoratedBox(
@@ -30,11 +33,11 @@ class DeckBoardHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                deckBoardLabel(board),
+                deckBoardLabel(board, l10n),
                 style: theme.textTheme.titleMedium,
               ),
               Text(
-                deckBoardSummary(cards),
+                deckBoardSummary(cards, l10n),
                 style: theme.textTheme.bodySmall,
               ),
             ],

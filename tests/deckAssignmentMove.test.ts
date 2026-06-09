@@ -158,6 +158,137 @@ describe('Deck assignment move between decks', () => {
     });
 
     describe('assignCollectionEntry', () => {
+        test('entry with qty=2 can be split 1+1 across two separate deck slots', async () => {
+            // First call: assign 1 copy to Deck A
+            (findDeckCardForUser as jest.Mock).mockResolvedValue({
+                id: DECK_CARD_A,
+                deckId: DECK_A,
+                scryfallId: SCRYFALL_A,
+                name: 'Command Tower',
+                quantity: 1,
+                board: 'main',
+            });
+            (findCollectionEntryForUser as jest.Mock).mockResolvedValue({
+                id: ENTRY_ID,
+                scryfallId: SCRYFALL_A,
+                name: 'Command Tower',
+                quantity: 2,
+                condition: 'NM',
+                isFoil: false,
+            });
+            (getAssignmentsForDeckCard as jest.Mock).mockResolvedValue([]);
+            (getAssignedTotalsByCollectionEntry as jest.Mock)
+                .mockResolvedValueOnce(new Map()) // assignedOnEntry before ensureEntryCapacity
+                .mockResolvedValueOnce(new Map()); // re-fetch after ensureEntryCapacity
+            (reclaimCollectionEntryQuantity as jest.Mock).mockResolvedValue({
+                reclaimed: 0,
+                affectedDeckIds: [],
+            });
+            (createAssignment as jest.Mock).mockResolvedValue({
+                id: 'assign-deck-a',
+                deckCardId: DECK_CARD_A,
+                collectionEntryId: ENTRY_ID,
+                quantity: 1,
+            });
+
+            await assignCollectionEntry(USER_ID, DECK_A, DECK_CARD_A, {
+                collectionEntryId: ENTRY_ID,
+                quantity: 1,
+            });
+
+            expect(reclaimCollectionEntryQuantity).not.toHaveBeenCalled();
+            expect(createAssignment).toHaveBeenCalledWith(DECK_CARD_A, ENTRY_ID, 1);
+
+            jest.clearAllMocks();
+            (touchDeckUpdatedAt as jest.Mock).mockResolvedValue(undefined);
+            (reclaimCollectionEntryQuantity as jest.Mock).mockResolvedValue({
+                reclaimed: 0,
+                affectedDeckIds: [],
+            });
+            (createAssignment as jest.Mock).mockResolvedValue({
+                id: 'assign-deck-b',
+                deckCardId: DECK_CARD_B,
+                collectionEntryId: ENTRY_ID,
+                quantity: 1,
+            });
+
+            // Second call: assign the other copy to Deck B — no reclaim needed (1+1 = 2 = entry qty)
+            (findDeckCardForUser as jest.Mock).mockResolvedValue({
+                id: DECK_CARD_B,
+                deckId: DECK_B,
+                scryfallId: SCRYFALL_A,
+                name: 'Command Tower',
+                quantity: 1,
+                board: 'main',
+            });
+            (findCollectionEntryForUser as jest.Mock).mockResolvedValue({
+                id: ENTRY_ID,
+                scryfallId: SCRYFALL_A,
+                name: 'Command Tower',
+                quantity: 2,
+                condition: 'NM',
+                isFoil: false,
+            });
+            (getAssignmentsForDeckCard as jest.Mock).mockResolvedValue([]);
+            (getAssignedTotalsByCollectionEntry as jest.Mock)
+                .mockResolvedValueOnce(new Map([[ENTRY_ID, 1]])) // 1 already assigned (to Deck A)
+                .mockResolvedValueOnce(new Map([[ENTRY_ID, 1]])); // re-fetch after ensureEntryCapacity
+
+            await assignCollectionEntry(USER_ID, DECK_B, DECK_CARD_B, {
+                collectionEntryId: ENTRY_ID,
+                quantity: 1,
+            });
+
+            expect(reclaimCollectionEntryQuantity).not.toHaveBeenCalled();
+            expect(createAssignment).toHaveBeenCalledWith(DECK_CARD_B, ENTRY_ID, 1);
+        });
+
+        test('entry with qty=1 reclaims from previous deck when assigned to a new deck', async () => {
+            (findDeckCardForUser as jest.Mock).mockResolvedValue({
+                id: DECK_CARD_B,
+                deckId: DECK_B,
+                scryfallId: SCRYFALL_A,
+                name: 'Command Tower',
+                quantity: 1,
+                board: 'main',
+            });
+            (findCollectionEntryForUser as jest.Mock).mockResolvedValue({
+                id: ENTRY_ID,
+                scryfallId: SCRYFALL_A,
+                name: 'Command Tower',
+                quantity: 1,
+                condition: 'NM',
+                isFoil: false,
+            });
+            (getAssignmentsForDeckCard as jest.Mock)
+                .mockResolvedValueOnce([])
+                .mockResolvedValueOnce([
+                    { id: 'assign-deck-b', deckCardId: DECK_CARD_B, collectionEntryId: ENTRY_ID, quantity: 1 },
+                ]);
+            (getAssignedTotalsByCollectionEntry as jest.Mock)
+                .mockResolvedValueOnce(new Map([[ENTRY_ID, 1]])) // 1 already assigned elsewhere
+                .mockResolvedValueOnce(new Map([[ENTRY_ID, 0]])); // after reclaim
+            (reclaimCollectionEntryQuantity as jest.Mock).mockResolvedValue({
+                reclaimed: 1,
+                affectedDeckIds: [DECK_A],
+            });
+            (createAssignment as jest.Mock).mockResolvedValue({
+                id: 'assign-deck-b',
+                deckCardId: DECK_CARD_B,
+                collectionEntryId: ENTRY_ID,
+                quantity: 1,
+            });
+
+            await assignCollectionEntry(USER_ID, DECK_B, DECK_CARD_B, {
+                collectionEntryId: ENTRY_ID,
+                quantity: 1,
+            });
+
+            // Single copy must be reclaimed from Deck A before being placed in Deck B
+            expect(reclaimCollectionEntryQuantity).toHaveBeenCalledWith(USER_ID, ENTRY_ID, 1, DECK_CARD_B);
+            expect(createAssignment).toHaveBeenCalledWith(DECK_CARD_B, ENTRY_ID, 1);
+        });
+
         test('reclaims from other deck before creating assignment', async () => {
             (findDeckCardForUser as jest.Mock).mockResolvedValue({
                 id: DECK_CARD_B,

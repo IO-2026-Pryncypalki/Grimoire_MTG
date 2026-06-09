@@ -1,3 +1,8 @@
+/**
+ * Heurystyka wyciągająca parametry wyszukiwania karty MTG z surowego plaintekstu OCR.
+ * Zwraca tylko pola sensownie odczytane; brak/niepasujące → undefined.
+ */
+
 export interface CardScanResult {
   name?: string;
   set?: string;
@@ -35,14 +40,19 @@ function extractName(lines: string[]): string | undefined {
   return undefined;
 }
 
+/** Kod setu: 3 alnum tuż przed tokenem języka druku (EN, JP, …). */
 function findSet(lines: string[]): { set?: string; lineIndex: number } {
-  const re = /(?:^|\s)([A-Z0-9]{3})\s*[•*.\u00B7\u2022\-]?\s*EN\b/g;
+  const LANG = "EN|JP|FR|DE|IT|ES|PT|RU|KO|CS|CT|CN";
+  const re = new RegExp(
+    `(?:^|\\s)([A-Z0-9]{3})\\s*[•*.\\u00B7\\u2022\\-]?\\s*(?:${LANG})\\b`,
+    "g",
+  );
   let set: string | undefined;
   let lineIndex = -1;
   for (let i = 0; i < lines.length; i++) {
     re.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(lines[i]))) {
+    const m = re.exec(lines[i]);
+    if (m) {
       set = m[1];
       lineIndex = i;
     }

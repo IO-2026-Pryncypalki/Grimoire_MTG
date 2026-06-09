@@ -3,6 +3,7 @@ jest.mock('../src/backend/models/Card', () => ({
         findByPk: jest.fn(),
         findAll: jest.fn(),
         create: jest.fn(),
+        upsert: jest.fn(),
     },
 }));
 
@@ -16,6 +17,15 @@ import { hasLegalities, upsertCardLegalities } from '../src/backend/repositories
 import { ensureCardInDb, getCardDetails, searchCards } from '../src/backend/services/CardService';
 
 const CARD_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+
+const expectScryfallFetch = (fetchMock: jest.Mock, url: string) => {
+    expect(fetchMock).toHaveBeenCalledWith(url, {
+        headers: {
+            Accept: 'application/json',
+            'User-Agent': 'GrimoireMTG/1.0 contact:github.com/grimoire-mtg',
+        },
+    });
+};
 
 const scryfallPayload = {
     id: CARD_ID,
@@ -110,9 +120,7 @@ describe('ensureCardInDb', () => {
         const result = await ensureCardInDb(CARD_ID);
 
         expect(result).toBe(existing);
-        expect(fetchMock).toHaveBeenCalledWith(
-            `https://api.scryfall.com/cards/${CARD_ID}`,
-        );
+        expectScryfallFetch(fetchMock, `https://api.scryfall.com/cards/${CARD_ID}`);
         expect(upsertCardLegalities).toHaveBeenCalledWith(
             expect.arrayContaining([
                 expect.objectContaining({ scryfallId: CARD_ID, format: 'Modern', status: 'legal' }),
@@ -134,9 +142,7 @@ describe('ensureCardInDb', () => {
 
         const result = await ensureCardInDb(CARD_ID);
 
-        expect(fetchMock).toHaveBeenCalledWith(
-            `https://api.scryfall.com/cards/${CARD_ID}`,
-        );
+        expectScryfallFetch(fetchMock, `https://api.scryfall.com/cards/${CARD_ID}`);
         expect(CardModel.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 scryfallId: CARD_ID,
@@ -195,17 +201,49 @@ describe('searchCards', () => {
         expect(result.total).toBe(2);
         expect(result.cards[0].getName()).toBe('Lightning Bolt');
         expect(CardModel.create).not.toHaveBeenCalled();
-        expect(fetchMock.mock.calls[0][0]).toContain('/cards/search?q=lightning');
+        expect(fetchMock.mock.calls[0][0]).toContain('/cards/search?q=name%3Alightning');
+        expect(result.noMatch).toBe(false);
     });
 
-    test('404 od Scryfall zwraca pustą listę lub tylko lokalne wyniki', async () => {
-        fetchMock.mockResolvedValue({ ok: false, status: 404 });
+    test('404 od Scryfall zwraca noMatch gdy brak autocomplete i trgm', async () => {
+        fetchMock
+            .mockResolvedValueOnce({ ok: false, status: 404 })
+            .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ data: [] }) });
         (CardModel.findAll as jest.Mock).mockResolvedValue([]);
 
         const result = await searchCards('unknownxyz');
 
-        expect(result).toEqual({ cards: [], total: 0 });
+        expect(result.cards).toEqual([]);
+        expect(result.noMatch).toBe(true);
+        expect(result.searchMode).toBe('direct');
         expect(CardModel.create).not.toHaveBeenCalled();
+    });
+
+    test('używa autocomplete gdy pierwsze wyszukiwanie puste', async () => {
+        fetchMock
+            .mockResolvedValueOnce({ ok: false, status: 404 })
+            .mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({ data: ['Lightning Bolt'] }),
+            })
+            .mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    total_cards: 1,
+                    data: [scryfallPayload],
+                }),
+            });
+        (CardModel.findAll as jest.Mock).mockResolvedValue([]);
+
+        const result = await searchCards('lighning bolt');
+
+        expect(result.cards).toHaveLength(1);
+        expect(result.searchMode).toBe('autocomplete');
+        expect(result.didYouMean).toContain('Lightning Bolt');
+        expect(result.noMatch).toBe(false);
+        expect(fetchMock.mock.calls[1][0]).toContain('/cards/autocomplete');
     });
 
     test('łączy wyniki Scryfall z lokalną bazą bez duplikatów', async () => {
@@ -239,9 +277,16 @@ describe('getCardDetails', () => {
         jest.clearAllMocks();
         fetchMock = jest.fn();
         global.fetch = fetchMock;
+        (upsertCardLegalities as jest.Mock).mockResolvedValue(undefined);
+        (CardModel.upsert as jest.Mock).mockResolvedValue(undefined);
+        fetchMock.mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => scryfallPayload,
+        });
     });
 
-    test('zwraca kartę z bazy bez Scryfall', async () => {
+    test('zwraca kartę z bazy gdy już istnieje', async () => {
         (CardModel.findByPk as jest.Mock).mockResolvedValue(dbCardModel());
 
         const card = await getCardDetails(CARD_ID);
@@ -249,21 +294,24 @@ describe('getCardDetails', () => {
         expect(card.getName()).toBe('Lightning Bolt');
         expect(card.getOracleText()).toBe('Lightning Bolt deals 3 damage to any target.');
         expect(fetchMock).not.toHaveBeenCalled();
-        expect(CardModel.create).not.toHaveBeenCalled();
+        expect(CardModel.upsert).not.toHaveBeenCalled();
     });
 
-    test('pobiera ze Scryfall bez zapisu do bazy', async () => {
-        (CardModel.findByPk as jest.Mock).mockResolvedValue(null);
-        fetchMock.mockResolvedValue({
-            ok: true,
-            status: 200,
-            json: async () => scryfallPayload,
-        });
+    test('pobiera ze Scryfall i zapisuje gdy karta nie jest w bazie', async () => {
+        (CardModel.findByPk as jest.Mock).mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 
         const card = await getCardDetails(CARD_ID);
 
         expect(card.getScryfallId()).toBe(CARD_ID);
         expect(card.getTypeLine()).toBe('Instant');
-        expect(CardModel.create).not.toHaveBeenCalled();
+        expectScryfallFetch(fetchMock, `https://api.scryfall.com/cards/${CARD_ID}`);
+        expect(CardModel.upsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                scryfallId: CARD_ID,
+                name: 'Lightning Bolt',
+                imageUri: 'https://example.com/bolt.jpg',
+            }),
+        );
+        expect(upsertCardLegalities).toHaveBeenCalled();
     });
 });

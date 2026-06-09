@@ -1,4 +1,5 @@
 import { Card as CardModel } from '../models/Card';
+import { scryfallHiResFromStoredNormal } from '../scanner/scryfallImageUrl';
 export interface Price {
     usd: number
     usd_foil: number
@@ -22,11 +23,14 @@ export default class Card {
     private colors: string[] = []
     private colorsIdentity: string[] = []
     private imageUri: any | null;
+    private imageUriLarge: string | null = null;
+    private imageUriPng: string | null = null;
     private priceUsd: number | null;
     private priceUsdFoil: number | null;
     private priceEur: number | null;
     private priceEurFoil: number | null;
     private scryfallUri: string | null;
+    private releasedAt: string | null;
 
     constructor(data?: {
         id?: string,
@@ -48,6 +52,7 @@ export default class Card {
         image_uris?: any | null,
         prices?: Price | null,
         scryfall_uri?: string | null,
+        released_at?: string | null,
     }) {
         this.scryfallId = data?.id ?? "unknown-id";
         this.name = data?.name ?? null;
@@ -65,11 +70,18 @@ export default class Card {
         if (data?.colors) this.colors = data?.colors;
         if (data?.colors_identity) this.colorsIdentity = data?.colors_identity;
         this.imageUri = data?.image_uris?.normal ?? null;
+        this.imageUriLarge =
+            data?.image_uris?.large
+            ?? scryfallHiResFromStoredNormal(this.imageUri, 'grid');
+        this.imageUriPng =
+            data?.image_uris?.png
+            ?? scryfallHiResFromStoredNormal(this.imageUri, 'detail');
         this.priceUsd = data?.prices?.usd ?? null;
         this.priceUsdFoil = data?.prices?.usd_foil ?? null;
         this.priceEur = data?.prices?.eur ?? null;
         this.priceEurFoil = data?.prices?.eur_foil ?? null;
         this.scryfallUri = data?.scryfall_uri ?? null;
+        this.releasedAt = data?.released_at ?? null;
     }
     public getScryfallId(): string {
         return this.scryfallId
@@ -119,6 +131,18 @@ export default class Card {
     public getImageUrl(): string | null {
         return this.imageUri;
     }
+    public getImageUrlHiRes(variant: 'grid' | 'detail' = 'grid'): string | null {
+        if (variant === 'detail') {
+            return this.imageUriPng
+                ?? this.imageUriLarge
+                ?? scryfallHiResFromStoredNormal(this.imageUri, 'detail')
+                ?? scryfallHiResFromStoredNormal(this.imageUri, 'grid')
+                ?? this.imageUri;
+        }
+        return this.imageUriLarge
+            ?? scryfallHiResFromStoredNormal(this.imageUri, 'grid')
+            ?? this.imageUri;
+    }
     public getCurrentPrice(): number | null {
         return this.priceUsd;
     }
@@ -133,6 +157,9 @@ export default class Card {
     }
     public getScryfallUri(): string | null {
         return this.scryfallUri;
+    }
+    public getReleasedAt(): string | null {
+        return this.releasedAt;
     }
 
     public updatePrice(price: number | null): void {
@@ -161,6 +188,10 @@ export default class Card {
         instance.colors = (raw.colors as string[] | null) ?? [];
         instance.colorsIdentity = (raw.colorIdentity as string[] | null) ?? [];
         instance.imageUri = raw.imageUri as string | null;
+        instance.imageUriLarge = (raw.imageUriLarge as string | null)
+            ?? scryfallHiResFromStoredNormal(instance.imageUri, 'grid');
+        instance.imageUriPng = (raw.imageUriPng as string | null)
+            ?? scryfallHiResFromStoredNormal(instance.imageUri, 'detail');
         instance.priceUsd = raw.priceUsd as number | null;
         instance.priceUsdFoil = raw.priceUsdFoil as number | null;
         instance.priceEur = raw.priceEur as number | null;

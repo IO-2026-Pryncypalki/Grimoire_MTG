@@ -14,7 +14,8 @@ jest.mock('../src/backend/services/CardService', () => ({
 
 import request from 'supertest';
 import express from 'express';
-import cardRoute from '../src/backend/routes/cardRoute';
+import { createCardRoute } from '../src/backend/routes/cardRoute';
+import ScannerService from '../src/backend/scanner/ScannerService';
 import { getCardDetails, searchCards } from '../src/backend/services/CardService';
 import Card from '../src/backend/collection/Card';
 
@@ -23,7 +24,7 @@ const CARD_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 const app = express();
 app.use(express.json());
 app.use(passport.initialize());
-app.use('/api/cards', cardRoute);
+app.use('/api/cards', createCardRoute(new ScannerService()));
 
 const makeCard = () => new Card({
     id: CARD_ID,
@@ -48,7 +49,13 @@ describe('POST /api/cards/search', () => {
 
     test('zwraca listę kart i total dla cardName', async () => {
         const card = makeCard();
-        (searchCards as jest.Mock).mockResolvedValue({ cards: [card], total: 1 });
+        (searchCards as jest.Mock).mockResolvedValue({
+            cards: [card],
+            total: 1,
+            noMatch: false,
+            didYouMean: [],
+            searchMode: 'direct',
+        });
 
         const res = await request(app)
             .post('/api/cards/search')
@@ -76,6 +83,25 @@ describe('POST /api/cards/search', () => {
             .send({ cardName: 'bolt' });
 
         expect(res.status).toBe(429);
+    });
+
+    test('zwraca noMatch i didYouMean gdy brak wyników', async () => {
+        (searchCards as jest.Mock).mockResolvedValue({
+            cards: [],
+            total: 0,
+            noMatch: true,
+            didYouMean: ['Lightning Bolt'],
+            searchMode: 'autocomplete',
+        });
+
+        const res = await request(app)
+            .post('/api/cards/search')
+            .send({ cardName: 'lighning' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.noMatch).toBe(true);
+        expect(res.body.didYouMean).toEqual(['Lightning Bolt']);
+        expect(res.body.searchMode).toBe('autocomplete');
     });
 });
 

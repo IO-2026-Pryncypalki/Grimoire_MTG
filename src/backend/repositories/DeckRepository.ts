@@ -1,8 +1,11 @@
+import { QueryTypes } from 'sequelize';
+import sequelize from '../config/database';
 import { Deck as DeckModel } from '../models/Deck';
 import { DeckCard as DeckCardModel } from '../models/DeckCard';
 import { DeckCardAssignment as DeckCardAssignmentModel } from '../models/DeckCardAssignment';
 import { CollectionEntry as CollectionEntryModel } from '../models/CollectionEntry';
 import { Card as CardModel } from '../models/Card';
+import { scryfallHiResFromStoredNormal } from '../scanner/scryfallImageUrl';
 import { getFilledQuantityOnDeckCard } from './DeckCardAssignmentRepository';
 
 export type DeckBoard = 'main' | 'sideboard' | 'commander';
@@ -61,7 +64,9 @@ export interface DeckCardRecord {
     board: DeckBoard;
     name: string | null;
     setCode: string | null;
+    typeLine: string | null;
     imageUrl: string | null;
+    imageUrlHiRes: string | null;
     assignments: DeckCardAssignmentRecord[];
 }
 
@@ -90,6 +95,61 @@ export const listByUser = async (userId: string): Promise<DeckRecord[]> => {
         order: [['updatedAt', 'DESC']],
     });
     return rows.map((row) => toDeckRecord(row));
+};
+
+export interface DeckCardSummaryRecord {
+    deckId: string;
+    board: DeckBoard;
+    quantity: number;
+    scryfallId: string;
+    name: string | null;
+    typeLine: string | null;
+    filledQty: number;
+}
+
+export const listDeckCardSummariesForUser = async (
+    userId: string,
+): Promise<DeckCardSummaryRecord[]> => {
+    const rows = await sequelize.query<{
+        deck_id: string;
+        board: DeckBoard;
+        quantity: number;
+        scryfall_id: string;
+        name: string | null;
+        type_line: string | null;
+        filled_qty: string;
+    }>(
+        `
+        SELECT
+            d.id AS deck_id,
+            dc.board,
+            dc.quantity,
+            dc.scryfall_id,
+            c.name,
+            c.type_line,
+            COALESCE(SUM(dca.quantity), 0)::int AS filled_qty
+        FROM decks d
+        INNER JOIN deck_cards dc ON dc.deck_id = d.id
+        LEFT JOIN cards c ON c.scryfall_id = dc.scryfall_id
+        LEFT JOIN deck_card_assignments dca ON dca.deck_card_id = dc.id
+        WHERE d.user_id = :userId
+        GROUP BY d.id, dc.id, dc.board, dc.quantity, dc.scryfall_id, c.name, c.type_line
+        `,
+        {
+            replacements: { userId },
+            type: QueryTypes.SELECT,
+        },
+    );
+
+    return rows.map((row) => ({
+        deckId: row.deck_id,
+        board: row.board,
+        quantity: row.quantity,
+        scryfallId: row.scryfall_id,
+        name: row.name,
+        typeLine: row.type_line,
+        filledQty: Number(row.filled_qty),
+    }));
 };
 
 export const getByIdForUser = async (deckId: string, userId: string): Promise<DeckRecord | null> => {
@@ -131,7 +191,13 @@ const toDeckCardRecord = (deckCardRow: InstanceType<typeof DeckCardModel>): Deck
         board: raw.board as DeckBoard,
         name: (cardRaw?.name as string | null) ?? null,
         setCode: (cardRaw?.setCode as string | null) ?? null,
+        typeLine: (cardRaw?.typeLine as string | null) ?? null,
         imageUrl: (cardRaw?.imageUri as string | null) ?? null,
+        imageUrlHiRes: (cardRaw?.imageUriLarge as string | null)
+            ?? scryfallHiResFromStoredNormal(
+                (cardRaw?.imageUri as string | null) ?? null,
+                'grid',
+            ),
         assignments,
     };
 };
@@ -208,6 +274,25 @@ export const deleteForUser = async (deckId: string, userId: string): Promise<boo
     return deletedCount > 0;
 };
 
+export const clearDeckCardsForUser = async (deckId: string, userId: string): Promise<boolean> => {
+    const deck = await getByIdForUser(deckId, userId);
+    if (!deck) {
+        return false;
+    }
+
+    await DeckCardModel.destroy({
+        where: { deckId },
+    });
+    await touchDeckUpdatedAt(deckId);
+    return true;
+};
+
+export const touchDeckUpdatedAt = async (deckId: string): Promise<void> => {
+    await DeckModel.update({ updatedAt: new Date() }, { where: { id: deckId } });
+    const { publishSyncForDeck } = await import('../services/syncPublish');
+    await publishSyncForDeck(deckId);
+};
+
 export interface AddDeckCardData {
     scryfallId: string;
     quantity: number;
@@ -250,6 +335,7 @@ export const addCardToDeckForUser = async (
         const currentQuantity = existing.get('quantity') as number;
         await existing.update({ quantity: currentQuantity + input.quantity });
         await existing.reload({ include: [{ model: CardModel }] });
+        await touchDeckUpdatedAt(deckId);
         return toDeckCardRecord(existing);
     }
 
@@ -268,6 +354,7 @@ export const addCardToDeckForUser = async (
         throw new Error('Failed to load deck card');
     }
 
+    await touchDeckUpdatedAt(deckId);
     return toDeckCardRecord(withCard);
 };
 
@@ -293,6 +380,7 @@ export const removeCardFromDeckForUser = async (
 
     if (newQuantity <= 0) {
         await existing.destroy();
+        await touchDeckUpdatedAt(deckId);
         return { removed: true };
     }
 
@@ -303,6 +391,7 @@ export const removeCardFromDeckForUser = async (
 
     await existing.update({ quantity: newQuantity });
     await existing.reload({ include: [{ model: CardModel }] });
+    await touchDeckUpdatedAt(deckId);
 
     return {
         removed: false,

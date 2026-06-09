@@ -1,4 +1,5 @@
 import Card, { Price } from '../collection/Card';
+import { resolveHiResImageUri } from './scryfallImageUrl';
 
 function parseScryfallPrice(value: unknown): number | null {
   if (value === null || value === undefined || value === '') {
@@ -39,6 +40,8 @@ export function scryfallJsonToCardModelFields(data: Record<string, unknown>) {
     colors: (data.colors as string[] | null) ?? null,
     colorIdentity: (data.color_identity as string[] | null) ?? null,
     imageUri: resolveImageUri(data),
+    imageUriLarge: resolveHiResImageUri(data, 'grid'),
+    imageUriPng: resolveHiResImageUri(data, 'detail'),
     priceUsd: parseScryfallPrice(prices?.usd),
     priceUsdFoil: parseScryfallPrice(prices?.usd_foil),
     priceEur: parseScryfallPrice(prices?.eur),
@@ -65,6 +68,7 @@ function mapScryfallPrices(data: Record<string, unknown>): Price | null {
 
 export function mapScryfallJsonToCard(data: Record<string, unknown>): Card {
   const imageUri = resolveImageUri(data);
+  const hiResGrid = resolveHiResImageUri(data, 'grid');
   return new Card({
     id: data.id as string,
     name: data.name as string,
@@ -81,8 +85,11 @@ export function mapScryfallJsonToCard(data: Record<string, unknown>): Card {
     rarity: (data.rarity as string | null) ?? null,
     colors: data.colors as string[] | undefined,
     colors_identity: data.color_identity as string[] | undefined,
-    image_uris: imageUri ? { normal: imageUri } : null,
+    image_uris: imageUri
+      ? { normal: imageUri, large: hiResGrid ?? undefined }
+      : null,
     prices: mapScryfallPrices(data),
     scryfall_uri: (data.scryfall_uri as string | null) ?? null,
+    released_at: (data.released_at as string | null) ?? null,
   });
 }

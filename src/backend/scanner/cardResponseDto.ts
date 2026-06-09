@@ -8,7 +8,9 @@ export interface CardDto {
   collectorNumber: string | null;
   lang: string | null;
   imageUrl: string | null;
+  imageUrlHiRes: string | null;
   price: number | null;
+  releasedAt: string | null;
 }
 
 export interface CardDetailDto extends CardDto {
@@ -37,13 +39,17 @@ export function toCardDto(card: Card): CardDto {
     collectorNumber: card.getCollectorNumber(),
     lang: card.getLang(),
     imageUrl: card.getImageUrl(),
+    imageUrlHiRes: card.getImageUrlHiRes('grid'),
     price: card.getCurrentPrice(),
+    releasedAt: card.getReleasedAt(),
   };
 }
 
 export function toCardDetailDto(card: Card): CardDetailDto {
+  const base = toCardDto(card);
   return {
-    ...toCardDto(card),
+    ...base,
+    imageUrlHiRes: card.getImageUrlHiRes('detail'),
     manaCost: card.getManaCost(),
     cmc: card.getCmc(),
     typeLine: card.getTypeLine(),

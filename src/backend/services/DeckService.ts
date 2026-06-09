@@ -5,6 +5,7 @@ import {
     getByIdForUser,
     getByIdForUserWithCards,
     listByUser,
+    listDeckCardSummariesForUser,
     removeCardFromDeckForUser,
     updateForUser,
     type CreateDeckData,
@@ -14,18 +15,26 @@ import {
     type DeckRecord,
     type UpdateDeckData,
 } from '../repositories/DeckRepository';
+import { getOwnedCardNamesForUser } from '../repositories/DeckCardAssignmentRepository';
 import {
     assignCollectionEntry,
     buildDeckCardFillStatus,
     type AssignCollectionEntryInput,
     type DeckCardFillStatus,
 } from './DeckCardAssignmentService';
+import { normalizeCardName } from '../utils/cardNameMatch';
 import { ensureCardInDb } from './CardService';
 import {
     getWarningForCard,
     getWarningsForDeckCards,
     type FormatWarningDto,
 } from './DeckFormatWarningService';
+import {
+    computeIsFormatValid,
+    computeIsFullyAssigned,
+    groupSummariesByDeckId,
+    toDeckCardStatusInput,
+} from './deckListStatus';
 
 export type { DeckCardFillStatus, AssignCollectionEntryInput, FormatWarningDto };
 
@@ -36,6 +45,8 @@ export interface DeckListItem {
     description: string | null;
     isValid: boolean | null;
     lastValidatedAt: string | null;
+    isFormatValid: boolean;
+    isFullyAssigned: boolean;
     createdAt: string;
     updatedAt: string;
 }
@@ -61,7 +72,10 @@ export interface DeckCardItem {
     board: DeckBoard;
     name: string | null;
     setCode: string | null;
+    typeLine: string | null;
     imageUrl: string | null;
+    imageUrlHiRes: string | null;
+    inCollection: boolean;
     fillStatus: DeckCardFillStatus;
     formatWarning: FormatWarningDto | null;
 }
@@ -92,9 +106,15 @@ export interface AddDeckCardResult {
     formatWarning: FormatWarningDto | null;
 }
 
+const isCardInCollection = (name: string | null, ownedNames: Set<string>): boolean => {
+    const normalized = normalizeCardName(name);
+    return normalized.length > 0 && ownedNames.has(normalized);
+};
+
 const toDeckCardItem = (
     card: DeckCardRecord,
     formatWarning: FormatWarningDto | null = null,
+    ownedNames: Set<string> = new Set(),
 ): DeckCardItem => ({
     id: card.id,
     scryfallId: card.scryfallId,
@@ -102,7 +122,10 @@ const toDeckCardItem = (
     board: card.board,
     name: card.name,
     setCode: card.setCode,
+    typeLine: card.typeLine,
     imageUrl: card.imageUrl,
+    imageUrlHiRes: card.imageUrlHiRes,
+    inCollection: isCardInCollection(card.name, ownedNames),
     fillStatus: buildDeckCardFillStatus(card.quantity, card.assignments.map((a) => ({
         id: a.id,
         deckCardId: card.id,
@@ -121,6 +144,8 @@ const toDeckListItem = (deck: DeckRecord): DeckListItem => ({
     description: deck.description,
     isValid: deck.isValid,
     lastValidatedAt: deck.lastValidatedAt ? deck.lastValidatedAt.toISOString() : null,
+    isFormatValid: false,
+    isFullyAssigned: false,
     createdAt: deck.createdAt.toISOString(),
     updatedAt: deck.updatedAt.toISOString(),
 });
@@ -152,9 +177,61 @@ const parseLastValidatedAt = (value: string | null | undefined): Date | null | u
     return date;
 };
 
+const buildDeckListItemWithStatus = async (
+    userId: string,
+    decks: DeckRecord[],
+): Promise<DeckListItem[]> => {
+    if (decks.length === 0) {
+        return [];
+    }
+
+    const summaries = await listDeckCardSummariesForUser(userId);
+    const byDeckId = groupSummariesByDeckId(summaries);
+
+    const scryfallIdsByFormat = new Map<DeckFormat, Set<string>>();
+    for (const deck of decks) {
+        const cards = byDeckId.get(deck.id) ?? [];
+        let idSet = scryfallIdsByFormat.get(deck.format);
+        if (!idSet) {
+            idSet = new Set();
+            scryfallIdsByFormat.set(deck.format, idSet);
+        }
+        for (const card of cards) {
+            idSet.add(card.scryfallId);
+        }
+    }
+
+    const warningsByFormat = new Map<DeckFormat, Map<string, FormatWarningDto | null>>();
+    await Promise.all(
+        [...scryfallIdsByFormat.entries()].map(async ([format, scryfallIds]) => {
+            const warnings = await getWarningsForDeckCards([...scryfallIds], format);
+            warningsByFormat.set(format, warnings);
+        }),
+    );
+
+    const cardNames = summaries
+        .map((c) => c.name)
+        .filter((name): name is string => name != null);
+    const ownedNames = await getOwnedCardNamesForUser(userId, cardNames);
+
+    return decks.map((deck) => {
+        const cards = byDeckId.get(deck.id) ?? [];
+        const formatWarnings = warningsByFormat.get(deck.format) ?? new Map();
+        const statusCards = cards.map((card) =>
+            toDeckCardStatusInput(card, formatWarnings.get(card.scryfallId) ?? null),
+        );
+
+        return {
+            ...toDeckListItem(deck),
+            isFormatValid: computeIsFormatValid(deck.format, statusCards),
+            isFullyAssigned: computeIsFullyAssigned(statusCards, ownedNames),
+        };
+    });
+};
+
 export const listDecks = async (userId: string): Promise<DeckListItem[]> => {
     const decks = await listByUser(userId);
-    return decks.map(toDeckListItem);
+    return buildDeckListItemWithStatus(userId, decks);
 };
 
 export const getDeck = async (userId: string, deckId: string): Promise<DeckListItem> => {
@@ -162,7 +239,8 @@ export const getDeck = async (userId: string, deckId: string): Promise<DeckListI
     if (!deck) {
         throw new Error('Deck not found');
     }
-    return toDeckListItem(deck);
+    const [item] = await buildDeckListItemWithStatus(userId, [deck]);
+    return item;
 };
 
 export const getDeckDetails = async (userId: string, deckId: string): Promise<DeckDetails> => {
@@ -176,10 +254,33 @@ export const getDeckDetails = async (userId: string, deckId: string): Promise<De
         cards.map((card) => card.scryfallId),
         deckMeta.format,
     );
+    const ownedNames = await getOwnedCardNamesForUser(
+        userId,
+        cards.map((card) => card.name).filter((name): name is string => name != null),
+    );
+
+    const statusCards = cards.map((card) =>
+        toDeckCardStatusInput(
+            {
+                deckId: deckMeta.id,
+                board: card.board,
+                quantity: card.quantity,
+                scryfallId: card.scryfallId,
+                name: card.name,
+                typeLine: card.typeLine,
+                filledQty: card.assignments.reduce((sum, a) => sum + a.quantity, 0),
+            },
+            warnings.get(card.scryfallId) ?? null,
+        ),
+    );
 
     return {
         ...toDeckListItem(deckMeta),
-        cards: cards.map((card) => toDeckCardItem(card, warnings.get(card.scryfallId) ?? null)),
+        isFormatValid: computeIsFormatValid(deckMeta.format, statusCards),
+        isFullyAssigned: computeIsFullyAssigned(statusCards, ownedNames),
+        cards: cards.map((card) =>
+            toDeckCardItem(card, warnings.get(card.scryfallId) ?? null, ownedNames),
+        ),
     };
 };
 
@@ -227,7 +328,8 @@ export const updateDeck = async (
         throw new Error('Deck not found');
     }
 
-    return toDeckListItem(deck);
+    const [item] = await buildDeckListItemWithStatus(userId, [deck]);
+    return item;
 };
 
 export const removeDeck = async (userId: string, deckId: string): Promise<void> => {
@@ -250,7 +352,7 @@ export const addCardToDeck = async (
         throw new Error('Deck not found');
     }
 
-    await ensureCardInDb(input.scryfallId);
+    const cardModel = await ensureCardInDb(input.scryfallId);
 
     const card = await addCardToDeckForUser(deckId, userId, {
         scryfallId: input.scryfallId,
@@ -267,10 +369,12 @@ export const addCardToDeck = async (
     const deck = await getByIdForUserWithCards(deckId, userId);
     const updatedCard = deck?.cards.find((c) => c.id === card.id);
     const formatWarning = await getWarningForCard(input.scryfallId, deckMeta.format);
-    const deckCardItem = toDeckCardItem(
-        updatedCard ?? { ...card, assignments: [] },
-        formatWarning,
+    const cardRecord = updatedCard ?? { ...card, assignments: [] };
+    const ownedNames = await getOwnedCardNamesForUser(
+        userId,
+        cardRecord.name ? [cardRecord.name] : [],
     );
+    const deckCardItem = toDeckCardItem(cardRecord, formatWarning, ownedNames);
 
     return {
         card: deckCardItem,
@@ -295,8 +399,12 @@ export const removeCardFromDeck = async (
         quantity,
     );
 
+    const ownedNames = result.card?.name
+        ? await getOwnedCardNamesForUser(userId, [result.card.name])
+        : new Set<string>();
+
     return {
         removed: result.removed,
-        card: result.card ? toDeckCardItem(result.card) : undefined,
+        card: result.card ? toDeckCardItem(result.card, null, ownedNames) : undefined,
     };
 };

@@ -16,11 +16,12 @@ Backend REST API dla aplikacji do zarządzania kolekcją kart Magic: The Gatheri
 5. [Endpointy — Cards](#endpointy--cards)
 6. [Endpointy — Collection](#endpointy--collection)
 7. [Endpointy — Decks](#endpointy--decks)
-8. [Flow — wersja mobilna (skanowanie)](#flow--wersja-mobilna-skanowanie)
-9. [Flow — wersja webowa (wyszukiwanie)](#flow--wersja-webowa-wyszukiwanie)
-10. [Flow — wspólne funkcjonalności](#flow--wspólne-funkcjonalności)
-11. [Funkcjonalności dodatkowe](#funkcjonalności-dodatkowe)
-12. [Kody błędów i limity](#kody-błędów-i-limity)
+8. [Endpointy — Sync](#endpointy--sync)
+9. [Flow — wersja mobilna (skanowanie)](#flow--wersja-mobilna-skanowanie)
+10. [Flow — wersja webowa (wyszukiwanie)](#flow--wersja-webowa-wyszukiwanie)
+11. [Flow — wspólne funkcjonalności](#flow--wspólne-funkcjonalności)
+12. [Funkcjonalności dodatkowe](#funkcjonalności-dodatkowe)
+13. [Kody błędów i limity](#kody-błędów-i-limity)
 
 ---
 
@@ -64,9 +65,12 @@ POST /api/auth/logout lub ponowne logowanie
   "collectorNumber": "234",
   "lang": "en",
   "imageUrl": "https://...",
+  "imageUrlHiRes": "https://...",
   "price": 1.25
 }
 ```
+
+`imageUrl` — Scryfall `normal` (~488×680), do małych miniaturek. `imageUrlHiRes` — wyższa rozdzielczość (`large` w listach/siatkach; w szczegółach karty endpoint zwraca `png` → `large` → `normal`).
 
 ### CardDetailDto (szczegóły karty)
 
@@ -165,7 +169,7 @@ Rozpoczyna logowanie przez Google OAuth 2.0. Przekierowuje użytkownika na stron
 Callback OAuth po autoryzacji Google.
 
 **Auth:** nie wymagana (obsługiwane przez Passport)  
-**Response:** redirect 302 na `{FE_BASE_URL}/api/user/me` z ustawionymi cookies:
+**Response:** redirect 302 na `{FE_BASE_URL}/#accessToken=...&refreshToken=...` (Flutter Web zapisuje tokeny w `sessionStorage` i używa `Authorization: Bearer`) oraz ustawia cookies:
 
 | Cookie | httpOnly | TTL (domyślnie) |
 |--------|----------|-----------------|
@@ -294,11 +298,20 @@ Wyszukuje karty po nazwie — **głównie dla wersji webowej**.
 ```json
 {
   "cards": [ /* CardDto[] */ ],
-  "total": 42
+  "total": 42,
+  "noMatch": false,
+  "didYouMean": [],
+  "searchMode": "direct"
 }
 ```
 
-Wyniki łączą dane ze Scryfall (`unique=prints`) z kartami już zapisanymi lokalnie.
+| Pole | Typ | Opis |
+|------|-----|------|
+| `noMatch` | boolean | `true` gdy po wyszukaniu (w tym autouzupełnianiu) nie ma żadnej karty |
+| `didYouMean` | string[] | Propozycje nazw ze Scryfall autocomplete lub lokalnego dopasowania trigram |
+| `searchMode` | string | `direct`, `autocomplete` (wyniki z podobnych nazw), lub `local_fuzzy` (tylko lokalna baza) |
+
+Wyniki łączą dane ze Scryfall (`unique=prints`) z kartami już zapisanymi lokalnie. Dla zwykłych nazw bez składni Scryfall zapytanie jest wysyłane jako `name:{cardName}`. Gdy pierwsze wyszukiwanie nie zwraca kart, backend próbuje Scryfall autocomplete i dopasowanie trigram (`pg_trgm`) w lokalnej tabeli `cards`.
 
 **Błędy:** `400` — brak `cardName`; `429` — limit Scryfall; `500` — błąd wyszukiwania.
 
@@ -379,6 +392,7 @@ Pobiera kolekcję użytkownika z opcjonalnymi filtrami.
       "name": "Lightning Bolt",
       "setCode": "M21",
       "imageUrl": "https://...",
+      "imageUrlHiRes": "https://...",
       "price": 1.25,
       "quantity": 4,
       "condition": "NM",
@@ -546,12 +560,20 @@ Lista decków użytkownika.
       "description": null,
       "isValid": null,
       "lastValidatedAt": null,
+      "isFormatValid": true,
+      "isFullyAssigned": false,
       "createdAt": "2024-03-15T10:00:00.000Z",
       "updatedAt": "2024-03-20T14:30:00.000Z"
     }
   ]
 }
 ```
+
+| Pole | Opis |
+|------|------|
+| `isFormatValid` | Obliczane na żywo: min. kart main, limity kopii, ostrzeżenia legalności (jak walidacja w aplikacji) |
+| `isFullyAssigned` | Obliczane na żywo: wszystkie karty obecne w kolekcji mają pełne przypisanie fizycznych kopii |
+| `isValid` | Opcjonalny zapis z ostatniego **Waliduj** w szczegółach talii (nie używany na liście) |
 
 ---
 
@@ -584,6 +606,46 @@ Tworzy nowy deck.
 
 ---
 
+### `GET /api/decks/card-availability`
+
+Zwraca dostępność karty do dodania do talii na podstawie kopii w kolekcji i już przydzielonych slotów we wszystkich taliach użytkownika (dopasowanie po **nazwie** karty).
+
+**Query params:**
+
+| Param | Wymagane | Opis |
+|-------|----------|------|
+| `scryfallId` | tak | UUID karty |
+
+**Response 200:**
+```json
+{
+  "ownedQty": 1,
+  "inDecksQty": 1,
+  "availableToAdd": 0,
+  "decksUsing": [
+    {
+      "deckId": "uuid",
+      "deckName": "Mono Black",
+      "deckCardId": "uuid",
+      "quantity": 1
+    }
+  ]
+}
+```
+
+| Pole | Opis |
+|------|------|
+| `ownedQty` | Suma kopii we wszystkich wpisach kolekcji o tej nazwie |
+| `inDecksQty` | Suma `quantity` we wszystkich slotach talii o tej nazwie |
+| `availableToAdd` | `max(0, ownedQty - inDecksQty)` |
+| `decksUsing` | Talie, w których karta już występuje |
+
+Gdy użytkownik nie ma karty w kolekcji (`ownedQty = 0`), limit nie obowiązuje — `availableToAdd` może być dowolnie duże (proxy/theorycraft).
+
+**Błędy:** `400` — brak `scryfallId`; `404` — karta nie istnieje.
+
+---
+
 ### `GET /api/decks/:id`
 
 Szczegóły decku z listą kart, statusem wypełnienia i ostrzeżeniami formatu.
@@ -608,7 +670,10 @@ Szczegóły decku z listą kart, statusem wypełnienia i ostrzeżeniami formatu.
         "board": "main",
         "name": "Lightning Bolt",
         "setCode": "M21",
+        "typeLine": "Instant",
         "imageUrl": "https://...",
+        "imageUrlHiRes": "https://...",
+        "inCollection": true,
         "fillStatus": {
           "quantity": 4,
           "filledQty": 2,
@@ -621,6 +686,10 @@ Szczegóły decku z listą kart, statusem wypełnienia i ostrzeżeniami formatu.
   }
 }
 ```
+
+| Pole | Opis |
+|------|------|
+| `inCollection` | `true` gdy użytkownik ma w kolekcji co najmniej jeden wpis o **tej samej nazwie** karty (dopasowanie po znormalizowanej nazwie, jak przy przypisywaniu) |
 
 ---
 
@@ -696,7 +765,7 @@ Dodaje kartę do decku.
 
 Jeśli karta już istnieje w danym `board`, ilość jest sumowana.
 
-**Błędy:** `400` — walidacja / przekroczenie slotów przy assignments; `404` — deck/karta nie istnieje; `429` — limit Scryfall.
+**Błędy:** `400` — walidacja / przekroczenie slotów przy assignments / `Exceeds owned collection quantity` gdy suma kopii we wszystkich taliach przekroczyłaby liczbę posiadanych egzemplarzy (dopasowanie po nazwie); `404` — deck/karta nie istnieje; `429` — limit Scryfall.
 
 ---
 
@@ -729,7 +798,7 @@ lub (gdy ilość > 1):
 
 ### `GET /api/decks/:id/cards/:deckCardId/collection-options`
 
-Zwraca wpisy z kolekcji pasujące do karty w decku — do przypisywania fizycznych kopii.
+Zwraca wpisy z kolekcji pasujące do karty w decku **po nazwie** (dowolny printing) — do przypisywania fizycznych kopii.
 
 **Response 200:**
 ```json
@@ -740,18 +809,135 @@ Zwraca wpisy z kolekcji pasujące do karty w decku — do przypisywania fizyczny
       "condition": "NM",
       "isFoil": false,
       "entryQuantity": 4,
-      "assignedTotal": 2,
-      "availableToAssign": 2
+      "assignedTotal": 4,
+      "assignedOnSlot": 0,
+      "assignedElsewhere": 4,
+      "availableToAssign": 0,
+      "assignableToSlot": 4,
+      "scryfallId": "uuid",
+      "setCode": "M21",
+      "name": "Lightning Bolt",
+      "isExactPrinting": true,
+      "transferSources": [
+        { "deckId": "uuid", "deckName": "Burn", "quantity": 4 }
+      ]
     }
   ]
 }
 ```
+
+| Pole | Opis |
+|------|------|
+| `isExactPrinting` | `true` gdy wpis kolekcji ma ten sam `scryfallId` co slot w talii |
+| `assignedOnSlot` | Kopie tego wpisu już przypisane do **tego** slotu w talii |
+| `assignedElsewhere` | Kopie przypisane w **innych** taliach (`assignedTotal - assignedOnSlot`) |
+| `availableToAssign` | Wolne kopie wpisu (`entryQuantity - assignedTotal`) |
+| `assignableToSlot` | Maks. kopii na ten slot (`entryQuantity - assignedOnSlot`), w tym przez przeniesienie z innej talii |
+| `transferSources` | Talie, z których kopie zostaną zdjęte przy przypisaniu (gdy `assignedElsewhere > 0`) |
+
+**Błędy:** `400` — karta w talii bez nazwy (`Deck card has no name`).
+
+---
+
+### `POST /api/decks/:id/assign-from-collection-by-name`
+
+Automatycznie przypisuje brakujące kopie do slotów talii, używając wpisów kolekcji o **tej samej nazwie** karty (nie tylko tego samego printingu).
+
+**Response 200:**
+```json
+{
+  "assignedSlots": 3,
+  "assignedCopies": 8,
+  "skippedNoCollection": 1,
+  "skippedNoName": 0
+}
+```
+
+| Pole | Opis |
+|------|------|
+| `assignedSlots` | Liczba pozycji w talii, do których przypisano co najmniej jedną kopię |
+| `assignedCopies` | Łączna liczba przypisanych kopii |
+| `skippedNoCollection` | Pozycje z brakiem dostępnych kopii o pasującej nazwie |
+| `skippedNoName` | Pozycje bez nazwy karty w bazie |
+
+Preferuje dokładny printing, potem inne wersje (kolejność: `setCode`, `condition`).
+
+---
+
+### `POST /api/decks/:id/import-list`
+
+Importuje karty do talii z wklejonej listy tekstowej (format `1 Nazwa karty`, opcjonalne sekcje `// Commander`, `// Sideboard`, `// Oathbreaker`).
+
+**Body:**
+```json
+{
+  "text": "1 Sol Ring\n1 Plains\n\n// Commander\n1 Wyleth, Soul of Steel",
+  "mode": "merge"
+}
+```
+
+| Pole | Opis |
+|------|------|
+| `text` | Wklejona lista kart (wymagane) |
+| `mode` | `merge` — dodaje / sumuje ilości; `replace` — czyści talię przed importem |
+
+**Response 200:**
+```json
+{
+  "message": "Deck list imported",
+  "result": {
+    "mode": "merge",
+    "clearedExisting": false,
+    "imported": [
+      {
+        "name": "Sol Ring",
+        "scryfallId": "uuid",
+        "quantity": 1,
+        "board": "main"
+      }
+    ],
+    "failed": [
+      {
+        "line": 12,
+        "name": "Unknown Card",
+        "reason": "not_found"
+      }
+    ]
+  }
+}
+```
+
+| Pole `failed[].reason` | Opis |
+|------------------------|------|
+| `not_found` | Scryfall nie rozpoznał nazwy |
+| `rate_limit` | Przekroczony limit Scryfall dla tej pozycji |
+
+Rozpoznawanie nazw używa tego samego łańcucha co skaner (exact → SymSpell → fuzzy). Przy `replace` usuwane są wszystkie `deck_cards` (przypisania kasowane kaskadowo).
+
+---
+
+### `GET /api/decks/:id/export-list`
+
+Eksportuje talię do tekstowej listy kompatybilnej z `import-list` (format `1 Nazwa karty`, sekcje `// Commander`, `// Sideboard`, `// Oathbreaker & Signature`).
+
+**Response 200:**
+```json
+{
+  "text": "1 Sol Ring\n1 Plains\n\n// Commander\n1 Wyleth, Soul of Steel"
+}
+```
+
+Kolejność sekcji: main → sideboard (jeśli niepusty) → commander/oathbreaker (jeśli niepusty). Karty sortowane alfabetycznie w obrębie sekcji.
+
+**Uwaga (Oathbreaker):** signature spell zaimportowany do boardu `main` pozostaje w sekcji main przy eksporcie — pełny round-trip wymaga metadanych roli karty (poza zakresem v1).
 
 ---
 
 ### `POST /api/decks/:id/cards/:deckCardId/assignments`
 
 Przypisuje fizyczne kopie z kolekcji do slotu w decku.
+
+Jeśli wpis jest już przypisany w innej talii, serwer **zdejmuje** wymaganą liczbę kopii z innych slotów (najstarsze przypisanie pierwsze), aktualizuje `decksUpdatedAt` źródłowych talii, a następnie przypisuje do docelowego slotu.
 
 **Body:**
 ```json
@@ -770,6 +956,10 @@ Przypisuje fizyczne kopie z kolekcji do slotu w decku.
 ```
 
 Jeśli przypisanie dla tego `collectionEntryId` już istnieje, ilości są sumowane.
+
+Dopuszcza wpisy kolekcji o **innej wersji** (inny `scryfallId`), jeśli `cards.name` jest takie samo (bez rozróżniania wielkości liter).
+
+**Błędy:** `400` — `Card name mismatch` gdy nazwy się różnią.
 
 ---
 
@@ -803,6 +993,59 @@ Usuwa przypisanie fizycznych kopii.
   "fillStatus": { /* DeckCardFillStatus */ }
 }
 ```
+
+---
+
+## Endpointy — Sync
+
+Endpointy do wykrywania zmian w kolekcji i taliach użytkownika (cross-device sync, polling).
+
+### `GET /api/sync/status`
+
+Zwraca znaczniki czasu ostatniej modyfikacji kolekcji i talii zalogowanego użytkownika.
+
+**Auth:** wymagany (`requireJwt`)
+
+**Response 200:**
+```json
+{
+  "collectionUpdatedAt": "2026-06-03T12:00:00.000Z",
+  "decksUpdatedAt": "2026-06-03T12:05:00.000Z",
+  "syncToken": "2026-06-03T12:05:00.000Z"
+}
+```
+
+| Pole | Opis |
+|------|------|
+| `collectionUpdatedAt` | `MAX(collection_entries.updated_at)` dla użytkownika (epoch ISO jeśli brak wpisów) |
+| `decksUpdatedAt` | `MAX(decks.updated_at)` dla użytkownika (epoch ISO jeśli brak talii) |
+| `syncToken` | Późniejszy z dwóch powyższych timestampów (porównanie leksykograficzne ISO) |
+
+**Użycie w kliencie:** preferowany kanał WebSocket (poniżej); zapasowo poll co ~5–10 s w tle. Gdy `syncToken` lub którykolwiek timestamp się zmieni:
+
+- jeśli zmieniło się `collectionUpdatedAt` → odśwież `GET /api/collection`
+- jeśli zmieniło się `decksUpdatedAt` → odśwież `GET /api/decks` (oraz otwarty `GET /api/decks/:id` jeśli dotyczy)
+
+Mutacje decków (karty, assignments) aktualizują `decks.updated_at` rodzica. Mutacje kolekcji aktualizują `collection_entries.updated_at`. Przypisania kopii z kolekcji do talii aktualizują też `updated_at` wpisu kolekcji.
+
+### `WebSocket /api/sync/stream`
+
+Push zmian sync dla zalogowanego użytkownika (mobile + web).
+
+**Auth:** `?token=<access JWT>` w URL (mobile) lub nagłówek `Authorization: Bearer` / cookie `accessToken` (web).
+
+**Wiadomość serwera (JSON):**
+
+```json
+{
+  "type": "sync",
+  "collectionUpdatedAt": "2026-06-03T12:00:00.000Z",
+  "decksUpdatedAt": "2026-06-03T12:05:00.000Z",
+  "syncToken": "2026-06-03T12:05:00.000Z"
+}
+```
+
+**Klient:** po połączeniu odświeża te same zasoby co przy poll; przy rozłączeniu używa `GET /api/sync/status` co kilka sekund. Serwer wysyła ping co 30 s.
 
 ---
 
@@ -970,7 +1213,7 @@ PATCH .../assignments/:id    → zmień ilość
 DELETE .../assignments/:id   → usuń przypisanie
 ```
 
-`fillStatus.unfilledQty > 0` sygnalizuje w UI, że slot decku nie ma przypisanych wszystkich fizycznych kopii.
+`fillStatus.unfilledQty > 0` sygnalizuje w UI, że slot decku nie ma przypisanych wszystkich fizycznych kopii. `inCollection: false` oznacza brak karty w kolekcji (UI nie pokazuje zielonego checkmarka nawet przy pełnym `fillStatus`).
 
 ### Profil użytkownika
 
@@ -978,6 +1221,17 @@ DELETE .../assignments/:id   → usuń przypisanie
 GET /api/user/me     → dane + statystyki
 PATCH /api/user/me   → zmiana username
 ```
+
+### Synchronizacja między urządzeniami (live sync)
+
+```
+Co ~5 s (aplikacja na pierwszym planie):
+GET /api/sync/status → porównaj syncToken z poprzednią wartością
+  → zmiana collectionUpdatedAt → GET /api/collection
+  → zmiana decksUpdatedAt      → GET /api/decks (+ otwarty deck)
+```
+
+Po każdej lokalnej mutacji klient odświeża odpowiedni store natychmiast (nie czeka na poll). Konflikty: last-write-wins po stronie serwera.
 
 ### Odświeżanie sesji (web)
 

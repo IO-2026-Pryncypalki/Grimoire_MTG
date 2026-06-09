@@ -6,6 +6,8 @@ import { Card as CardModel } from '../models/Card';
 import ScryfallAdapter from '../adapters/ScryfallAdapter';
 import { ensureCardInDb } from '../services/CardService';
 import type { CardCondition } from '../models/CollectionEntry';
+import { publishSyncForUser } from '../services/syncPublish';
+import { listAssignmentsForCollectionEntry } from '../repositories/DeckCardAssignmentRepository';
 
 const router = Router();
 
@@ -96,15 +98,17 @@ router.get('/', requireJwt, async (req: Request, res: Response) => {
         const collection = await Collection.load(user.id, filters);
 
         const entries = collection.getEntries().map(entry => ({
+            collectionEntryId: entry.getId(),
             scryfallId: entry.getCard().getScryfallId(),
-            name:       entry.getCard().getName(),
-            setCode:    entry.getCard().getSetCode(),
-            imageUrl:   entry.getCard().getImageUrl(),
-            price:      entry.getCard().getCurrentPrice(),
-            quantity:   entry.getQuantity(),
-            condition:  entry.getCondition(),
-            isFoil:     entry.getIsFoil(),
-            notes:      entry.getNotes(),
+            name: entry.getCard().getName(),
+            setCode: entry.getCard().getSetCode(),
+            imageUrl: entry.getCard().getImageUrl(),
+            imageUrlHiRes: entry.getCard().getImageUrlHiRes('grid'),
+            price: entry.getCard().getCurrentPrice(),
+            quantity: entry.getQuantity(),
+            condition: entry.getCondition(),
+            isFoil: entry.getIsFoil(),
+            notes: entry.getNotes(),
         }));
 
         return res.status(200).json({
@@ -147,6 +151,8 @@ router.post('/', requireJwt, async (req: Request, res: Response) => {
         const collection = await Collection.load(user.id);
         const entry = await collection.addCardAndSave(card, { quantity, condition, isFoil });
 
+        publishSyncForUser(user.id);
+
         return res.status(201).json({
             message: 'Card added to collection',
             entry,
@@ -169,12 +175,32 @@ router.post('/refresh-prices', requireJwt, async (req: Request, res: Response) =
                 ? 'Prices refreshed with warnings'
                 : 'Prices refreshed successfully';
 
+        publishSyncForUser(user.id);
+
         return res.status(200).json({
             message,
             ...refreshResult,
         });
     } catch (error) {
         return res.status(500).json({ message: 'Failed to refresh prices', error });
+    }
+});
+
+// GET /api/collection/entries/:entryId/assignments
+router.get('/entries/:entryId/assignments', requireJwt, async (req: Request, res: Response) => {
+    try {
+        const user = req.user as { id: string };
+        const { entryId } = req.params;
+        const assignments = await listAssignmentsForCollectionEntry(user.id, entryId);
+        return res.status(200).json({
+            assignments: assignments.map(a => ({
+                deckId: a.deckId,
+                deckName: a.deckName,
+                quantity: a.quantity,
+            })),
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Failed to load entry assignments', error });
     }
 });
 
@@ -191,7 +217,9 @@ router.patch('/:scryfallId/transfer', requireJwt, async (req: Request, res: Resp
         }
 
         const collection = await Collection.load(user.id);
-        collection.transferCondition(scryfallId, fromCondition, toCondition, isFoil, quantity);
+        await collection.transferCondition(scryfallId, fromCondition, toCondition, isFoil, quantity);
+
+        publishSyncForUser(user.id);
 
         return res.status(200).json({ message: 'Condition transferred' });
     } catch (error: any) {
@@ -216,10 +244,12 @@ router.patch('/:scryfallId', requireJwt, async (req: Request, res: Response) => 
         if (!entry) return res.status(404).json({ message: 'Entry not found' });
 
         if (delta !== undefined) {
-            entry.updateQuantity(delta);
+            await collection.updateEntryQuantity(entry, delta);
             collection.pruneEmpty();
         }
         if (notes !== undefined) entry.setNotes(notes);
+
+        publishSyncForUser(user.id);
 
         return res.status(200).json({ message: 'Entry updated' });
     } catch (error: any) {
@@ -238,10 +268,15 @@ router.delete('/:scryfallId', requireJwt, async (req: Request, res: Response) =>
                         : undefined;
 
         const collection = await Collection.load(user.id);
-        collection.removeCard(scryfallId, condition, isFoil);
+        const removed = await collection.removeCard(scryfallId, condition, isFoil);
+        if (removed === 0) {
+            return res.status(404).json({ message: 'Entry not found' });
+        }
+        publishSyncForUser(user.id);
         return res.status(200).json({ message: 'Entry removed' });
-    } catch (error) {
-        return res.status(500).json({ message: 'Failed to remove entry', error });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Failed to remove entry';
+        return res.status(500).json({ message });
     }
 });
 

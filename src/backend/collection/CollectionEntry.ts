@@ -47,6 +47,7 @@ export default class CollectionEntry {
         });
     }
 
+    public getId(): string           { return this.id; }
     public getCard(): Card           { return this.card; }
     public getQuantity(): number     { return this.quantity; }
     public getCondition(): string    { return this.condition; }
@@ -58,11 +59,9 @@ export default class CollectionEntry {
         const newQty = this.quantity + delta;
         if (newQty < 0) throw new Error('Quantity cannot go negative');
         this.quantity = newQty;
-        if (!this.id) return;
-        const op = newQty === 0
-            ? CollectionEntryModel.destroy({ where: { id: this.id } })
-            : CollectionEntryModel.update({ quantity: newQty }, { where: { id: this.id } });
-        op.catch(err => console.error('updateQuantity DB error:', err));
+        if (!this.id || newQty === 0) return;
+        CollectionEntryModel.update({ quantity: newQty }, { where: { id: this.id } })
+            .catch(err => console.error('updateQuantity DB error:', err));
     }
 
     public setCondition(condition: string): void {

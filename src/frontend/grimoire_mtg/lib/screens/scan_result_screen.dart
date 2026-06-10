@@ -14,10 +14,46 @@ import '../widgets/add_to_collection_sheet.dart';
 import 'card_detail_screen.dart';
 import 'card_search_screen.dart';
 
-class ScanResultScreen extends StatelessWidget {
+class ScanResultScreen extends StatefulWidget {
   const ScanResultScreen({super.key, required this.scanResult});
 
   final ScanResponse scanResult;
+
+  @override
+  State<ScanResultScreen> createState() => _ScanResultScreenState();
+}
+
+class _ScanResultScreenState extends State<ScanResultScreen> {
+  final TextEditingController _filterController = TextEditingController();
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _filterController.addListener(() {
+      setState(() {
+        _query = _filterController.text;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _filterController.dispose();
+    super.dispose();
+  }
+
+  ScanResponse get scanResult => widget.scanResult;
+
+  List<CardDetailDto> get _filteredCards {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return scanResult.cards;
+    return scanResult.cards.where((c) {
+      return (c.setCode?.toLowerCase().contains(q) ?? false) ||
+          (c.collectorNumber?.toLowerCase().contains(q) ?? false) ||
+          (c.releasedYear?.toString().contains(q) ?? false);
+    }).toList();
+  }
 
   Future<void> _addToCollection(BuildContext context, CardDto card) async {
     final added = await showAddToCollection(
@@ -132,10 +168,38 @@ class ScanResultScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.scanSelectVariant)),
-      body: ListView.separated(
-        itemCount: cards.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, index) => _variantTile(context, cards[index]),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            child: TextField(
+              controller: _filterController,
+              autofocus: false,
+              decoration: InputDecoration(
+                hintText: l10n.scanFilterHint,
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () => _filterController.clear(),
+                      ),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ListView.separated(
+              itemCount: _filteredCards.length,
+              separatorBuilder: (_, _) => const Divider(height: 1),
+              itemBuilder: (context, index) =>
+                  _variantTile(context, _filteredCards[index]),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -147,9 +211,6 @@ class ScanResultScreen extends StatelessWidget {
     final price = card.price;
     final priceText =
         price != null ? NumberFormat.simpleCurrency(locale: locale).format(price) : null;
-
-    final subtitleParts = <String>[];
-    if (printingLine != null) subtitleParts.add(printingLine);
 
     return ListTile(
       title: Text(card.name ?? l10n.cardDefaultName),

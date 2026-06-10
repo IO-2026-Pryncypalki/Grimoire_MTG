@@ -403,6 +403,7 @@
   "scanNotRecognized": "Nie rozpoznano karty",
   "scanSearchManually": "Wyszukaj ręcznie",
   "scanSelectVariant": "Wybierz wariant",
+  "scanFilterHint": "Filtruj po kodzie edycji, numerze lub roku…",
   "scanCreateDeckInTab": "Utwórz talię w zakładce Talie",
   "scanAddedToCollectionAndDeck": "Dodano do kolekcji i talii"
 }

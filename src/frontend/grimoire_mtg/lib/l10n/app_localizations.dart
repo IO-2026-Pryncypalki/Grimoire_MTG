@@ -1345,6 +1345,12 @@ abstract class AppLocalizations {
   /// **'Wybierz wariant'**
   String get scanSelectVariant;
 
+  /// No description provided for @scanFilterHint.
+  ///
+  /// In pl, this message translates to:
+  /// **'Filtruj po kodzie edycji, numerze lub roku…'**
+  String get scanFilterHint;
+
   /// No description provided for @scanCreateDeckInTab.
   ///
   /// In pl, this message translates to:

@@ -228,6 +228,7 @@
   "scanNotRecognized": "Card not recognized",
   "scanSearchManually": "Search manually",
   "scanSelectVariant": "Select printing",
+  "scanFilterHint": "Filter by set code, number or year…",
   "scanCreateDeckInTab": "Create a deck in the Decks tab",
   "scanAddedToCollectionAndDeck": "Added to collection and deck"
 }

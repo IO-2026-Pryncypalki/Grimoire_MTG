@@ -140,8 +140,28 @@ router.get(
             if (isMobileFlow) {
                 const params = `accessToken=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}`;
                 const customSchemeUrl = `${MOBILE_SCHEME}://auth?${params}`;
-                console.log('[auth]   -> mobile 302 redirect to:', customSchemeUrl.replace(/accessToken=[^&]+/, 'accessToken=<token>').replace(/refreshToken=[^&]+/, 'refreshToken=<token>'));
-                return res.status(302).redirect(customSchemeUrl);
+                const androidPackage = process.env.ANDROID_PACKAGE || 'com.example.grimoire_mtg';
+                const intentUrl = `intent://auth?${params}#Intent;scheme=${MOBILE_SCHEME};package=${androidPackage};end`;
+                console.log('[auth]   -> serving mobile redirect page for scheme:', customSchemeUrl.replace(/accessToken=[^&]+/, 'accessToken=<token>').replace(/refreshToken=[^&]+/, 'refreshToken=<token>'));
+                return res.status(200).send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0;url=${intentUrl}">
+  <title>Returning to app…</title>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; min-height: 100vh;
+           margin: 0; background: #1a1a2e; color: #e0e0e0; }
+    a { color: #a78bfa; font-size: 1.1rem; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <p>Returning to Scryphone…</p>
+  <a href="${customSchemeUrl}">Tap here if not redirected automatically</a>
+  <script>window.location.replace(${JSON.stringify(intentUrl)});</script>
+</body>
+</html>`);
             }
 
             console.log('[auth]   -> redirecting to web frontend');

@@ -29,7 +29,7 @@ class MTGManagerApp extends StatelessWidget {
     final localeService = context.watch<LocaleService>();
 
     return MaterialApp(
-      title: 'Grimoire MTG',
+      title: 'Scryphone',
       debugShowCheckedModeBanner: false,
       locale: localeService.locale,
       localizationsDelegates: const [

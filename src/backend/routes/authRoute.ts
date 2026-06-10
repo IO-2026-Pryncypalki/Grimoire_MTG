@@ -154,7 +154,7 @@ router.get(
   </style>
 </head>
 <body>
-  <p>Returning to Grimoire…</p>
+  <p>Returning to Scryphone…</p>
   <a href="${redirectUrl}">Tap here if not redirected automatically</a>
   <script>window.location.replace(${JSON.stringify(redirectUrl)});</script>
 </body>

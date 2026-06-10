@@ -732,6 +732,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get scanSelectVariant => 'Wybierz wariant';
 
   @override
+  String get scanFilterHint => 'Filtruj po kodzie edycji, numerze lub roku…';
+
+  @override
   String get scanCreateDeckInTab => 'Utwórz talię w zakładce Talie';
 
   @override

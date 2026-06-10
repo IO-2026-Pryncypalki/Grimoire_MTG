@@ -14,14 +14,31 @@ class AuthGate extends StatefulWidget {
   State<AuthGate> createState() => _AuthGateState();
 }
 
-class _AuthGateState extends State<AuthGate> {
+class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (kIsWeb) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         context.read<AuthService>().checkSessionAfterWebRedirect();
       });
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final auth = context.read<AuthService>();
+      if (!auth.isAuthenticated && auth.hasStoredSession && !auth.isLoading) {
+        auth.retryRestoreSession();
+      }
     }
   }
 

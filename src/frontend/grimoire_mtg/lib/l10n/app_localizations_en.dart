@@ -733,6 +733,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanSelectVariant => 'Select printing';
 
   @override
+  String get scanFilterHint => 'Filter by set code, number or year…';
+
+  @override
   String get scanCreateDeckInTab => 'Create a deck in the Decks tab';
 
   @override

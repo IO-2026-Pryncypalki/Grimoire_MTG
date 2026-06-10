@@ -223,6 +223,7 @@ class AuthService extends ChangeNotifier {
 
   Future<void> login() async {
     _error = null;
+    _loading = true;
     notifyListeners();
 
     try {
@@ -249,14 +250,14 @@ class AuthService extends ChangeNotifier {
       }
 
       await _saveTokens(access, refresh);
-      _user = await _api.getMe();
-      _loading = false;
-      notifyListeners();
+      await _restoreSession();
     } on ApiException catch (e) {
       _error = e.message;
+      _loading = false;
       notifyListeners();
     } catch (e) {
       _error = e.toString();
+      _loading = false;
       notifyListeners();
     }
   }
